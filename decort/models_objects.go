@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,8 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 */
 
 package decort
+
+/*
 
 type DiskConfig struct {
 	Label string
@@ -65,7 +67,7 @@ type ComputeConfig struct {
 	Description string
 	// The following two parameters are required to create data disks by 
 	// a separate disks/create API call
-	TenantID int
+	AccountID int
 	GridID int
 	// The following one paratmeter is required to create port forwards
 	// it will be obsoleted when we implement true Resource Groups
@@ -81,8 +83,8 @@ type ResgroupQuotaConfig struct {
 }
 
 type ResgroupConfig struct {
-	TenantID int
-	TenantName string
+	AccountID int
+	AccountName string
 	Location string
 	Name string
 	ID int
@@ -91,3 +93,5 @@ type ResgroupConfig struct {
 	Quota ResgroupQuotaConfig
 	Network NetworkConfig
 }
+
+*/

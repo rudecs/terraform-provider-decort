@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package decs
+package decort
 
 import (
 
@@ -100,14 +100,18 @@ func Provider() *schema.Provider {
 		},
 		
 		ResourcesMap: map[string]*schema.Resource {
-			"decs_resgroup": resourceResgroup(),
-			"decs_vm": resourceVm(),
+			"decort_resgroup": resourceResgroup(),
+			"decort_kvmx86": resourceKvmX86(),
+			"decort_disk": resourceDisk(),
+			"decort_vins": resourceVins(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource {
-			"decs_resgroup": dataSourceResgroup(),
-			"decs_vm": dataSourceVm(),
-			"decs_image": dataSourceImage(),
+			"decort_resgroup": dataSourceResgroup(),
+			"decs_kvmx86": dataSourceCompute(),
+			"decort_image": dataSourceImage(),
+			"decort_disk": dataSourceDisk(),
+			"decort_vins": dataSourceVins(),
 		},
 		
 		ConfigureFunc: providerConfigure,

@@ -63,8 +63,8 @@ type ControllerCfg struct {
 	app_id           string  // required for oauth2 mode
 	app_secret       string  // required for oauth2 mode
 	oauth2_url       string  // always required
-	decort_username    string  // assigned to either legacy_user (legacy mode) or Oauth2 user (oauth2 mode) upon successful verification
-	cc_client        *http.Client // assigned when all initial check successfully passed
+	decort_username  string  // assigned to either legacy_user (legacy mode) or Oauth2 user (oauth2 mode) upon successful verification
+	cc_client        *http.Client // assigned when all initial checks successfully passed
 }
 
 func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {

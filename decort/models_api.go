@@ -60,8 +60,8 @@ type AccountAclRecord struct {
 type ResgroupRecord struct {
 	ACLs []UserAclRecord   `json:"ACLs"`
 	Owner AccountAclRecord `json:"accountAcl"`
-	TenantID int           `json:"accountId"`
-	TenantName string      `json:"accountName"`
+	AccountID int           `json:"accountId"`
+	AccountName string      `json:"accountName"`
 	CreatedBy string       `json:"createdBy"`
 	CreatedTime uint64     `json:"createdTime"`
 	DefaultNetID int       `json:"def_net_id"`
@@ -85,23 +85,6 @@ type ResgroupListResp []ResgroupRecord
 // structures related to /cloudapi/rg/create API call
 //
 const ResgroupCreateAPI= "/restmachine/cloudapi/rg/create"
-type ResgroupCreateParam struct {
-	TenantID int           `json:"accountId"`
-	GridId int             `json:"gid"`
-	Name string            `json:"name"`
-	Ram int                `json:"maxMemoryCapacity"`
-	Disk int               `json:"maxVDiskCapacity"`
-	Cpu int                `json:"maxCPUCapacity"`
-	NetTraffic int         `json:"maxNetworkPeerTransfer"`
-	ExtIPs int             `json:"maxNumPublicIP"`
-	Owner string           `json:"owner"`
-	DefNet string          `json:"def_net"`
-	IPCidr string          `json:"ipcidr"`
-	Desc string            `json:"decs"`
-	Reason string          `json:"reason"`
-	ExtNetID int           `json:"extNetId"`
-	ExtIP string           `json:"extIp"`	
-} 
 
 //
 // structures related to /cloudapi/rg/update API call
@@ -139,8 +122,8 @@ const ResgroupGetAPI= "/restmachine/cloudapi/rg/get"
 type ResgroupGetResp struct {
 	ACLs []UserAclRecord   `json:"ACLs"`
 	Usage UsageRecord      `json:"Resources"`
-	TenantID int           `json:"accountId"`
-	TenantName string      `json:"accountName"`
+	AccountID int          `json:"accountId"`
+	AccountName string     `json:"accountName"`
 
 	CreatedBy string       `json:"createdBy"`
 	CreatedTime uint64     `json:"createdTime"`
@@ -182,11 +165,6 @@ type ResgroupUpdateParam struct {
 // structures related to /cloudapi/rg/delete API
 //
 const ResgroupDeleteAPI = "/restmachine/cloudapi/rg/delete"
-type ResgroupDeleteParam struct {
-	ID uint                `json:"rgId"`
-	Force bool             `json:"force"`
-	Reason string          `json:"reason"`
-}
 
 //
 // structures related to /cloudapi/kvmXXX/create APIs
@@ -245,8 +223,8 @@ type SnapSetRecord struct {
 }
 
 type ComputeRecord struct {
-	TenantID int           `json:"accountId"`
-	TenantName string      `json:"accountName"`
+	AccountID int          `json:"accountId"`
+	AccountName string     `json:"accountName"`
 	ACLs []UserAclRecord   `json:"acl"`
 	Arch string            `json:"arch"`
 	BootDiskSize int       `json:"bootdiskSize"`
@@ -302,7 +280,7 @@ type SnapshotRecord struct {
 type DiskRecord struct {
 	// ACLs `json:"ACL"` - it is a dictionary, special parsing required
 	// was - Acl map[string]string  `json:"acl"`
-	TenantID int           `json:"accountId"`
+	AccountID int          `json:"accountId"`
 	BootPartition int      `json:"bootPartition"`
 	CreatedTime uint64     `json:"creationTime"`
 	DeletedTime uint64     `json:"deletionTime"`
@@ -347,8 +325,8 @@ type ComputeGetParam struct {
 }
 type ComputeGetResp struct {
 	// ACLs `json:"ACL"` - it is a dictionary, special parsing required
-	TenantID int           `json:"accountId"`
-	TenantName string      `json:"accountName"`
+	AccountID int          `json:"accountId"`
+	AccountName string     `json:"accountName"`
 	Arch string            `json:"arch"`
 	BootDiskSize int       `json:"bootdiskSize"`
 	CloneReference int     `json:"cloneReference"`
@@ -391,7 +369,7 @@ type ComputeGetResp struct {
 // structures related to /restmachine/cloudapi/images/list API
 //
 type ImageRecord struct {
-	TenantID uint       `json:"accountId"`
+	AccountID uint      `json:"accountId"`
 	Arch string         `json:"architecture`
 	BootType string     `json:"bootType"`
 	IsBootable boo      `json:"bootable"`
@@ -411,7 +389,7 @@ type ImageRecord struct {
 
 const ImagesListAPI = "/restmachine/cloudapi/images/list"
 type ImagesListParam struct {
-	TenantID int        `json:"accountId"`
+	AccountID int        `json:"accountId"`
 }
 type ImagesListResp []ImageRecord
 
@@ -426,7 +404,7 @@ type ExtNetRecord struct {
 
 const ExtNetListAPI = "/restmachine/cloudapi/extnet/list"
 type ExtNetListParam struct {
-	TenantID int        `json:"accountId"`
+	AccountID int        `json:"accountId"`
 }
 type ExtNetListResp []ExtNetRecord
 
@@ -434,7 +412,7 @@ type ExtNetListResp []ExtNetRecord
 //
 // structures related to /cloudapi/accounts/list API
 //
-type TenantRecord struct {
+type AccountRecord struct {
 	ACLs []UserAclRecord    `json:"acl"`
 	CreatedTime uint64      `json:"creationTime"`
 	DeletedTime uint64      `json:"deletionTime"`
@@ -444,8 +422,8 @@ type TenantRecord struct {
 	UpdatedTime uint64      `json:"updateTime"`
 }
 
-const TenantsListAPI = "/restmachine/cloudapi/accounts/list"
-type TenantsListResp []TenantRecord
+const AccountsListAPI = "/restmachine/cloudapi/accounts/list"
+type AccountsListResp []AccountRecord
 
 //
 // structures related to /cloudapi/portforwarding/list API
@@ -516,7 +494,7 @@ const ComputeDiskDetachAPI = "/restmachine/cloudapi/compute/diskDetach"
 // structures related to /cloudapi/disks/create
 // 
 type DiskCreateParam struct {
-	TenantID int           `json:"accountId`
+	AccountID int          `json:"accountId`
 	GridID int             `json:"gid"`
 	Name string            `json:"string"`
 	Description string     `json:"description"`

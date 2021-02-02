@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,24 +39,23 @@ import (
 func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
 	// from resourceRsgroupExists(...) method
-	log.Printf("%s", rg_facts)
-	log.Printf("flattenResgroup: ready to decode response body from %q", CloudspacesGetAPI)
-	details := CloudspacesGetResp{}
+	log.Debugf("%s", rg_facts)
+	log.Debugf("flattenResgroup: ready to decode response body from %q", CloudspacesGetAPI)
+	details := ResgroupGetResp{}
 	err := json.Unmarshal([]byte(rg_facts), &details)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("flattenResgroup: decoded ResGroup name %q / ID %d, tenant ID %d, public IP %q", 
-				details.Name, details.ID, details.TenantID, details.PublicIP)
+	log.Debugf("flattenResgroup: decoded ResGroup name %q / ID %d, account ID %d, public IP %q", 
+				details.Name, details.ID, details.AccountID, details.PublicIP)
 
 	d.SetId(fmt.Sprintf("%d", details.ID))
 	d.Set("name", details.Name)
-	d.Set("tenant_id", details.TenantID)
+	d.Set("account_id", details.AccountID)
 	d.Set("grid_id", details.GridID)
-	d.Set("public_ip", details.PublicIP) // legacy field - this may be obsoleted when new network segments are implemented
 
-	log.Printf("flattenResgroup: calling flattenQuota()")
+	log.Debugf("flattenResgroup: calling flattenQuota()")
 	if err = d.Set("quotas", flattenQuota(details.Quotas)); err != nil {
 		return err
 	}
@@ -69,7 +68,7 @@ func dataSourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 	if rg_facts == "" {
 		// if empty string is returned from utilityResgroupCheckPresence then there is no
 		// such resource group and err tells so - just return it to the calling party 
-		d.SetId("") // ensure ID is empty
+		d.SetId("") // ensure ID is empty in this case
 		return err
 	}
 
@@ -95,13 +94,13 @@ func dataSourceResgroup() *schema.Resource {
 				Description:  "Name of this resource group. Names are case sensitive and unique within the context of a tenant.",
 			},
 
-			"tenant": &schema.Schema {
+			"account": &schema.Schema {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the tenant, which this resource group belongs to.",
 			},
 
-			"tenant_id": &schema.Schema {
+			"account_id": &schema.Schema {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Unique ID of the tenant, which this resource group belongs to.",
@@ -111,12 +110,6 @@ func dataSourceResgroup() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Unique ID of the grid, where this resource group is deployed.",
-			},
-
-			"location": {
-				Type:          schema.TypeString,
-				Computed:      true,
-				Description:  "Location of this resource group.",
 			},
 
 			"public_ip": {  // this may be obsoleted as new network segments and true resource groups are implemented
