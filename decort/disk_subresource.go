@@ -89,12 +89,13 @@ func makeDataDisksArgString(disks []DiskConfig) string {
 }
 */
 
+// ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
 func diskSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
-		"label": {
+		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Unique label to identify this disk among other disks connected to this VM.",
+			Description: "Name of this disk resource.",
 		},
 
 		"size": {
@@ -104,6 +105,26 @@ func diskSubresourceSchema() map[string]*schema.Schema {
 			Description: "Size of the disk in GB.",
 		},
 
+		"account_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of the account this disk resource belongs to.",
+		},
+
+		"sep_id": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "default",
+			Description: "Storage provider (storage technology type) by which this disk should be served.",
+		},
+
+		"sep_type": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "default",
+			Description: "Storage provider (storage technology type) by which this disk should be served.",
+		},
+
 		"pool": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -111,17 +132,10 @@ func diskSubresourceSchema() map[string]*schema.Schema {
 			Description: "Pool from which this disk should be provisioned.",
 		},
 
-		"provider": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "default",
-			Description: "Storage provider (storage technology type) by which this disk should be served.",
-		},
-
-		"disk_id": {
+		"image_id": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "ID of this disk resource.",
+			Description: "ID of the binary Image this disk resource is cloned from (if any).",
 		},
 		
 	}

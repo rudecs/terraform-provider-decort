@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019-2020 Digital Energy Cloud Solutions. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,49 +29,54 @@ import (
 	"log"
 	"net/url"
 	"strconv"
+	"strings"
 	
 	"github.com/hashicorp/terraform/helper/schema"
 
 )
 
 func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceResgroupCreate: called for res group name %q, account name %q", 
-			   d.Get("name").(string), d.Get("account").(string))
-			   
-	rg := &ResgroupConfig{
-		Name:         d.Get("name").(string),
-		AccountName:  d.Get("account").(string),
+	// First validate that we have all parameters required to create the new Resource Group
+	arg_set := false
+	account_name, arg_set := d.GetOk("account")
+	if !arg_set {
+		return  fmt.Errorf("Cannot create new RG: missing account.")
+	}
+	rg_name, arg_set := d.GetOk("name")
+	if !arg_set {
+		return  fmt.Errorf("Cannot create new RG: missing name.")
+	}
+	grid_id, arg_set := d.GetOk("grid_id")
+	if !arg_set {
+		return  fmt.Errorf("Cannot create new RG %q for account %q: missing Grid ID.", 
+		                    rg_name.(string), account_name.(string))
 	}
 
-	// validate that we have all parameters required to create the new Resource Group
-	// location code is required to create new resource group
-	arg_value, arg_set := d.GetOk("location")
-	if arg_set {
-		rg.Location = arg_value.(string)
-	} else {
-		return  fmt.Errorf("Cannot create new RG %q for account %q: missing location parameter.", 
-		                    rg.Name, rg.AccountName)
-	}
-	// account ID is required to create new resource group
+	// all required parameters are set in the schema - we can continue with RG creation
+	log.Debugf("resourceResgroupCreate: called for RG name %q, account name %q", 
+			   account_name.(string), rg_name.(string))
+			   
+	// Valid account ID is required to create new resource group
 	// obtain Account ID by account name - it should not be zero on success
-	account_id, err := utilityGetAccountIdByName(rg.AccountName, m)
+	validated_account_id, err := utilityGetAccountIdByName(account_name.(string), m)
 	if err != nil {
 		return err
 	}
-	rg.AccountID = account_id
 
-	set_quotas := false
-	arg_value, arg_set = d.GetOk("quotas")
+	// quota settings are optional
+	set_quota := false
+	var quota_record QuotaRecord 
+	arg_value, arg_set = d.GetOk("quota")
 	if arg_set {
-		log.Debugf("resourceResgroupCreate: calling makeQuotaConfig")
-		rg.Quota, _ = makeQuotaConfig(arg_value.([]interface{}))
-		set_quotas = true
+		log.Debugf("resourceResgroupCreate: setting Quota on RG requested")
+		quota_record, _ = makeQuotaRecord(arg_value.([]interface{}))
+		set_quota = true
 	}
 
 	controller := m.(*ControllerCfg)
-	log.Debugf("resourceResgroupCreate: called by user %q for RG name %q, for account  %q / ID %d, location %q",
+	log.Debugf("resourceResgroupCreate: called by user %q for RG name %q, account  %q / ID %d, Grid ID %d",
 	            controller.getdecortUsername(),
-				rg.Name, d.Get("account").(string), rg.AccountID, rg.Location)
+				rg_name.(string), account_name.(string), validated_account_id, gird_id.(int))
 	/*
 	type ResgroupCreateParam struct {
 	AccountID int          `json:"accountId"`
@@ -93,23 +98,40 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	*/
 				
 	url_values := &url.Values{}
-	url_values.Add("accountId", fmt.Sprintf("%d", rg.AccountID))
-	url_values.Add("name", rg.Name)
-	url_values.Add("gid", rg.Location)
+	url_values.Add("accountId", fmt.Sprintf("%d", validated_account_id))
+	url_values.Add("name", rg_name.(string))
+	url_values.Add("gid", fmt.Sprintf("%d", grid_id.(int)))
 	url_values.Add("owner", controller.getdecortUsername())
-	url_values.Add("def_net", "NONE")
+	
 	// pass quota values as set
-	if set_quotas {
-		url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", rg.Quota.Cpu))
-		url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", rg.Quota.Disk))
-		url_values.Add("maxMemoryCapacity", fmt.Sprintf("%f", rg.Quota.Ram))
-		url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", rg.Quota.NetTraffic))
-		url_values.Add("maxNumPublicIP", fmt.Sprintf("%d", rg.Quota.ExtIPs))
+	if set_quota {
+		url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", quota_record.Cpu))
+		url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", quota_record.Disk))
+		url_values.Add("maxMemoryCapacity", fmt.Sprintf("%d", quota_record.Ram))
+		url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", quota_record.ExtTraffic))
+		url_values.Add("maxNumPublicIP", fmt.Sprintf("%d", quota_record.ExtIPs))
+		// url_values.Add("???", fmt.Sprintf("%d", quota_record.GpuUnits))
 	}
-	// pass externalnetworkid if set
-	arg_value, arg_set = d.GetOk("extnet_id")
+
+	// parse and handle network settings
+	def_net_type, arg_set = d.GetOk("def_net_type")
 	if arg_set {
-		url_values.Add("extNetId", fmt.Sprintf("%d", arg_value))
+		ulr_values.Add("def_net", def_net_type.(string))
+	}
+
+	ipcidr, arg_set = d.GetOk("ipcidr")
+	if arg_set {
+		ulr_values.Add("ipcidr", ipcidr.(string))
+	}
+
+	ext_net_id, arg_set = d.GetOk("ext_net_id")
+	if arg_set {
+		ulr_values.Add("extNetId", ext_net_id.(int))
+	}
+
+	ext_ip, arg_set = d.GetOk("ext_ip")
+	if arg_set {
+		ulr_values.Add("extIp", ext_ip.(string))
 	}
 	
 	api_resp, err := controller.decortAPICall("POST", ResgroupCreateAPI, url_values)
@@ -120,6 +142,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	d.SetId(api_resp) // rg/create API returns ID of the newly creted resource group on success
 	rg.ID, _ = strconv.Atoi(api_resp)
 
+	// re-read newly created RG to make sure schema contains complete and up to date set of specifications
 	return resourceResgroupRead(d, m)
 }
 
@@ -138,66 +161,81 @@ func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
-	// this method will only update quotas, if any are set
 	log.Debugf("resourceResgroupUpdate: called for RG name %q, account name %q", 
 			   d.Get("name").(string), d.Get("account").(string))
 
-	quota_value, arg_set := d.GetOk("quotas")
-	if !arg_set {
-		// if there are no quotas set explicitly in the resource configuration - no change will be done
-		log.Debugf("resourceResgroupUpdate: quotas are not set in the resource config - no update on this resource will be done")
-		return resourceResgroupRead(d, m)
-	}
-	quotaconfig_new, _ := makeQuotaConfig(quota_value.([]interface{}))
-
-	quota_value, _ = d.GetChange("quotas") // returns old as 1st, new as 2nd argument
-	quotaconfig_old, _ := makeQuotaConfig(quota_value.([]interface{}))
+	do_update := false
 
 	controller := m.(*ControllerCfg)
 	url_values := &url.Values{}
-	url_values.Add("cloudspaceId", d.Id())
-	url_values.Add("name", d.Get("name").(string))
+	url_values.Add("rgId", d.Id())
+
+	name_new, name_set := d.GetOk("name")
+	if name_set {
+		log.Debugf("resourceResgroupUpdate: name specified - looking for deltas from the old settings.")
+		name_old, _ := d.GetChange("name")
+		if name_old.(string) != name_new.(string) {
+			do_update := true
+			url_values.Add("name", name_new.(string))
+		}
+	}
 	
-	do_update := false
+	quota_value, quota_set := d.GetOk("quota")
+	if quota_set {
+		log.Debugf("resourceResgroupUpdate: quota specified - looking for deltas from the old quota.")
+		quotarecord_new, _ := makeQuotaRecord(quota_value.([]interface{}))
+		quota_value_old, _ = d.GetChange("quota") // returns old as 1st, new as 2nd return value
+		quotarecord_old, _ := makeQuotaRecord(quota_value_old.([]interface{}))
 
-	if quotaconfig_new.Cpu != quotaconfig_old.Cpu {
-		do_update = true
-		log.Debugf("resourceResgroupUpdate: Cpu diff %d <- %d", quotaconfig_new.Cpu, quotaconfig_old.Cpu)
-		url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", quotaconfig_new.Cpu))
+		if quotarecord_new.Cpu != quotarecord_old.Cpu {
+			do_update = true
+			log.Debugf("resourceResgroupUpdate: Cpu diff %d <- %d", quotarecord_new.Cpu, quotarecord_old.Cpu)
+			url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", quotarecord_new.Cpu))
+		}
+	
+		if quotarecord_new.Disk != quotarecord_old.Disk {
+			do_update = true
+			log.Debugf("resourceResgroupUpdate: Disk diff %d <- %d", quotarecord_new.Disk, quotarecord_old.Disk)
+			url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", quotarecord_new.Disk))
+		}
+	
+		if quotarecord_new.Ram != quotarecord_old.Ram {
+			do_update = true
+			log.Debugf("resourceResgroupUpdate: Ram diff %f <- %f", quotarecord_new.Ram, quotarecord_old.Ram)
+			url_values.Add("maxMemoryCapacity", fmt.Sprintf("%f", quotarecord_new.Ram))
+		}
+	
+		if quotarecord_new.ExtTraffic != quotarecord_old.ExtTraffic {
+			do_update = true
+			log.Debugf("resourceResgroupUpdate: NetTraffic diff %d <- %d", quotarecord_new.ExtTraffic, quotarecord_old.ExtTraffic)
+			url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", quotarecord_new.NetTraffic))
+		}
+	
+		if quotarecord_new.ExtIPs != quotarecord_old.ExtIPs {
+			do_update = true
+			log.Debugf("resourceResgroupUpdate: ExtIPs diff %d <- %d", quotarecord_new.ExtIPs, quotarecord_old.ExtIPs)
+			url_values.Add("maxNumPublicIP", fmt.Sprintf("%d", quotarecord_new.ExtIPs))
+		}
 	}
 
-	if quotaconfig_new.Disk != quotaconfig_old.Disk {
-		do_update = true
-		log.Debugf("resourceResgroupUpdate: Disk diff %d <- %d", quotaconfig_new.Disk, quotaconfig_old.Disk)
-		url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", quotaconfig_new.Disk))
-	}
-
-	if quotaconfig_new.Ram != quotaconfig_old.Ram {
-		do_update = true
-		log.Debugf("resourceResgroupUpdate: Ram diff %f <- %f", quotaconfig_new.Ram, quotaconfig_old.Ram)
-		url_values.Add("maxMemoryCapacity", fmt.Sprintf("%f", quotaconfig_new.Ram))
-	}
-
-	if quotaconfig_new.NetTraffic != quotaconfig_old.NetTraffic {
-		do_update = true
-		log.Debugf("resourceResgroupUpdate: NetTraffic diff %d <- %d", quotaconfig_new.NetTraffic, quotaconfig_old.NetTraffic)
-		url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", quotaconfig_new.NetTraffic))
-	}
-
-	if quotaconfig_new.ExtIPs != quotaconfig_old.ExtIPs {
-		do_update = true
-		log.Debugf("resourceResgroupUpdate: ExtIPs diff %d <- %d", quotaconfig_new.ExtIPs, quotaconfig_old.ExtIPs)
-		url_values.Add("maxNumPublicIP", fmt.Sprintf("%d", quotaconfig_new.ExtIPs))
+	desc_new, desc_set := d.GetOk("desc")
+	if desc_set {
+		log.Debugf("resourceResgroupUpdate: description specified - looking for deltas from the old settings.")
+		desc_old, _ := d.GetChange("desc")
+		if desc_old.(string) != desc_new.(string) {
+			do_update := true
+			url_values.Add("desc", desc_new.(string))
+		}
 	}
 
 	if do_update {
-		log.Debugf("resourceResgroupUpdate: some new quotas are set - updating the resource")
+		log.Debugf("resourceResgroupUpdate: detected delta between new and old RG specs - updating the RG")
 		_, err := controller.decortAPICall("POST", ResgroupUpdateAPI, url_values)
 		if err != nil {
 			return err
 		}
 	} else {
-		log.Debugf("resourceResgroupUpdate: no difference in quotas between old and new state - no update on this resource will be done")
+		log.Debugf("resourceResgroupUpdate: no difference between old and new state - no update on the RG will be done")
 	}
 	
 	return resourceResgroupRead(d, m)
@@ -216,14 +254,14 @@ func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 
-	params := &url.Values{}
-	params.Add("rgId", d.Id())
-	params.Add("force", "true")
-	params.Add("permanently", "true")
-	params.Add("reason", "Destroyed by DECORT Terraform provider")
+	url_values := &url.Values{}
+	url_values.Add("rgId", d.Id())
+	url_values.Add("force", "true")
+	url_values.Add("permanently", "true")
+	url_values.Add("reason", "Destroyed by DECORT Terraform provider")
 
 	controller := m.(*ControllerCfg)
-	vm_facts, err = controller.decortAPICall("POST", ResgroupDeleteAPI, params)
+	_, err = controller.decortAPICall("POST", ResgroupDeleteAPI, url_values)
 	if err != nil {
 		return err
 	}
@@ -232,7 +270,7 @@ func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	// Reminder: according to Terraform rules, this function should not modify ResourceData argument
+	// Reminder: according to Terraform rules, this function should NOT modify ResourceData argument
 	rg_facts, err := utilityResgroupCheckPresence(d, m)
 	if rg_facts == "" {
 		if err != nil {
@@ -274,10 +312,30 @@ func resourceResgroup() *schema.Resource {
 				Description: "Name of the account, which this resource group belongs to.",
 			},
 
-			"extnet_id": &schema.Schema {
+			"def_net": &schema.Schema {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "PRIVATE"
+				Description: "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
+			},
+
+			"ipcidr": &schema.Schema {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Address of the netowrk inside the private network segment (aka ViNS) if def_net=PRIVATE",
+			},
+
+			"ext_net_id": &schema.Schema {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "ID of the external network, which this resource group will be connected to by default.",
+				Default:     0,
+				Description: "ID of the external network, which this resource group will use as default for its computes if def_net=PUBLIC",
+			},
+
+			"ext_ip": &schema.Schema {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "IP address on the external netowrk to request, if def_net=PUBLIC",
 			},
 
 			"account_id": &schema.Schema {
@@ -292,14 +350,51 @@ func resourceResgroup() *schema.Resource {
 				Description: "Unique ID of the grid, where this resource group is deployed.",
 			},
 
-			"quotas": {
+			"quota": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				MaxItems:    1,
 				Elem:        &schema.Resource {
 					Schema:  quotasSubresourceSchema(),
 				},
-				Description: "Quotas on the resources for this resource group.",
+				Description: "Quota settings for this resource group.",
+			},
+
+			"desc": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "User-defined text description of this resource group."
+			},
+
+			"status": { 
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Current status of this resource group.",
+			},
+
+			"def_net_id": &schema.Schema {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "ID of the default network for this resource group (if any).",
+			},
+
+			"vins": {
+				Type:          schema.TypeList,
+				Computed:      true,
+				MaxItems:      LimitMaxVinsPerResgroup,
+				Elem:          &schema.Resource {
+					Schema: vinsRgSubresourceSchema() // this is a list of ints
+				},
+				Description: "List of VINs deployed in this resource group.",
+			},
+
+			"computes": {
+				Type:          schema.TypeList,
+				Computed:      true,
+				Elem:          &schema.Resource {
+					Schema: computesRgSubresourceSchema() //this is a list of ints
+				},
+				Description: "List of computes deployed in this resource group."
 			},
 		},
 	}

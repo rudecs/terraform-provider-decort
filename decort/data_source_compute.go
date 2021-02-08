@@ -38,7 +38,7 @@ import (
 func flattenCompute(d *schema.ResourceData, comp_facts string) error {
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
 	// from resourceComputeExists(...) method
-	model := MachinesGetResp{}
+	model := ComputeGetResp{}
 	log.Printf("flattenCompute: ready to unmarshal string %q", comp_facts) 
 	err := json.Unmarshal([]byte(comp_facts), &model)
 	if err != nil {
@@ -50,11 +50,17 @@ func flattenCompute(d *schema.ResourceData, comp_facts string) error {
 	d.SetId(fmt.Sprintf("%d", model.ID))
 	d.Set("name", model.Name)
 	d.Set("rgid", model.ResGroupID)
+	d.Set("rg_name", model.ResGroupName)
+	d.Set("account_id", model.AccountID)
+	d.Set("account_name", model.AccountName)
+	d.Set("arch", model.Arch)
 	d.Set("cpu", model.Cpu)
 	d.Set("ram", model.Ram)
-	// d.Set("boot_disk", model.BootDisk)
+	d.Set("boot_disk_size", model.BootDiskSize)
 	d.Set("image_id", model.ImageID)
-	d.Set("description", model.Description)
+	d.Set("description", model.Desc)
+	d.Set("status", model.Status)
+	d.Set("tech_status", model.TechStatus)
 
 	bootdisk_map := make(map[string]interface{})
 	bootdisk_map["size"] = model.BootDisk
@@ -131,76 +137,86 @@ func dataSourceCompute() *schema.Resource {
 			"name": {
 				Type:          schema.TypeString,
 				Required:      true,
-				Description:  "Name of this virtual machine. This parameter is case sensitive.",
+				Description:  "Name of this compute instance. NOTE: this parameter is case sensitive.",
 			},
 
 			"rgid": {
 				Type:         schema.TypeInt,
 				Required:     true,
 				ValidateFunc: validation.IntAtLeast(1),
-				Description:  "ID of the resource group where this virtual machine is located.",
+				Description:  "ID of the resource group where this compute instance is located.",
 			},
 
-			/*
-			"internal_ip": {
+			"rg_name": {
 				Type:          schema.TypeString,
 				Computed:      true,
-				Description:  "Internal IP address of this Compute.",
+				Description:  "Name of the resource group where this compute instance is located.",
 			},
-			*/
+
+			"account_id": {
+				Type:         schema.TypeInt,
+				Computed:     true,
+				Description:  "ID of the account this compute instance belongs to.",
+			},
+
+			"account_name": {
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Name of the account this compute instance belongs to.",
+			},
+
+			"arch": {
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Hardware architecture of this compute instance.",
+			},
 
 			"cpu": {
 				Type:         schema.TypeInt,
 				Computed:     true,
-				Description:  "Number of CPUs allocated for this virtual machine.",
+				Description:  "Number of CPUs allocated for this compute instance.",
 			},
 
 			"ram": {
 				Type:         schema.TypeInt,
 				Computed:     true,
-				Description:  "Amount of RAM in MB allocated for this virtual machine.",
+				Description:  "Amount of RAM in MB allocated for this compute instance.",
 			},
 
 			"image_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "ID of the OS image this virtual machine is based on.",
+				Description: "ID of the OS image this compute instance is based on.",
 			},
 
-			/*
 			"image_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Name of the OS image this virtual machine is based on.",
+				Description: "Name of the OS image this compute instance is based on.",
 			},
-			*/
 
-			"boot_disk": {
-				Type:        schema.TypeList,
+			"boot_disk_size": {
+				Type:        schema.TypeInt,
 				Computed:    true,
-				MinItems:    1,
-				Elem:        &schema.Resource {
-					Schema:  diskSubresourceSchema(),
-				},
-				Description: "Specification for a boot disk on this virtual machine.",
+				Description: "This compute instance boot disk size in GB.",
 			},
 
-			"data_disks": {
+			"disks": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem:        &schema.Resource {
-					Schema:  diskSubresourceSchema(),
+					Schema:  diskSubresourceSchema(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
 				},
-				Description: "Specification for data disks on this virtual machine.",
+				Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
 			},
 
 			"guest_logins": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem:        &schema.Resource {
-					Schema:  loginsSubresourceSchema(),
+					Schema:  guestLoginsSubresourceSchema(),
 				},
-				Description: "Specification for guest logins on this virtual machine.",
+				Description: "Details about the guest OS users provisioned together with this compute instance.",
 			},
 
 			"networks": {
@@ -224,22 +240,28 @@ func dataSourceCompute() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Description of this virtual machine.",
+				Description: "User-defined text description of this compute instance.",
 			},
 
-			"user": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Default login name for the guest OS on this virtual machine.",
+			"status": {
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Current model status of this compute instance.",
 			},
 
-			"password": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Sensitive:   true,
-				Description: "Default password for the guest OS login on this virtual machine.",
+			"tech_status": {
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Current technical status of this compute instance.",
 			},
 
+			/*
+			"internal_ip": {
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Internal IP address of this Compute.",
+			},
+			*/
 		},
 	}
 }

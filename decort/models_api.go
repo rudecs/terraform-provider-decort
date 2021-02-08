@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -104,7 +104,16 @@ type ResgroupUpdateParam struct {
 //
 // structures related to /cloudapi/rg/get API call
 //
-type ResourceRecord struct {
+type QuotaRecord struct { // this is how quota is reported by /api/.../rg/get
+	Cpu int                `json:"CU_C"`        // CPU count in pcs
+	Ram int                `json:"CU_M"`        // RAM volume in MB
+	Disk int               `json:"CU_D"`        // Disk capacity in GB
+	ExtIPs int             `json:"CU_I"`        // Ext IPs count
+	ExtTraffic int         `json:"CU_NP"`       // Ext network traffic
+	GpuUnits int           `json:"gpu_units"`   // GPU count
+}
+
+type ResourceRecord struct { // this is how actual usage is reported by /api/.../rg/get
 	Cpu int                `json:"cpu"`
 	Disk int               `json:"disksize"`
 	ExtIPs int             `json:"extips"`
@@ -135,7 +144,7 @@ type ResgroupGetResp struct {
 	ID uint                `json:"id"`
 	LockStatus string      `json:"lockStatus"`
 	Name string            `json:"name"`
-	Quotas QuotaRecord     `json:"resourceLimits"`
+	Quota QuotaRecord      `json:"resourceLimits"`
 	Status string          `json:"status"`
 	UpdatedBy string       `json:"updatedBy"`
 	UpdatedTime uint64     `json:"updatedTime"`
@@ -171,7 +180,7 @@ const ResgroupDeleteAPI = "/restmachine/cloudapi/rg/delete"
 //
 const KvmX86CreateAPI = "/restmachine/cloudapi/kvmx86/create"
 const KvmPPCCreateAPI = "/restmachine/cloudapi/kvmppc/create"
-type KvmXXXCreateParam struct { // this is unified structure for both x86 and PPC based VMs creation
+type KvmVmCreateParam struct { // this is unified structure for both x86 and PPC based KVM VMs creation
 	RgID uint              `json:"rgId"`
 	Name string            `json:"name"`
 	Cpu int                `json:"cpu"`
@@ -320,9 +329,6 @@ type OsUserRecord struct {
 }
 
 const ComputeGetAPI = "/restmachine/cloudapi/compute/get"
-type ComputeGetParam struct {
-	ComputeID int          `json:"computeId"`
-}
 type ComputeGetResp struct {
 	// ACLs `json:"ACL"` - it is a dictionary, special parsing required
 	AccountID int          `json:"accountId"`

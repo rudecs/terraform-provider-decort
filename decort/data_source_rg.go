@@ -54,6 +54,12 @@ func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
 	d.Set("name", details.Name)
 	d.Set("account_id", details.AccountID)
 	d.Set("grid_id", details.GridID)
+	d.Set("desc", details.Description)
+	d.Set("status", details.Status)
+	d.Set("def_net", details.DefaultNetType)
+	d.Set("def_net_id", details.DefaultNetID)
+	d.Set("vins", details.Vins)
+	d.Set("computes", details.Computes)
 
 	log.Debugf("flattenResgroup: calling flattenQuota()")
 	if err = d.Set("quotas", flattenQuota(details.Quotas)); err != nil {
@@ -91,19 +97,25 @@ func dataSourceResgroup() *schema.Resource {
 			"name": {
 				Type:          schema.TypeString,
 				Required:      true,
-				Description:  "Name of this resource group. Names are case sensitive and unique within the context of a tenant.",
+				Description:  "Name of this resource group. Names are case sensitive and unique within the context of an account.",
 			},
 
 			"account": &schema.Schema {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the tenant, which this resource group belongs to.",
+				Description: "Name of the account, which this resource group belongs to.",
 			},
 
 			"account_id": &schema.Schema {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Unique ID of the tenant, which this resource group belongs to.",
+				Description: "Unique ID of the account, which this resource group belongs to.",
+			},
+
+			"desc": &schema.Schema {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "User-defined text description of this resource group.",
 			},
 
 			"grid_id": &schema.Schema {
@@ -112,20 +124,51 @@ func dataSourceResgroup() *schema.Resource {
 				Description: "Unique ID of the grid, where this resource group is deployed.",
 			},
 
-			"public_ip": {  // this may be obsoleted as new network segments and true resource groups are implemented
-				Type:          schema.TypeString,
-				Computed:      true,
-				Description:  "Public IP address of this resource group (if any).",
-			},
-
 			"quotas": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				MaxItems:    1,
 				Elem:        &schema.Resource {
-					Schema:  quotasSubresourceSchema(),
+					Schema:  quotaRgSubresourceSchema(), // this is a dictionary
 				},
 				Description: "Quotas on the resources for this resource group.",
+			},
+
+			"status": { 
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Current status of this resource group.",
+			},
+
+			"def_net": &schema.Schema {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Type of the default network for this resource group.",
+			},
+
+			"def_net_id": &schema.Schema {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "ID of the default network for this resource group (if any).",
+			},
+
+			"vins": {
+				Type:          schema.TypeList,  // this is a list of ints
+				Computed:      true,
+				MaxItems:      LimitMaxVinsPerResgroup,
+				Elem:          &schema.Schema {
+					Type:      schema.TypeInt,
+				},
+				Description: "List of VINs deployed in this resource group.",
+			},
+
+			"computes": {
+				Type:          schema.TypeList, //t his is a list of ints
+				Computed:      true,
+				Elem:          &schema.Schema {
+					Type:      schema.TypeInt, 
+				},
+				Description: "List of computes deployed in this resource group."
 			},
 		},
 	}

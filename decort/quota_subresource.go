@@ -29,13 +29,14 @@ import (
 
 )
 
-func makeQuotaConfig(arg_list []interface{}) (ResgroupQuotaConfig, int) {
-	quota := ResgroupQuotaConfig{
+func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
+	quota := QuotaRecord{
 		Cpu:        -1,
 		Ram:        -1,
 		Disk:       -1,
 		NetTraffic: -1,
 		ExtIPs:     -1,
+		GpuUnits:   -1,
 	}
 	subres_data := arg_list[0].(map[string]interface{})
 
@@ -44,75 +45,86 @@ func makeQuotaConfig(arg_list []interface{}) (ResgroupQuotaConfig, int) {
 	}
 
 	if subres_data["disk"].(int) > 0 {
-		quota.Disk = subres_data["disk"].(int)
+		quota.Disk = subres_data["disk"].(int) // Disk capacity ib GB
 	}
 
 	if subres_data["ram"].(int) > 0 {
-		ram_limit := subres_data["ram"].(int)
-		quota.Ram = float32(ram_limit) // /1024 // legacy fix - this can be obsoleted once redmine FR #1465 is implemented
+		quota.Ram= subres_data["ram"].(int) // RAM volume in MB
 	}
 
-	if subres_data["net_traffic"].(int) > 0 {
-		quota.NetTraffic = subres_data["net_traffic"].(int)
+	if subres_data["ext_traffic"].(int) > 0 {
+		quota.ExtTraffic = subres_data["ext_traffic"].(int)
 	}
 
 	if subres_data["ext_ips"].(int) > 0 {
 		quota.ExtIPs = subres_data["ext_ips"].(int)
 	}
 
+	if subres_data["gpu_units"].(int) > 0 {
+		quota.GpuUnits = subres_data["gpu_units"].(int)
+	}
+
 	return quota, 1
 } 
 
-func flattenQuota(quotas QuotaRecord) []interface{} {
-	quotas_map :=  make(map[string]interface{})
+func flattenQuota(quota QuotaRecord) []interface{} {
+	quota_map :=  make(map[string]interface{})
 
-	quotas_map["cpu"] = quotas.Cpu
-	quotas_map["ram"] = int(quotas.Ram)
-	quotas_map["disk"] = quotas.Disk
-	quotas_map["net_traffic"] = quotas.NetTraffic
-	quotas_map["ext_ips"] = quotas.ExtIPs
+	quota_map["cpu"] = quota.Cpu
+	quota_map["ram"] = quota.Ram
+	quota_map["disk"] = quota.Disk
+	quota_map["ext_traffic"] = quota.ExtTraffic
+	quota_map["ext_ips"] = quota.ExtIPs
+	quota_map["gpu_units"] = quota.GpuUnits
 
 	result := make([]interface{}, 1)
-	result[0] = quotas_map
+	result[0] = quota_map
 
 	return result
 }
 
-func quotasSubresourceSchema() map[string]*schema.Schema {
+func quotaRgSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema {
 		"cpu": &schema.Schema {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
-			Description: "The quota on the total number of CPUs in this resource group.",
+			Description: "Limit on the total number of CPUs in this resource group.",
 		},
 
 		"ram": &schema.Schema {
-			Type:        schema.TypeInt, // NB: API expects and returns this as float! This may be changed in the future.
+			Type:        schema.TypeInt, // NB: old API expects and returns this as float! This may be changed in the future.
 			Optional:    true,
 			Default:     -1,
-			Description: "The quota on the total amount of RAM in this resource group, specified in GB (Gigabytes!).",
+			Description: "Limit on the total amount of RAM in this resource group, specified in MB.",
 			},
 
 		"disk": &schema.Schema {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
-			Description: "The quota on the total volume of storage resources in this resource group, specified in GB.",
+			Description: "Limit on the total volume of storage resources in this resource group, specified in GB.",
 		},
 
-		"net_traffic": &schema.Schema {
+		"ext_traffic": &schema.Schema {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
-			Description: "The quota on the total ingress network traffic for this resource group, specified in GB.",
+			Description: "Limit on the total ingress network traffic for this resource group, specified in GB.",
 		},
 
 		"ext_ips": &schema.Schema {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
-			Description: "The quota on the total number of external IP addresses this resource group can use.",
+			Description: "Limit on the total number of external IP addresses this resource group can use.",
+		},
+
+		"gpu_units": &schema.Schema {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     -1,
+			Description: "Limit on the total number of virtual GPUs this resource group can use.",
 		},
 	}
 	return rets

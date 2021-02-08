@@ -68,6 +68,8 @@ func (ctrl *ControllerCfg) utilityResgroupConfigGet(rgid int) (*ResgroupGetResp,
 	return model, nil
 }
 
+// On success this function returns a string, as returned by API rg/get, which could be unmarshalled
+// into ResgroupGetResp structure
 func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
 	// This function tries to locate resource group by its name and account name.
 	// If succeeded, it returns non empty string that contains JSON formatted facts about the 
@@ -79,7 +81,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	// .../rg/list API with includedeleted=false
 	//
 	// This function does not modify its ResourceData argument, so it is safe to use it as core
-	// method for the resource's Exists method.
+	// method for the Terraform resource Exists method.
 	//
 	name := d.Get("name").(string)
 	account_name := d.Get("account").(string)
@@ -94,7 +96,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 
 	log.Debugf("%s", body_string)
 	log.Debugf("utilityResgroupCheckPresence: ready to decode response body from %q", ResgroupListAPI)
-	model := CloudspacesListResp{}
+	model := ResgroupListResp{}
 	err = json.Unmarshal([]byte(body_string), &model)
 	if err != nil {
 		return "", err
@@ -148,5 +150,5 @@ func utilityGetAccountIdByName(account_name string, m interface{}) (int, error) 
 		}
 	}
 
-	return 0, fmt.Errorf("Cannot find account %q for the current user. Check account value and your access rights", account_name)
+	return 0, fmt.Errorf("Cannot find account %q for the current user. Check account name and your access rights", account_name)
 }
