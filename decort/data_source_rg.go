@@ -168,7 +168,7 @@ func dataSourceResgroup() *schema.Resource {
 				Elem:          &schema.Schema {
 					Type:      schema.TypeInt, 
 				},
-				Description: "List of computes deployed in this resource group."
+				Description: "List of computes deployed in this resource group.",
 			},
 		},
 	}

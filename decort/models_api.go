@@ -290,10 +290,11 @@ type DiskRecord struct {
 	// ACLs `json:"ACL"` - it is a dictionary, special parsing required
 	// was - Acl map[string]string  `json:"acl"`
 	AccountID int          `json:"accountId"`
+	AccountName string     `json:"accountName"` // NOTE: absent from compute/get output
 	BootPartition int      `json:"bootPartition"`
 	CreatedTime uint64     `json:"creationTime"`
 	DeletedTime uint64     `json:"deletionTime"`
-	Description string     `json:"descr"`
+	Desc string            `json:"descr"`
 	DestructionTime uint64 `json:"destructionTime"`
 	DiskPath string        `json:"diskPath"`
 	GridID int             `json:"gid"`
@@ -302,6 +303,7 @@ type DiskRecord struct {
 	Images []int           `json:"images"`
 	// IOTune 'json:"iotune" - it is a dictionary
 	Name string            `json:"name"`
+	// Order                   `json:"order"`
 	ParentId int           `json:"parentId"`
 	PciSlot int            `json:"pciSlot"`
 	// ResID string           `json:"resId"`
@@ -313,12 +315,12 @@ type DiskRecord struct {
 	SepType string         `json:"sepType"`
 	SepID int              `json:"sepid"`
 	SizeMax int            `json:"sizeMax"`
-	SizeUsed int           `json:"sizeUsed"`
+	SizeUsed int           `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
 	Snapshots []SnapshotRecord `json:"snapshots"`
 	Status string          `json:"status"`
 	TechStatus string      `json:"techStatus"`
 	Type string            `json:"type"`
-	ComputeID int          `json:"vmId"`
+	ComputeID int          `json:"vmid"`
 }
 
 type OsUserRecord struct {
@@ -520,3 +522,5 @@ type DisksGetParam struct {
 const DisksCreateAPI = "/restmachine/cloudapi/disks/create"
 
 const DisksGetAPI = "/restmachine/cloudapi/disks/get" // Returns single DiskRecord on success
+
+const DisksListAPI = "/restmachine/cloudapi/disks/list" // Returns list of DiskRecord on success

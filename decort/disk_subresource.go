@@ -95,7 +95,7 @@ func diskSubresourceSchema() map[string]*schema.Schema {
 		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Name of this disk resource.",
+			Description: "Name of this disk.",
 		},
 
 		"size": {
@@ -108,28 +108,34 @@ func diskSubresourceSchema() map[string]*schema.Schema {
 		"account_id": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "ID of the account this disk resource belongs to.",
+			Description: "ID of the account this disk belongs to.",
+		},
+
+		"type": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Type of this disk.",
 		},
 
 		"sep_id": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "default",
-			Description: "Storage provider (storage technology type) by which this disk should be served.",
+			Description: "ID of the storage end-point provider serving this disk.",
 		},
 
 		"sep_type": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "default",
-			Description: "Storage provider (storage technology type) by which this disk should be served.",
+			Description: "Type of the storage provider serving this disk.",
 		},
 
 		"pool": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "default",
-			Description: "Pool from which this disk should be provisioned.",
+			Description: "Pool on the storage where this disk is located.",
 		},
 
 		"image_id": {

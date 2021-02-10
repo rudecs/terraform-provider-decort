@@ -205,7 +205,7 @@ func dataSourceCompute() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem:        &schema.Resource {
-					Schema:  diskSubresourceSchema(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
+					Schema:  dataSourceDiskSchemaMake(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
 				},
 				Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
 			},

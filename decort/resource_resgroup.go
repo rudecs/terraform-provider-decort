@@ -363,7 +363,7 @@ func resourceResgroup() *schema.Resource {
 			"desc": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "User-defined text description of this resource group."
+				Description:  "User-defined text description of this resource group.",
 			},
 
 			"status": { 
@@ -379,22 +379,22 @@ func resourceResgroup() *schema.Resource {
 			},
 
 			"vins": {
-				Type:          schema.TypeList,
+				Type:          schema.TypeList,  // this is a list of ints
 				Computed:      true,
 				MaxItems:      LimitMaxVinsPerResgroup,
-				Elem:          &schema.Resource {
-					Schema: vinsRgSubresourceSchema() // this is a list of ints
+				Elem:          &schema.Schema {
+					Type:      schema.TypeInt,
 				},
 				Description: "List of VINs deployed in this resource group.",
 			},
 
 			"computes": {
-				Type:          schema.TypeList,
+				Type:          schema.TypeList, // this is a list of ints
 				Computed:      true,
-				Elem:          &schema.Resource {
-					Schema: computesRgSubresourceSchema() //this is a list of ints
+				Elem:          &schema.Schema {
+					Type:      schema.TypeInt, 
 				},
-				Description: "List of computes deployed in this resource group."
+				Description: "List of computes deployed in this resource group.",
 			},
 		},
 	}
