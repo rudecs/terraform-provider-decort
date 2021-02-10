@@ -67,7 +67,7 @@ func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 	return quota, 1
 } 
 
-func flattenQuota(quota QuotaRecord) []interface{} {
+func parseQuota(quota QuotaRecord) []interface{} {
 	quota_map :=  make(map[string]interface{})
 
 	quota_map["cpu"] = quota.Cpu
@@ -80,7 +80,7 @@ func flattenQuota(quota QuotaRecord) []interface{} {
 	result := make([]interface{}, 1)
 	result[0] = quota_map
 
-	return result
+	return result // this result will be used to d.Set("quota,") of dataSourceResgroup schema
 }
 
 func quotaRgSubresourceSchema() map[string]*schema.Schema {

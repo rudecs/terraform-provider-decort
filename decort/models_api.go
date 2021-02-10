@@ -175,6 +175,24 @@ type ResgroupUpdateParam struct {
 //
 const ResgroupDeleteAPI = "/restmachine/cloudapi/rg/delete"
 
+// 
+// structures related to /cloudapi/rg/listComputes API
+//
+type ComputeBriefRecord struct { // this is a brief compute specifiaction as returned by API rg/listComputes
+	// we do not even include here all fields as returned by this API, but only the most important that
+	// are really necessary to identify and distinguish computes
+	AccountID int          `json:"accountId"`
+	AccountName string     `json:"accountName"`
+	Name string            `json:"name"`
+	ID uint                `json:"id"`
+	RgID int               `json:"rgId"`
+	RgName string          `json:"rgName"`
+	Status string          `json:"status"`
+	TechStatus string      `json:"techStatus"`
+}
+const RgListComputesAPI = "/restmachine/cloudapi/rg/listComputes"
+type RgListComputesResp []ComputeBriefRecord
+
 //
 // structures related to /cloudapi/kvmXXX/create APIs
 //
@@ -197,11 +215,6 @@ type KvmVmCreateParam struct { // this is unified structure for both x86 and PPC
 
 // structures related to cloudapi/compute/delete API
 const ComputeDeleteAPI = "/restmachine/cloudapi/compute/delete"
-
-type ComputeDeleteParam struct {
-	ComputeID int          `json:"computeId"`
-	Permanently bool       `json:"permanently"`
-}
 
 // 
 // structures related to /cloudapi/compute/list API
@@ -270,9 +283,6 @@ type ComputeRecord struct {
 }
 
 const ComputeListAPI = "/restmachine/cloudapi/compute/list"
-type ComputeListParam struct {
-	IncludeDeleted bool    `json:"includedeleted"`
-}
 type ComputeListResp []ComputeRecord
 
 //
