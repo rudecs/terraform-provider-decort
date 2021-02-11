@@ -18,34 +18,32 @@ limitations under the License.
 package decort
 
 import (
-
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 	// "github.com/hashicorp/terraform/terraform"
-
 )
 
 var decsController *ControllerCfg
 
 func Provider() *schema.Provider {
-	return &schema.Provider {
-		Schema: map[string]*schema.Schema {
+	return &schema.Provider{
+		Schema: map[string]*schema.Schema{
 			"authenticator": {
-				Type:        schema.TypeString,
-				Required:    true,
-				StateFunc:   stateFuncToLower,
+				Type:         schema.TypeString,
+				Required:     true,
+				StateFunc:    stateFuncToLower,
 				ValidateFunc: validation.StringInSlice([]string{"oauth2", "legacy", "jwt"}, true), // ignore case while validating
-				Description: "Authentication mode to use when connecting to DECS cloud API. Should be one of 'oauth2', 'legacy' or 'jwt'.",
+				Description:  "Authentication mode to use when connecting to DECORT cloud API. Should be one of 'oauth2', 'legacy' or 'jwt'.",
 			},
 
 			"oauth2_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				StateFunc:   stateFuncToLower,
-				DefaultFunc: schema.EnvDefaultFunc("DECS_OAUTH2_URL", nil),
-				Description: "The Oauth2 application URL in 'oauth2' authentication mode.",
+				DefaultFunc: schema.EnvDefaultFunc("DECORT_OAUTH2_URL", nil),
+				Description: "OAuth2 application URL in 'oauth2' authentication mode.",
 			},
 
 			"controller_url": {
@@ -53,67 +51,70 @@ func Provider() *schema.Provider {
 				Required:    true,
 				ForceNew:    true,
 				StateFunc:   stateFuncToLower,
-				Description: "The URL of DECS Cloud controller to use. API calls will be directed to this URL.",
+				Description: "URL of DECORT Cloud controller to use. API calls will be directed to this URL.",
 			},
 
 			"user": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DECS_USER", nil),
-				Description: "The user name for DECS cloud API operations in 'legacy' authentication mode.",
+				DefaultFunc: schema.EnvDefaultFunc("DECORT_USER", nil),
+				Description: "User name for DECORT cloud API operations in 'legacy' authentication mode.",
 			},
 
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DECS_PASSWORD", nil),
-				Description: "The user password for DECS cloud API operations in 'legacy' authentication mode.",
+				DefaultFunc: schema.EnvDefaultFunc("DECORT_PASSWORD", nil),
+				Description: "User password for DECORT cloud API operations in 'legacy' authentication mode.",
 			},
 
 			"app_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DECS_APP_ID", nil),
-				Description: "Application ID to access DECS cloud API in 'oauth2' authentication mode.",
+				DefaultFunc: schema.EnvDefaultFunc("DECORT_APP_ID", nil),
+				Description: "Application ID to access DECORT cloud API in 'oauth2' authentication mode.",
 			},
 
 			"app_secret": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DECS_APP_SECRET", nil),
-				Description: "Application secret to access DECS cloud API in 'oauth2' authentication mode.",
+				DefaultFunc: schema.EnvDefaultFunc("DECSORTAPP_SECRET", nil),
+				Description: "Application secret to access DECORT cloud API in 'oauth2' authentication mode.",
 			},
 
 			"jwt": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("DECS_JWT", nil),
-				Description: "JWT to access DECS cloud API in 'jwt' authentication mode.",
+				Description: "JWT to access DECORT cloud API in 'jwt' authentication mode.",
 			},
 
 			"allow_unverified_ssl": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "If set, DECS API will allow unverifiable SSL certificates.",
+				Description: "If true, DECORT API will not verify SSL certificates. Use this with caution and in trusted environments only!",
 			},
 		},
-		
-		ResourcesMap: map[string]*schema.Resource {
+
+		ResourcesMap: map[string]*schema.Resource{
 			"decort_resgroup": resourceResgroup(),
-			"decort_kvmx86": resourceKvmX86(),
-			"decort_disk": resourceDisk(),
-			"decort_vins": resourceVins(),
+			"decort_kvmvm":    resourceCompute(),
+			"decort_disk":     resourceDisk(),
+			"decort_vins":     resourceVins(),
+			// "decort_pfw": resourcePfw(),
 		},
 
-		DataSourcesMap: map[string]*schema.Resource {
+		DataSourcesMap: map[string]*schema.Resource{
+			// "decort_account": dataSourceAccount(),
 			"decort_resgroup": dataSourceResgroup(),
-			"decs_kvmx86": dataSourceCompute(),
-			"decort_image": dataSourceImage(),
-			"decort_disk": dataSourceDisk(),
-			"decort_vins": dataSourceVins(),
+			"decort_kvmvm":    dataSourceCompute(),
+			"decort_image":    dataSourceImage(),
+			"decort_disk":     dataSourceDisk(),
+			"decort_vins":     dataSourceVins(),
+			// "decort_pfw": dataSourcePfw(),
 		},
-		
+
 		ConfigureFunc: providerConfigure,
 	}
 }

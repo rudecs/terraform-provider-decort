@@ -15,17 +15,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package decs
+package decort
 
 import (
-
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	// "github.com/hashicorp/terraform/helper/validation"
 )
 
-func flattenGuestLogins(logins []GuestLoginRecord) []interface{} {
+func parseGuestLogins(logins []OsUserRecord) []interface{} {
 	var result = make([]interface{}, len(logins))
 
 	elem := make(map[string]interface{})
@@ -34,28 +33,28 @@ func flattenGuestLogins(logins []GuestLoginRecord) []interface{} {
 		elem["guid"] = value.Guid
 		elem["login"] = value.Login
 		elem["password"] = value.Password
+		elem["public_key"] = value.PubKey
 		result[index] = elem
-		log.Printf("flattenGuestLogins: parsed element %d - login %q", 
-		            index, value.Login)
+		log.Debugf("parseGuestLogins: parsed element %d - login %q", index, value.Login)
 	}
 
 	return result
 }
 
-func loginsSubresourceSchema() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
+func loginsSubresourceSchemaMake() map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
 		"guid": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "",
-			Description: "GUID of this guest user.",
+			Description: "GUID of this guest OS user.",
 		},
 
 		"login": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "",
-			Description: "Login name of this guest user.",
+			Description: "Login name of this guest OS user.",
 		},
 
 		"password": {
@@ -63,7 +62,14 @@ func loginsSubresourceSchema() map[string]*schema.Schema {
 			Optional:    true,
 			Default:     "",
 			Sensitive:   true,
-			Description: "Password of this guest user.",
+			Description: "Password of this guest OS user.",
+		},
+
+		"public_key": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "",
+			Description: "SSH public key of this guest user.",
 		},
 	}
 

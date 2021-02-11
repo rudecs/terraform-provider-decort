@@ -49,8 +49,20 @@ func parseComputeDisks(disks []DiskRecord) []interface{} {
 	for i, value := range disks {
 		// keys in this map should correspond to the Schema definition
 		// as returned by dataSourceDiskSchemaMake()
-		elem[" attribute "] = value. attribute
-		...
+		elem["name"] = value.Name
+		elem["disk_id"] = value.ID
+		elem["account_id"] = value.AccountID
+		elem["account_name"] = value.AccountName
+		elem["description"] = value.Desc
+		elem["image_id"] = value.ImageID
+		elem["size"] = value.SizeMax
+		elem["type"] = value.Type
+		elem["sep_id"] = value.SepID
+		elem["sep_type"] = value.SepType
+		elem["pool"] = value.Pool
+		elem["status"] = value.Status
+		elem["tech_status"] = value.TechStatus
+		elem["compute_id"] = value.ComputeID
 		result[i] = elem
 	}
 
@@ -71,8 +83,22 @@ func parseComputeInterfaces(ifaces []InterfaceRecord) []interface{} {
 	for i, value := range ifaces {
 		// Keys in this map should correspond to the Schema definition
 		// as returned by dataSourceInterfaceSchemaMake()
-		elem[" attribute "] = value. attribute
-		...
+		elem["net_id"] = value.NetId
+		elem["net_type"] = value.NetType
+		elem["ip_address"] = value.IPAddress
+		elem["netmask"] = value.NetMask
+		elem["mac"] = value.MAC
+		elem["default_gw"] = value.DefaultGW
+		elem["name"] = value.Name
+		elem["connection_id"] = value.ConnID
+		elem["connection_type"] = value.ConnType
+
+		qos_schema := interfaceQosSubresourceSchemaMake()
+		qos_schema.Set("egress_rate", value.QOS.ERate)
+		qos_schema.Set("ingress_rate", value.QOS.InRate)
+		qos_schema.Set("ingress_burst", value.QOS.InBurst)
+		elem["qos"] = qos_schema
+
 		result[i] = elem
 	}
 
@@ -93,7 +119,7 @@ func flattenCompute(d *schema.ResourceData, comp_facts string) error {
 		return err
 	}
 
-	log.Debugf("flattenCompute: model.ID %d, model.ResGroupID %d", model.ID, model.ResGroupID)
+	log.Debugf("flattenCompute: ID %d, ResGroupID %d", model.ID, model.ResGroupID)
 			   
 	d.SetId(fmt.Sprintf("%d", model.ID))
 	d.Set("compute_id", model.ID)
@@ -119,25 +145,15 @@ func flattenCompute(d *schema.ResourceData, comp_facts string) error {
 	}
 
 	if len(model.Interfaces) > 0 {
-		log.Printf("flattenCompute: calling parseComputeInterfaces for %d interfaces", len(model.Interfaces))
+		log.Debugf("flattenCompute: calling parseComputeInterfaces for %d interfaces", len(model.Interfaces))
 		if err = d.Set("interfaces", parseComputeInterfaces(model.Interfaces)); err != nil {
 			return err
 		}
 	}
 
 	if len(model.GuestLogins) > 0 {
-		log.Printf("flattenCompute: calling parseGuestLogins")
-		guest_logins := parseGuestLogins(model.GuestLogins)
-		if err = d.Set("guest_logins", guest_logins); err != nil {
-			return err
-		}
-
-		default_login := guest_logins[0].(map[string]interface{})
-		// set user & password attributes to the corresponding values of the 1st item in the list
-		if err = d.Set("user", default_login["login"]); err != nil {
-			return err
-		}
-		if err = d.Set("password", default_login["password"]); err != nil {
+		log.Debugf("flattenCompute: calling parseGuestLogins for %d logins", len(model.GuestLogins))
+		if err = d.Set("guest_logins", parseGuestLogins(model.GuestLogins)); err != nil {
 			return err
 		}
 	}
@@ -263,7 +279,7 @@ func dataSourceCompute() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem:        &schema.Resource {
-					Schema:  interfaceSubresourceSchema(),
+					Schema:  interfaceSubresourceSchemaMake(),
 				},
 				Description: "Specification for the virtual NICs configured on this compute instance.",
 			},

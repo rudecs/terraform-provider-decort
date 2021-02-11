@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package decs
+package decort
 
 import (
-
 	"fmt"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -26,7 +25,7 @@ import (
 )
 
 func makeSshKeysConfig(arg_list []interface{}) (sshkeys []SshKeyConfig, count int) {
-	count = len(arg_list) 
+	count = len(arg_list)
 	if count < 1 {
 		return nil, 0
 	}
@@ -48,13 +47,13 @@ func makeSshKeysArgString(sshkeys []SshKeyConfig) string {
 	// It is designed to be passed as "userdata" argument of virtual machine create API call.
 	// The following format is expected:
 	// '{"users": [{"ssh-authorized-keys": ["SSH_PUBCIC_KEY_VALUE"], "shell": "SHELL_VALUE", "name": "USERNAME_VALUE"}, {...}, ]}'
-	
+
 	/*
-	`%s\n
-	  - name: %s\n
-		ssh-authorized-keys:
-		- %s\n
-		shell: /bin/bash`
+		`%s\n
+		  - name: %s\n
+			ssh-authorized-keys:
+			- %s\n
+			shell: /bin/bash`
 	*/
 	if len(sshkeys) < 1 {
 		return ""
@@ -70,18 +69,18 @@ func makeSshKeysArgString(sshkeys []SshKeyConfig) string {
 	return out
 }
 
-func sshSubresourceSchema() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
+func sshSubresourceSchemaMake() map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
 		"user": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Name of the user on the guest OS of the new VM, for which the following SSH key will be authorized.",
+			Description: "Name of the guest OS user of a new compute, for which the following SSH key will be authorized.",
 		},
 
 		"public_key": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Public part of SSH key to authorize to the specified user on the VM being created.",
+			Description: "Public SSH key to authorize to the specified guest OS user on the compute being created.",
 		},
 
 		"shell": {
@@ -94,4 +93,3 @@ func sshSubresourceSchema() map[string]*schema.Schema {
 
 	return rets
 }
-

@@ -74,15 +74,14 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		return "", fmt.Error("Cannot locate disk if name is empty and no disk ID specified.")
 	}
 
-	account_id, acc_id_set := d.GetOk("account_id")
-	if !acc_id_set {
-		account_name, arg_set := d.GetOkd("account_name")
-		if !arg_set {
-			return "", fmt.Error("Cannot locate disk by name %s if neither account ID nor account name are set", disk_name.(string))
-		}
+	// Valid account ID is required to locate disks
+	// obtain Account ID by account name - it should not be zero on success
+	validated_account_id, err := utilityGetAccountIdBySchema(d, m)
+	if err != nil {
+		return err
 	}
 
-	url_values.Add("accountId", fmt.Sprintf("%d", account_id.(int)))
+	url_values.Add("accountId", fmt.Sprintf("%d", validated_account_id))
 	disk_facts, err := controller.decortAPICall("POST", DisksListAPI, url_values)
 	if err != nil {
 		return "", err
@@ -100,7 +99,7 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	log.Debugf("utilityDiskCheckPresence: traversing decoded JSON of length %d", len(disks_list))
 	for _, item := range disks_list {
 		// need to match disk by name, return the first match
-		if item.Name == disk_name && item.Status != "DESTROYED" {
+		if item.Name == disk_name.(string) && item.Status != "DESTROYED" {
 			log.Printf("utilityDiskCheckPresence: index %d, matched disk name %q", index, item.Name)
 			// we found the disk we need - not get detailed information via API call to disks/get
 			/*
