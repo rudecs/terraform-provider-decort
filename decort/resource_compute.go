@@ -94,18 +94,18 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	// by separate API calls)
 	d.Partial(true)
 	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
-	url_values.Add("cloudspaceId", fmt.Sprintf("%d", machine.ResGroupID))
-	url_values.Add("name", machine.Name)
-	url_values.Add("description", machine.Description)
-	url_values.Add("vcpus", fmt.Sprintf("%d", machine.Cpu))
-	url_values.Add("memory", fmt.Sprintf("%d", machine.Ram))
-	url_values.Add("imageId", fmt.Sprintf("%d", machine.ImageID))
-	url_values.Add("disksize", fmt.Sprintf("%d", machine.BootDisk.Size))
+	urlValues := &url.Values{}
+	urlValues.Add("cloudspaceId", fmt.Sprintf("%d", machine.ResGroupID))
+	urlValues.Add("name", machine.Name)
+	urlValues.Add("description", machine.Description)
+	urlValues.Add("vcpus", fmt.Sprintf("%d", machine.Cpu))
+	urlValues.Add("memory", fmt.Sprintf("%d", machine.Ram))
+	urlValues.Add("imageId", fmt.Sprintf("%d", machine.ImageID))
+	urlValues.Add("disksize", fmt.Sprintf("%d", machine.BootDisk.Size))
 	if len(machine.SshKeys) > 0 {
-		url_values.Add("userdata", makeSshKeysArgString(machine.SshKeys))
+		urlValues.Add("userdata", makeSshKeysArgString(machine.SshKeys))
 	}
-	api_resp, err := controller.decortAPICall("POST", MachineCreateAPI, url_values)
+	api_resp, err := controller.decortAPICall("POST", MachineCreateAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -218,8 +218,8 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 	log.Printf("resourceComputeRead: called for VM name %q, ResGroupID %d",
 		d.Get("name").(string), d.Get("rgid").(int))
 
-	comp_facts, err := utilityComputeCheckPresence(d, m)
-	if comp_facts == "" {
+	compFacts, err := utilityComputeCheckPresence(d, m)
+	if compFacts == "" {
 		if err != nil {
 			return err
 		}
@@ -227,7 +227,7 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 
-	if err = flattenCompute(d, comp_facts); err != nil {
+	if err = flattenCompute(d, compFacts); err != nil {
 		return err
 	}
 	log.Printf("resourceComputeRead: after flattenCompute: VM ID %s, VM name %q, ResGroupID %d",
@@ -236,12 +236,12 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 	// Not all parameters, that we may need, are returned by machines/get API
 	// Continue with further reading of VM subresource parameters:
 	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
+	urlValues := &url.Values{}
 
 	/*
 		// Obtain information on external networks
-		url_values.Add("machineId", d.Id())
-		body_string, err := controller.decortAPICall("POST", VmExtNetworksListAPI, url_values)
+		urlValues.Add("machineId", d.Id())
+		body_string, err := controller.decortAPICall("POST", VmExtNetworksListAPI, urlValues)
 		if err != nil {
 			return err
 		}
@@ -271,10 +271,10 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 	//
 	// Obtain information on port forwards
 	/*
-	url_values.Add("cloudspaceId", fmt.Sprintf("%d", d.Get("rgid")))
-	url_values.Add("machineId", d.Id())
+	urlValues.Add("cloudspaceId", fmt.Sprintf("%d", d.Get("rgid")))
+	urlValues.Add("machineId", d.Id())
 	pfw_list := PortforwardsResp{}
-	body_string, err := controller.decortAPICall("POST", PortforwardsListAPI, url_values)
+	body_string, err := controller.decortAPICall("POST", PortforwardsListAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -301,24 +301,24 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
-	// NOTE: this method destroys target VM with flag "permanently", so there is no way to
-	// restore destroyed VM
+	// NOTE: this method destroys target Compute instance with flag "permanently", so 
+	// there is no way to restore destroyed Compute
 	log.Printf("resourceComputeDelete: called for VM name %q, ResGroupID %d",
 		d.Get("name").(string), d.Get("rgid").(int))
 
-	comp_facts, err := utilityComputeCheckPresence(d, m)
-	if comp_facts == "" {
-		// the target VM does not exist - in this case according to Terraform best practice
+	compFacts, err := utilityComputeCheckPresence(d, m)
+	if compFacts == "" {
+		// the target Compute does not exist - in this case according to Terraform best practice
 		// we exit from Destroy method without error
 		return nil
 	}
 
 	params := &url.Values{}
-	params.Add("machineId", d.Id())
+	params.Add("computeId", d.Id())
 	params.Add("permanently", "true")
 
 	controller := m.(*ControllerCfg)
-	comp_facts, err = controller.decortAPICall("POST", MachineDeleteAPI, params)
+	compFacts, err = controller.decortAPICall("POST", ComputeDeleteAPI, params)
 	if err != nil {
 		return err
 	}
@@ -331,8 +331,8 @@ func resourceComputeExists(d *schema.ResourceData, m interface{}) (bool, error) 
 	log.Printf("resourceComputeExist: called for VM name %q, ResGroupID %d",
 		d.Get("name").(string), d.Get("rgid").(int))
 
-	comp_facts, err := utilityComputeCheckPresence(d, m)
-	if comp_facts == "" {
+	compFacts, err := utilityComputeCheckPresence(d, m)
+	if compFacts == "" {
 		if err != nil {
 			return false, err
 		}
@@ -363,123 +363,132 @@ func resourceCompute() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of this virtual machine. This parameter is case sensitive.",
+				Description: "Name of this compute. This parameter is case sensitive and must be unique in the resource group.",
 			},
 
-			"rgid": {
+			"rg_id": {
 				Type:         schema.TypeInt,
 				Required:     true,
 				ValidateFunc: validation.IntAtLeast(1),
-				Description:  "ID of the resource group where this virtual machine should be deployed.",
+				Description:  "ID of the resource group where this compute should be deployed.",
+			},
+
+			"arch": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Hardware architecture of this compute instance.",
 			},
 
 			"cpu": {
 				Type:         schema.TypeInt,
 				Required:     true,
 				ValidateFunc: validation.IntBetween(1, 64),
-				Description:  "Number of CPUs to allocate to this virtual machine.",
+				Description:  "Number of CPUs to allocate to this compute instance.",
 			},
 
 			"ram": {
 				Type:         schema.TypeInt,
 				Required:     true,
 				ValidateFunc: validation.IntAtLeast(512),
-				Description:  "Amount of RAM in MB to allocate to this virtual machine.",
+				Description:  "Amount of RAM in MB to allocate to this compute instance.",
 			},
 
 			"image_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				ForceNew:    true,
-				Description: "ID of the OS image to base this virtual machine on.",
+				Description: "ID of the OS image to base this compute instance on.",
 			},
 
-			"boot_disk": {
-				Type:     schema.TypeList,
-				Required: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: diskSubresourceSchema(),
-				},
-				Description: "Specification for a boot disk on this virtual machine.",
+			"boot_disk_size": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Description: "Size of the boot disk on this compute instance.",
 			},
 
-			"data_disks": {
+			"extra_disks": {
 				Type:     schema.TypeList,
 				Optional: true,
-				MaxItems: 12,
-				Elem: &schema.Resource{
-					Schema: diskSubresourceSchema(),
+				MaxItems: MaxExtraDisksPerCompute,
+				Elem: &schema.Schema{
+					Type: schema.TypeInt,
 				},
-				Description: "Specification for data disks on this virtual machine.",
+				Description: "Optional list of IDs of the extra disks to attach to this compute.",
+			},
+
+			"ssh_keys": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: MaxSshKeysPerCompute,
+				Elem: &schema.Resource{
+					Schema: sshSubresourceSchemaMake(),
+				},
+				Description: "SSH keys to authorize on this compute instance.",
+			},
+
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of this compute instance.",
+			},
+
+			// The rest are Compute properties, which are "computed" once it is created
+			"rg_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Name of the resource group where this compute instance is located.",
+			},
+
+			"account_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "ID of the account this compute instance belongs to.",
+			},
+
+			"account_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Name of the account this compute instance belongs to.",
+			},
+
+			"disks": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: dataSourceDiskSchemaMake(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
+				},
+				Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
+			},
+
+			"interfaces": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: interfaceSubresourceSchemaMake(),
+				},
+				Description: "Specification for the virtual NICs configured on this compute instance.",
 			},
 
 			"guest_logins": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
-					Schema: loginsSubresourceSchema(),
+					Schema: loginsSubresourceSchemaMake(),
 				},
-				Description: "Specification for guest logins on this virtual machine.",
+				Description: "Specification for guest logins on this compute instance.",
 			},
 
-			"networks": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 8,
-				Elem: &schema.Resource{
-					Schema: networkSubresourceSchema(),
-				},
-				Description: "Specification for the networks to connect this virtual machine to.",
-			},
-
-			"nics": {
-				Type:     schema.TypeList,
-				Computed: true,
-				MaxItems: 8,
-				Elem: &schema.Resource{
-					Schema: nicSubresourceSchema(),
-				},
-				Description: "Specification for the virutal NICs allocated to this virtual machine.",
-			},
-
-			"ssh_keys": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 12,
-				Elem: &schema.Resource{
-					Schema: sshSubresourceSchema(),
-				},
-				Description: "SSH keys to authorize on this virtual machine.",
-			},
-
-			"port_forwards": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: 12,
-				Elem: &schema.Resource{
-					Schema: portforwardSubresourceSchema(),
-				},
-				Description: "Specification for the port forwards to configure for this virtual machine.",
-			},
-
-			"description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Description of this virtual machine.",
-			},
-
-			"user": {
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Default login name for the guest OS on this virtual machine.",
+				Description: "Current model status of this compute instance.",
 			},
 
-			"password": {
+			"tech_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Sensitive:   true,
-				Description: "Default password for the guest OS login on this virtual machine.",
+				Description: "Current technical status of this compute instance.",
 			},
 		},
 	}

@@ -24,4 +24,11 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 
 package decort
 
+// LimitMaxVinsPerResgroup set maximum number of VINs instances per Resource Group
 const LimitMaxVinsPerResgroup=4
+
+// MaxSshKeysPerCompute sets maximum number of user:ssh_key pairs to authorize when creating new compute
+const MaxSshKeysPerCompute=12
+
+// MaxExtraDisksPerCompute sets maximum number of extra disks that can be added when creating new compute
+const MaxExtraDisksPerCompute=12

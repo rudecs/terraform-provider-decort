@@ -37,57 +37,57 @@ import (
 
 func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
 	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
+	urlValues := &url.Values{}
 
-	acc_id, arg_set := d.GetOk("account_id")
-	if arg_set {
+	accId, argSet := d.GetOk("account_id")
+	if argSet {
 		// get Account right away by its ID
-		log.Debugf("utilityAccountCheckPresence: locating Account by its ID %d", acc_id.(int))
-		url_values.Add("accountId", fmt.Sprintf("%d", acc_id.(int)))
-		api_resp, err := controller.decortAPICall("POST", AccountsGetAPI, url_values)
+		log.Debugf("utilityAccountCheckPresence: locating Account by its ID %d", accId.(int))
+		urlValues.Add("accountId", fmt.Sprintf("%d", accId.(int)))
+		apiResp, err := controller.decortAPICall("POST", AccountsGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
-		return api_resp, nil
+		return apiResp, nil
 	}
 
-	acc_name, arg_set := d.GetOk("name")
-	if !arg_set {
+	accName, argSet := d.GetOk("name")
+	if !argSet {
 		// neither ID nor name - no account for you!
-		return "", fmt.Errorf("Cannot check account presence if name is empty and no account ID specified.")
+		return "", fmt.Errorf("Cannot check account presence if name is empty and no account ID specified")
 	}
 
-	api_resp, err := controller.decortAPICall("POST", AccountsListAPI, url_values)
+	apiResp, err := controller.decortAPICall("POST", AccountsListAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
-	// log.Debugf("%s", api_resp)
+	// log.Debugf("%s", apiResp)
 	// log.Debugf("utilityAccountCheckPresence: ready to decode response body from %q", AccountsListAPI)
-	acc_list := AccountsListResp{}
-	err = json.Unmarshal([]byte(api_resp), &acc_list)
+	accList := AccountsListResp{}
+	err = json.Unmarshal([]byte(apiResp), &accList)
 	if err != nil {
 		return "", err
 	}
 
-	log.Debugf("utilityAccountCheckPresence: traversing decoded Json of length %d", len(acc_list))
-	for index, item := range acc_list {
+	log.Debugf("utilityAccountCheckPresence: traversing decoded Json of length %d", len(accList))
+	for index, item := range accList {
 		// match by account name
-		if item.Name == acc_name.(string) {
+		if item.Name == accName.(string) {
 			log.Debugf("utilityAccountCheckPresence: match account name %q / ID %d at index %d",
 				item.Name, item.ID, index)
 
 			// NB: unlike accounts/get API, accounts/list API returns abridged set of account info,
 			// for instance it does not return quotas
 
-			reencoded_item, err := json.Marshal(item)
+			reencodedItem, err := json.Marshal(item)
 			if err != nil {
 				return "", err
 			}
-			return string(reencoded_item[:]), nil
+			return string(reencodedItem[:]), nil
 		}
 	}
 
-	return "", fmt.Errorf("Cannot find account name %q", acc_name.(string))
+	return "", fmt.Errorf("Cannot find account name %q", accName.(string))
 }
 
 func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, error) {
@@ -112,28 +112,28 @@ func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, er
 
 	*/
 
-	account_id, arg_set := d.GetOk("account_id")
-	if arg_set {
-		if account_id.(int) > 0 {
-			return account_id.(int), nil
+	accId, argSet := d.GetOk("account_id")
+	if argSet {
+		if accId.(int) > 0 {
+			return accId.(int), nil
 		}
-		return 0, fmt.Errorf("Account ID must be positive.")
+		return 0, fmt.Errorf("Account ID must be positive")
 	}
 
-	account_name, arg_set := d.GetOk("account_name")
-	if !arg_set {
-		return 0, fmt.Errorf("Non-empty account name or positive account ID must be specified.")
+	accName, argSet := d.GetOk("account_name")
+	if !argSet {
+		return 0, fmt.Errorf("Either non-empty account name or positive account ID must be specified")
 	}
 
 	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
-	body_string, err := controller.decortAPICall("POST", AccountsListAPI, url_values)
+	urlValues := &url.Values{}
+	apiResp, err := controller.decortAPICall("POST", AccountsListAPI, urlValues)
 	if err != nil {
 		return 0, err
 	}
 
 	model := AccountsListResp{}
-	err = json.Unmarshal([]byte(body_string), &model)
+	err = json.Unmarshal([]byte(apiResp), &model)
 	if err != nil {
 		return 0, err
 	}
@@ -141,12 +141,12 @@ func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, er
 	log.Debugf("utilityGetAccountIdBySchema: traversing decoded Json of length %d", len(model))
 	for index, item := range model {
 		// need to match Account by name
-		if item.Name == account_name.(string) {
+		if item.Name == accName.(string) {
 			log.Debugf("utilityGetAccountIdBySchema: match Account name %q / ID %d at index %d",
 				item.Name, item.ID, index)
 			return item.ID, nil
 		}
 	}
 
-	return 0, fmt.Errorf("Cannot find account %q for the current user. Check account name and your access rights", account_name.(string))
+	return 0, fmt.Errorf("Cannot find account %q for the current user. Check account name and your access rights", accName.(string))
 }

@@ -39,17 +39,17 @@ import (
 
 func (ctrl *ControllerCfg) utilityVmDisksProvision(mcfg *MachineConfig) error {
 	for index, disk := range mcfg.DataDisks {
-		url_values := &url.Values{}
-		// url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		url_values.Add("accountId", fmt.Sprintf("%d", mcfg.TenantID))
-		url_values.Add("gid", fmt.Sprintf("%d", mcfg.GridID))
-		url_values.Add("name", fmt.Sprintf("%s", disk.Label))
-		url_values.Add("description", fmt.Sprintf("Data disk for VM ID %d / VM Name: %s", mcfg.ID, mcfg.Name))
-		url_values.Add("size", fmt.Sprintf("%d", disk.Size))
-		url_values.Add("type", "D")
-		// url_values.Add("iops", )
+		urlValues := &url.Values{}
+		// urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
+		urlValues.Add("accountId", fmt.Sprintf("%d", mcfg.TenantID))
+		urlValues.Add("gid", fmt.Sprintf("%d", mcfg.GridID))
+		urlValues.Add("name", fmt.Sprintf("%s", disk.Label))
+		urlValues.Add("description", fmt.Sprintf("Data disk for VM ID %d / VM Name: %s", mcfg.ID, mcfg.Name))
+		urlValues.Add("size", fmt.Sprintf("%d", disk.Size))
+		urlValues.Add("type", "D")
+		// urlValues.Add("iops", )
 
-		disk_id_resp, err := ctrl.decortAPICall("POST", DiskCreateAPI, url_values)
+		disk_id_resp, err := ctrl.decortAPICall("POST", DiskCreateAPI, urlValues)
 		if err != nil {
 			// failed to create disk - partial resource update
 			return err
@@ -65,11 +65,11 @@ func (ctrl *ControllerCfg) utilityVmDisksProvision(mcfg *MachineConfig) error {
 
 		// now that we have disk created and stored its ID in the mcfg.DataDisks[index].ID
 		// we can attempt attaching the disk to the VM
-		url_values = &url.Values{}
-		// url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		url_values.Add("diskId", disk_id_resp)
-		_, err = ctrl.decortAPICall("POST", DiskAttachAPI, url_values)
+		urlValues = &url.Values{}
+		// urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
+		urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
+		urlValues.Add("diskId", disk_id_resp)
+		_, err = ctrl.decortAPICall("POST", DiskAttachAPI, urlValues)
 		if err != nil {
 			// failed to attach disk - partial resource update
 			return err
@@ -81,14 +81,14 @@ func (ctrl *ControllerCfg) utilityVmDisksProvision(mcfg *MachineConfig) error {
 
 func (ctrl *ControllerCfg) utilityVmPortforwardsProvision(mcfg *MachineConfig) error {
 	for _, rule := range mcfg.PortForwards {
-		url_values := &url.Values{}
-		url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		url_values.Add("cloudspaceId", fmt.Sprintf("%d", mcfg.ResGroupID))
-		url_values.Add("publicIp", mcfg.ExtIP) // this may be obsoleted by Resource group implementation
-		url_values.Add("publicPort", fmt.Sprintf("%d", rule.ExtPort))
-		url_values.Add("localPort", fmt.Sprintf("%d", rule.IntPort))
-		url_values.Add("protocol", rule.Proto)
-		_, err := ctrl.decortAPICall("POST", PortforwardingCreateAPI, url_values)
+		urlValues := &url.Values{}
+		urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
+		urlValues.Add("cloudspaceId", fmt.Sprintf("%d", mcfg.ResGroupID))
+		urlValues.Add("publicIp", mcfg.ExtIP) // this may be obsoleted by Resource group implementation
+		urlValues.Add("publicPort", fmt.Sprintf("%d", rule.ExtPort))
+		urlValues.Add("localPort", fmt.Sprintf("%d", rule.IntPort))
+		urlValues.Add("protocol", rule.Proto)
+		_, err := ctrl.decortAPICall("POST", PortforwardingCreateAPI, urlValues)
 		if err != nil {
 			// failed to create port forward rule - partial resource update
 			return err
@@ -99,10 +99,10 @@ func (ctrl *ControllerCfg) utilityVmPortforwardsProvision(mcfg *MachineConfig) e
 
 func (ctrl *ControllerCfg) utilityVmNetworksProvision(mcfg *MachineConfig) error {
 	for _, net := range mcfg.Networks {
-		url_values := &url.Values{}
-		url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		url_values.Add("externalNetworkId", fmt.Sprintf("%d", net.NetworkID))
-		_, err := ctrl.decortAPICall("POST", AttachExternalNetworkAPI, url_values)
+		urlValues := &url.Values{}
+		urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
+		urlValues.Add("externalNetworkId", fmt.Sprintf("%d", net.NetworkID))
+		_, err := ctrl.decortAPICall("POST", AttachExternalNetworkAPI, urlValues)
 		if err != nil {
 			// failed to attach network - partial resource update
 			return err
@@ -128,58 +128,58 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	//
 
 	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
+	urlValues := &url.Values{}
 
-	compute_id, arg_set := d.GetOk("compute_id")
-	if arg_set {
+	computeId, argSet := d.GetOk("compute_id")
+	if argSet {
 		// compute ID is specified, try to get compute instance straight by this ID
-		log.Debugf("utilityComputeCheckPresence: locating compute by its ID %d", compute_id.(int))
-		url_values.Add("computeId", fmt.Sprintf("%d", compute_id.(int)))
-		compute_facts, err := controller.decortAPICall("POST", ComputeGetAPI, url_values)
+		log.Debugf("utilityComputeCheckPresence: locating compute by its ID %d", computeId.(int))
+		urlValues.Add("computeId", fmt.Sprintf("%d", computeId.(int)))
+		computeFacts, err := controller.decortAPICall("POST", ComputeGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
-		return compute_facts, nil
+		return computeFacts, nil
 	}
 
-	compute_name, arg_set := d.GetOk("name")
-	if !arg_set {
-		return "", fmt.Errorf("Cannot locate compute instance if name is empty and no compute ID specified.")
+	computeName, argSet := d.GetOk("name")
+	if !argSet {
+		return "", fmt.Errorf("Cannot locate compute instance if name is empty and no compute ID specified")
 	}
 
-	rg_id, arg_set := d.GetOk("rg_id")
-	if !arg_set {
-		return "", fmt.Errorf("Cannot locate compute by name %s if no resource group ID is set", compute_name.(string))
+	rgId, argSet := d.GetOk("rg_id")
+	if !argSet {
+		return "", fmt.Errorf("Cannot locate compute by name %s if no resource group ID is set", computeName.(string))
 	}
 	
-	url_values.Add("rgId", fmt.Sprintf("%d", rg_id))
-	api_resp, err := controller.decortAPICall("POST", RgListComputesAPI, url_values)
+	urlValues.Add("rgId", fmt.Sprintf("%d", rgId))
+	apiResp, err := controller.decortAPICall("POST", RgListComputesAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
 
-	log.Debugf("utilityComputeCheckPresence: ready to unmarshal string %q", api_resp)
+	log.Debugf("utilityComputeCheckPresence: ready to unmarshal string %q", apiResp)
 
-	comp_list := RgListComputesResp{}
-	err = json.Unmarshal([]byte(api_resp), &comp_list)
+	computeList := RgListComputesResp{}
+	err = json.Unmarshal([]byte(apiResp), &computeList)
 	if err != nil {
 		return "", err
 	}
 
-	// log.Printf("%#v", comp_list)
-	log.Debugf("utilityComputeCheckPresence: traversing decoded JSON of length %d", len(comp_list))
-	for index, item := range comp_list {
+	// log.Printf("%#v", computeList)
+	log.Debugf("utilityComputeCheckPresence: traversing decoded JSON of length %d", len(computeList))
+	for index, item := range computeList {
 		// need to match Compute by name, skip Computes with the same name in DESTROYED satus
-		if item.Name == compute_name.(string) && item.Status != "DESTROYED" {
+		if item.Name == computeName.(string) && item.Status != "DESTROYED" {
 			log.Debugf("utilityComputeCheckPresence: index %d, matched name %q", index, item.Name)
 			// we found the Compute we need - now get detailed information via compute/get API
-			get_url_values := &url.Values{}
-			get_url_values.Add("computeId", fmt.Sprintf("%d", item.ID))
-			api_resp, err = controller.decortAPICall("POST", ComputeGetAPI, get_url_values)
+			cgetValues := &url.Values{}
+			cgetValues.Add("computeId", fmt.Sprintf("%d", item.ID))
+			apiResp, err = controller.decortAPICall("POST", ComputeGetAPI, cgetValues)
 			if err != nil {
 				return "", err
 			}
-			return api_resp, nil
+			return apiResp, nil
 		}
 	}
 

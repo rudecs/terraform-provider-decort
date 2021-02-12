@@ -107,15 +107,15 @@ func parseComputeInterfaces(ifaces []InterfaceRecord) []interface{} {
 	return result // this result will be used to d.Set("interfaces",) item of dataSourceCompute schema
 }
 
-func flattenCompute(d *schema.ResourceData, comp_facts string) error {
+func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	// This function expects that comp_facts string contains response from API compute/get,
 	// i.e. detailed information about compute instance.
 	//
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
 	// from resourceComputeExists(...) method
 	model := ComputeGetResp{}
-	log.Debugf("flattenCompute: ready to unmarshal string %q", comp_facts)
-	err := json.Unmarshal([]byte(comp_facts), &model)
+	log.Debugf("flattenCompute: ready to unmarshal string %q", compFacts)
+	err := json.Unmarshal([]byte(compFacts), &model)
 	if err != nil {
 		return err
 	}
@@ -163,15 +163,15 @@ func flattenCompute(d *schema.ResourceData, comp_facts string) error {
 }
 
 func dataSourceComputeRead(d *schema.ResourceData, m interface{}) error {
-	comp_facts, err := utilityComputeCheckPresence(d, m)
-	if comp_facts == "" {
+	compFacts, err := utilityComputeCheckPresence(d, m)
+	if compFacts == "" {
 		// if empty string is returned from utilityComputeCheckPresence then there is no
 		// such Compute and err tells so - just return it to the calling party
 		d.SetId("") // ensure ID is empty
 		return err
 	}
 
-	return flattenCompute(d, comp_facts)
+	return flattenCompute(d, compFacts)
 }
 
 func dataSourceCompute() *schema.Resource {
