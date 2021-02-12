@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package decs
+package decort
 
 import (
-
 	"log"
 	"strconv"
 	"strings"
@@ -28,22 +27,22 @@ import (
 )
 
 func makeNetworksConfig(arg_list []interface{}) (nets []NetworkConfig, count int) {
-	count = len(arg_list) 
+	count = len(arg_list)
 	if count < 1 {
 		return nil, 0
 	}
-	
-	// allocate Networks list and fill it 
+
+	// allocate Networks list and fill it
 	nets = make([]NetworkConfig, count)
 	var subres_data map[string]interface{}
 	for index, value := range arg_list {
-			subres_data = value.(map[string]interface{})
-			// nets[index].Label = subres_data["label"].(string)
-			nets[index].NetworkID = subres_data["network_id"].(int)
-		}
+		subres_data = value.(map[string]interface{})
+		// nets[index].Label = subres_data["label"].(string)
+		nets[index].NetworkID = subres_data["network_id"].(int)
+	}
 
 	return nets, count
-} 
+}
 
 func flattenNetworks(nets []NicRecord) []interface{} {
 	// this function expects an array of NicRecord as returned by machines/get API call
@@ -68,7 +67,7 @@ func flattenNetworks(nets []NicRecord) []interface{} {
 	var subindex = 0
 	for index, value := range nets {
 		if value.NicType == "PUBLIC" {
-			// this will be changed as network segments entity 
+			// this will be changed as network segments entity
 			// value.Params for ext net comes in a form "gateway:176.118.165.1 externalnetworkId:6"
 			// for network_id we need to extract from this string
 			strarray = strings.Split(value.Params, " ")
@@ -76,23 +75,23 @@ func flattenNetworks(nets []NicRecord) []interface{} {
 			elem["network_id"], _ = strconv.Atoi(substr[1])
 			elem["ip_range"] = value.IPAddress
 			// elem["label"] = ... - should be uncommented for the future release
-			log.Printf("flattenNetworks: parsed element %d - network_id %d, ip_range %q", 
-		                index, elem["network_id"].(int), value.IPAddress)
+			log.Printf("flattenNetworks: parsed element %d - network_id %d, ip_range %q",
+				index, elem["network_id"].(int), value.IPAddress)
 			result[subindex] = elem
 			subindex += 1
 		}
 	}
 
-	return result 
+	return result
 }
 
 func networkSubresourceSchema() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
 		"network_id": {
-			Type:        schema.TypeInt,
-			Required:    true,
+			Type:         schema.TypeInt,
+			Required:     true,
 			ValidateFunc: validation.IntAtLeast(1),
-			Description: "ID of the network to attach to this VM.",
+			Description:  "ID of the network to attach to this VM.",
 		},
 
 		/* should be uncommented for the future release
@@ -114,14 +113,13 @@ func networkSubresourceSchema() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "MAC address of the interface connected to this network.",
 		},
-
 	}
 
 	return rets
 }
 
 func makePortforwardsConfig(arg_list []interface{}) (pfws []PortforwardConfig, count int) {
-	count = len(arg_list) 
+	count = len(arg_list)
 	if count < 1 {
 		return nil, 0
 	}
@@ -150,7 +148,7 @@ func flattenPortforwards(pfws []PortforwardRecord) []interface{} {
 		// external port field is of TypeInt in the portforwardSubresourceSchema, but string is returned
 		// by portforwards/list API, so we need conversion here
 		port_num, _ = strconv.Atoi(value.ExtPort)
-		elem["ext_port"] =  port_num
+		elem["ext_port"] = port_num
 		// internal port field is of TypeInt in the portforwardSubresourceSchema, but string is returned
 		// by portforwards/list API, so we need conversion here
 		port_num, _ = strconv.Atoi(value.IntPort)
@@ -161,11 +159,11 @@ func flattenPortforwards(pfws []PortforwardRecord) []interface{} {
 		result[index] = elem
 	}
 
-	return result 
+	return result
 }
 
 func portforwardSubresourceSchema() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
 		/* this should be uncommented for the future release
 		"label": {
 			Type:        schema.TypeString,
@@ -173,24 +171,24 @@ func portforwardSubresourceSchema() map[string]*schema.Schema {
 			Description: "Unique label of this network connection to identify it amnong other connections for this VM.",
 		},
 		*/
-		
+
 		"ext_port": {
-			Type:        schema.TypeInt,
-			Required:    true,
+			Type:         schema.TypeInt,
+			Required:     true,
 			ValidateFunc: validation.IntBetween(1, 65535),
-			Description: "External port number for this port forwarding rule.",
+			Description:  "External port number for this port forwarding rule.",
 		},
 
 		"int_port": {
-			Type:        schema.TypeInt,
-			Required:    true,
+			Type:         schema.TypeInt,
+			Required:     true,
 			ValidateFunc: validation.IntBetween(1, 65535),
-			Description: "Internal port number for this port forwarding rule.",
+			Description:  "Internal port number for this port forwarding rule.",
 		},
 
 		"proto": {
-			Type:        schema.TypeString,
-			Required:    true,
+			Type:     schema.TypeString,
+			Required: true,
 			// ValidateFunc: validation.IntBetween(1, ),
 			Description: "Protocol type for this port forwarding rule. Should be either 'tcp' or 'udp'.",
 		},
@@ -230,7 +228,7 @@ func flattenNICs(nics []NicRecord) []interface{} {
 }
 
 func nicSubresourceSchema() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
 		"status": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -242,7 +240,7 @@ func nicSubresourceSchema() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Type of this NIC.",
 		},
-		
+
 		"mac": {
 			Type:        schema.TypeString,
 			Computed:    true,

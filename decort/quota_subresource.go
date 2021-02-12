@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package decs
+package decort
 
 import (
 
@@ -26,7 +26,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	// "github.com/hashicorp/terraform/helper/validation"
-
 )
 
 func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
@@ -49,7 +48,7 @@ func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 	}
 
 	if subres_data["ram"].(int) > 0 {
-		quota.Ram= subres_data["ram"].(int) // RAM volume in MB
+		quota.Ram = subres_data["ram"].(int) // RAM volume in MB
 	}
 
 	if subres_data["ext_traffic"].(int) > 0 {
@@ -65,10 +64,10 @@ func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 	}
 
 	return quota, 1
-} 
+}
 
 func parseQuota(quota QuotaRecord) []interface{} {
-	quota_map :=  make(map[string]interface{})
+	quota_map := make(map[string]interface{})
 
 	quota_map["cpu"] = quota.Cpu
 	quota_map["ram"] = quota.Ram
@@ -83,44 +82,44 @@ func parseQuota(quota QuotaRecord) []interface{} {
 	return result // this result will be used to d.Set("quota,") of dataSourceResgroup schema
 }
 
-func quotaRgSubresourceSchema() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
-		"cpu": &schema.Schema {
+func quotaRgSubresourceSchemaMake() map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
+		"cpu": &schema.Schema{
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total number of CPUs in this resource group.",
 		},
 
-		"ram": &schema.Schema {
+		"ram": &schema.Schema{
 			Type:        schema.TypeInt, // NB: old API expects and returns this as float! This may be changed in the future.
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total amount of RAM in this resource group, specified in MB.",
-			},
+		},
 
-		"disk": &schema.Schema {
+		"disk": &schema.Schema{
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total volume of storage resources in this resource group, specified in GB.",
 		},
 
-		"ext_traffic": &schema.Schema {
+		"ext_traffic": &schema.Schema{
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total ingress network traffic for this resource group, specified in GB.",
 		},
 
-		"ext_ips": &schema.Schema {
+		"ext_ips": &schema.Schema{
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total number of external IP addresses this resource group can use.",
 		},
 
-		"gpu_units": &schema.Schema {
+		"gpu_units": &schema.Schema{
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,

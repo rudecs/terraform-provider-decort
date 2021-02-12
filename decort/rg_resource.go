@@ -71,25 +71,6 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceResgroupCreate: called by user %q for RG name %q, account  %q / ID %d, Grid ID %d",
 		controller.getdecortUsername(),
 		rg_name.(string), account_name.(string), validated_account_id, gird_id.(int))
-	/*
-			type ResgroupCreateParam struct {
-			AccountID int          `json:"accountId"`
-			GridId int             `json:"gid"`
-			Name string            `json:"name"`
-			Ram int                `json:"maxMemoryCapacity"`
-			Disk int               `json:"maxVDiskCapacity"`
-			Cpu int                `json:"maxCPUCapacity"`
-			NetTraffic int         `json:"maxNetworkPeerTransfer"`
-			ExtIPs int             `json:"maxNumPublicIP"`
-			Owner string           `json:"owner"`
-			DefNet string          `json:"def_net"`
-			IPCidr string          `json:"ipcidr"`
-			Desc string            `json:"decs"`
-			Reason string          `json:"reason"`
-			ExtNetID int           `json:"extNetId"`
-			ExtIP string           `json:"extIp"`
-		}
-	*/
 
 	url_values := &url.Values{}
 	url_values.Add("accountId", fmt.Sprintf("%d", validated_account_id))
@@ -110,7 +91,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	// parse and handle network settings
 	def_net_type, arg_set = d.GetOk("def_net_type")
 	if arg_set {
-		ulr_values.Add("def_net", def_net_type.(string))
+		ulr_values.Add("def_net", def_net_type.(string)) // NOTE: in API default network type is set by "def_net" parameter
 	}
 
 	ipcidr, arg_set = d.GetOk("ipcidr")
@@ -312,30 +293,36 @@ func resourceResgroup() *schema.Resource {
 				Description: "Name of the account, which this resource group belongs to.",
 			},
 
-			"def_net": &schema.Schema{
+			"def_net_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "PRIVATE",
 				Description: "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
 			},
 
+			"def_net_id": &schema.Schema{
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "ID of the default network for this resource group (if any).",
+			},
+
 			"ipcidr": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Address of the netowrk inside the private network segment (aka ViNS) if def_net=PRIVATE",
+				Description: "Address of the netowrk inside the private network segment (aka ViNS) if def_net_type=PRIVATE",
 			},
 
 			"ext_net_id": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
-				Description: "ID of the external network, which this resource group will use as default for its computes if def_net=PUBLIC",
+				Description: "ID of the external network, which this resource group will use as default for its computes if def_net_type=PUBLIC",
 			},
 
 			"ext_ip": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "IP address on the external netowrk to request, if def_net=PUBLIC",
+				Description: "IP address on the external netowrk to request, if def_net_type=PUBLIC",
 			},
 
 			"account_id": &schema.Schema{
@@ -344,7 +331,7 @@ func resourceResgroup() *schema.Resource {
 				Description: "Unique ID of the account, which this resource group belongs to.",
 			},
 
-			"grid_id": &schema.Schema{
+			"grid_id": &schema.Schema{ // change of Grid ID will require new RG
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Unique ID of the grid, where this resource group is deployed.",
@@ -355,7 +342,7 @@ func resourceResgroup() *schema.Resource {
 				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
-					Schema: quotasSubresourceSchema(),
+					Schema: quotaRgSubresourceSchemaMake(),
 				},
 				Description: "Quota settings for this resource group.",
 			},
@@ -370,12 +357,6 @@ func resourceResgroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Current status of this resource group.",
-			},
-
-			"def_net_id": &schema.Schema{
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "ID of the default network for this resource group (if any).",
 			},
 
 			"vins": {

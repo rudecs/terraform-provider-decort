@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +15,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package decs
+package decort
 
 import (
-
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -26,12 +25,12 @@ import (
 )
 
 func makeDisksConfig(arg_list []interface{}) (disks []DiskConfig, count int) {
-	count = len(arg_list) 
+	count = len(arg_list)
 	if count < 1 {
 		return nil, 0
 	}
 
-	// allocate DataDisks list and fill it 
+	// allocate DataDisks list and fill it
 	disks = make([]DiskConfig, count)
 	var subres_data map[string]interface{}
 	for index, value := range arg_list {
@@ -72,7 +71,7 @@ func flattenDataDisks(disks []DataDiskRecord) []interface{} {
 			result[subindex] = elem
 			subindex += 1
 		}
-		
+
 	}
 
 	return result
@@ -91,7 +90,7 @@ func makeDataDisksArgString(disks []DiskConfig) string {
 
 // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
 func diskSubresourceSchema() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
 		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
@@ -99,10 +98,10 @@ func diskSubresourceSchema() map[string]*schema.Schema {
 		},
 
 		"size": {
-			Type:        schema.TypeInt,
-			Required:    true,
+			Type:         schema.TypeInt,
+			Required:     true,
 			ValidateFunc: validation.IntAtLeast(1),
-			Description: "Size of the disk in GB.",
+			Description:  "Size of the disk in GB.",
 		},
 
 		"account_id": {
@@ -143,7 +142,6 @@ func diskSubresourceSchema() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "ID of the binary Image this disk resource is cloned from (if any).",
 		},
-		
 	}
 
 	return rets

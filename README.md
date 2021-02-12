@@ -22,11 +22,11 @@ For a quick start follow these steps.
     export PATH=$PATH:$GOROOT/bin
 ```
 
-2. Clone Terraform framework repository to $GOPKG/src/github.com/hashicorp/terraform
+2. Clone Terraform Plugin SDK framework repository to $GOPKG/src/github.com/hashicorp/terraform
 ```
     mkdir -p $GOPKG/src/github.com/hashicorp
     cd $GOPKG/src/github.com/hashicorp
-    git clone https://github.com/hashicorp/terraform.git
+    git clone https://github.com/hashicorp/terraform-plugin-sdk.git
 ```
 
 3. Clone jwt-go package repository to $GOPKG/src/github.com/dgrijalva/jwt-go:

@@ -99,19 +99,19 @@ func Provider() *schema.Provider {
 
 		ResourcesMap: map[string]*schema.Resource{
 			"decort_resgroup": resourceResgroup(),
-			"decort_kvmvm":    resourceCompute(),
-			"decort_disk":     resourceDisk(),
-			"decort_vins":     resourceVins(),
+			// "decort_kvmvm":    resourceCompute(),
+			// "decort_disk":     resourceDisk(),
+			// "decort_vins":     resourceVins(),
 			// "decort_pfw": resourcePfw(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			// "decort_account": dataSourceAccount(),
+			"decort_account":  dataSourceAccount(),
 			"decort_resgroup": dataSourceResgroup(),
 			"decort_kvmvm":    dataSourceCompute(),
 			"decort_image":    dataSourceImage(),
 			"decort_disk":     dataSourceDisk(),
-			"decort_vins":     dataSourceVins(),
+			// "decort_vins":     dataSourceVins(),
 			// "decort_pfw": dataSourcePfw(),
 		},
 

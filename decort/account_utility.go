@@ -118,7 +118,7 @@ func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, er
 		if account_id.(int) > 0 {
 			return account_id.(int), nil
 		}
-		return 0, fmt.Error("Account ID must be positive, if set.")
+		return 0, fmt.Error("Account ID must be positive.")
 	}
 
 	account_name, arg_set := d.GetOk("account_name")

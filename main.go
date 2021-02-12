@@ -30,11 +30,10 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package main
 
 import (
-	
 	"github.com/hashicorp/terraform/plugin"
 	"github.com/hashicorp/terraform/terraform"
 
-	"github.com/terraform-provider-decort/decort"
+	"github.com/rudecs/terraform-provider-decort/decort"
 )
 
 func main() {
