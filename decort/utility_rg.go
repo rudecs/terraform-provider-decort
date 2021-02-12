@@ -27,26 +27,25 @@ package decort
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/url"
 
-	// "strconv"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	// "github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func (ctrl *ControllerCfg) utilityResgroupConfigGet(rgid int) (*ResgroupGetResp, error) {
-	url_values := &url.Values{}
-	url_values.Add("rgId", fmt.Sprintf("%d", rgid))
-	resgroup_facts, err := ctrl.decortAPICall("POST", ResgroupGetAPI, url_values)
+	urlValues := &url.Values{}
+	urlValues.Add("rgId", fmt.Sprintf("%d", rgid))
+	rgFacts, err := ctrl.decortAPICall("POST", ResgroupGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Debugf("utilityResgroupConfigGet: ready to unmarshal string %q", resgroup_facts)
+	log.Debugf("utilityResgroupConfigGet: ready to unmarshal string %q", rgFacts)
 	model := &ResgroupGetResp{}
-	err = json.Unmarshal([]byte(resgroup_facts), model)
+	err = json.Unmarshal([]byte(rgFacts), model)
 	if err != nil {
 		return nil, err
 	}
@@ -89,42 +88,42 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	//
 
 	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
+	urlValues := &url.Values{}
 
-	rg_id, arg_set := d.GetOk("rg_id")
-	if arg_set {
+	rgId, argSet := d.GetOk("rgId")
+	if argSet {
 		// go straight for the RG by its ID
-		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", rg_id.(int))
-		url_values.Add("rgId", fmt.Sprintf("%d", rg_id.(int)))
-		rg_facts, err := controller.decortAPICall("POST", ResgroupGetAPI, url_values)
+		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", rgId.(int))
+		urlValues.Add("rgId", fmt.Sprintf("%d", rgId.(int)))
+		rgFacts, err := controller.decortAPICall("POST", ResgroupGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
-		return rg_facts, nil
+		return rgFacts, nil
 	}
 
-	rg_name, arg_set := d.GetOk("name")
-	if !arg_set {
+	rgName, argSet := d.GetOk("name")
+	if !argSet {
 		// no RG ID and no RG name - we cannot locate resource group in this case
-		return "", fmt.Error("Cannot check resource group presence if name is empty and no resource group ID specified.")
+		return "", fmt.Errorf("Cannot check resource group presence if name is empty and no resource group ID specified")
 	}
 
 	// Valid account ID is required to locate a resource group
 	// obtain Account ID by account name - it should not be zero on success
-	validated_account_id, err := utilityGetAccountIdBySchema(d, m)
-	if err != nil {
-		return err
-	}
-
-	url_values.Add("includedeleted", "false")
-	body_string, err := controller.decortAPICall("POST", ResgroupListAPI, url_values)
+	validatedAccountId, err := utilityGetAccountIdBySchema(d, m)
 	if err != nil {
 		return "", err
 	}
-	// log.Debugf("%s", body_string)
+
+	urlValues.Add("includedeleted", "false")
+	apiResp, err := controller.decortAPICall("POST", ResgroupListAPI, urlValues)
+	if err != nil {
+		return "", err
+	}
+	// log.Debugf("%s", apiResp)
 	// log.Debugf("utilityResgroupCheckPresence: ready to decode response body from %q", ResgroupListAPI)
 	model := ResgroupListResp{}
-	err = json.Unmarshal([]byte(body_string), &model)
+	err = json.Unmarshal([]byte(apiResp), &model)
 	if err != nil {
 		return "", err
 	}
@@ -132,23 +131,23 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	log.Debugf("utilityResgroupCheckPresence: traversing decoded Json of length %d", len(model))
 	for index, item := range model {
 		// match by RG name & account ID
-		if item.Name == rg_name.(string) && item.AccountID == validated_account_id {
+		if item.Name == rgName.(string) && item.AccountID == validatedAccountId {
 			log.Debugf("utilityResgroupCheckPresence: match RG name %q / ID %d, account ID %d at index %d",
 				item.Name, item.ID, item.AccountID, index)
 
 			// not all required information is returned by rg/list API, so we need to initiate one more
 			// call to rg/get to obtain extra data to complete Resource population.
 			// Namely, we need resource quota settings
-			req_values := &url.Values{}
-			req_values.Add("rgId", fmt.Sprintf("%d", item.ID))
-			body_string, err := controller.decortAPICall("POST", ResgroupGetAPI, req_values)
+			reqValues := &url.Values{}
+			reqValues.Add("rgId", fmt.Sprintf("%d", item.ID))
+			apiResp, err := controller.decortAPICall("POST", ResgroupGetAPI, reqValues)
 			if err != nil {
 				return "", err
 			}
 
-			return body_string, nil
+			return apiResp, nil
 		}
 	}
 
-	return "", fmt.Errorf("Cannot find RG name %q owned by account ID %d", name, validated_account_id)
+	return "", fmt.Errorf("Cannot find RG name %q owned by account ID %d", rgName, validatedAccountId)
 }

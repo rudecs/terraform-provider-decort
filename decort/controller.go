@@ -39,8 +39,8 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	// "github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/terraform"
 
 )
 
@@ -194,7 +194,7 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 	return ret_config, nil
 }
 
-func (config *ControllerCfg) getDecsUsername() (string) {
+func (config *ControllerCfg) getDecortUsername() (string) {
 	return config.decort_username
 }
 

@@ -27,12 +27,13 @@ package decort
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	// "net/url"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	// "github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
@@ -55,7 +56,7 @@ func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
 	d.Set("account_name", details.AccountName)
 	d.Set("account_id", details.AccountID)
 	d.Set("grid_id", details.GridID)
-	d.Set("desc", details.Description)
+	d.Set("desc", details.Desc)
 	d.Set("status", details.Status)
 	d.Set("def_net_type", details.DefaultNetType)
 	d.Set("def_net_id", details.DefaultNetID)
@@ -63,7 +64,7 @@ func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
 	d.Set("computes", details.Computes)
 
 	log.Debugf("flattenResgroup: calling flattenQuota()")
-	if err = d.Set("quota", parseQuota(details.Quotas)); err != nil {
+	if err = d.Set("quota", parseQuota(details.Quota)); err != nil {
 		return err
 	}
 

@@ -27,13 +27,12 @@ package decort
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/url"
 
-	// "strconv"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	// "github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
@@ -55,7 +54,7 @@ func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	acc_name, arg_set := d.GetOk("name")
 	if !arg_set {
 		// neither ID nor name - no account for you!
-		return "", fmt.Error("Cannot check account presence if name is empty and no account ID specified.")
+		return "", fmt.Errorf("Cannot check account presence if name is empty and no account ID specified.")
 	}
 
 	api_resp, err := controller.decortAPICall("POST", AccountsListAPI, url_values)
@@ -70,7 +69,7 @@ func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (string,
 		return "", err
 	}
 
-	log.Debugf("utilityAccountCheckPresence: traversing decoded Json of length %d", len(model))
+	log.Debugf("utilityAccountCheckPresence: traversing decoded Json of length %d", len(acc_list))
 	for index, item := range acc_list {
 		// match by account name
 		if item.Name == acc_name.(string) {
@@ -84,11 +83,11 @@ func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (string,
 			if err != nil {
 				return "", err
 			}
-			return reencoded_item.(string), nil
+			return string(reencoded_item[:]), nil
 		}
 	}
 
-	return "", fmt.Errorf("Cannot find account name %q owned by account ID %d", name, validated_account_id)
+	return "", fmt.Errorf("Cannot find account name %q", acc_name.(string))
 }
 
 func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, error) {
@@ -118,12 +117,12 @@ func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, er
 		if account_id.(int) > 0 {
 			return account_id.(int), nil
 		}
-		return 0, fmt.Error("Account ID must be positive.")
+		return 0, fmt.Errorf("Account ID must be positive.")
 	}
 
 	account_name, arg_set := d.GetOk("account_name")
 	if !arg_set {
-		return 0, fmt.Error("Non-empty account name or positive account ID must be specified.")
+		return 0, fmt.Errorf("Non-empty account name or positive account ID must be specified.")
 	}
 
 	controller := m.(*ControllerCfg)

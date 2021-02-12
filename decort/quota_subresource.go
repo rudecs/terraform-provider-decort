@@ -24,8 +24,8 @@ import (
 	// "log"
 	// "net/url"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	// "github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
@@ -33,7 +33,7 @@ func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 		Cpu:        -1,
 		Ram:        -1,
 		Disk:       -1,
-		NetTraffic: -1,
+		ExtTraffic: -1,
 		ExtIPs:     -1,
 		GpuUnits:   -1,
 	}

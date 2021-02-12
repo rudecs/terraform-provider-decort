@@ -16,23 +16,22 @@ limitations under the License.
 */
 
 /*
-This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration 
+This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration
 Technology platfom.
 
-Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates. 
+Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates.
 */
 
 package decort
 
 import (
-
 	"encoding/json"
 	"fmt"
-	"log"
 	// "net/url"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func flattenAccount(d *schema.ResourceData, acc_facts string) error {
@@ -41,13 +40,12 @@ func flattenAccount(d *schema.ResourceData, acc_facts string) error {
 
 	// log.Debugf("flattenAccount: ready to decode response body from %q", CloudspacesGetAPI)
 	details := AccountRecord{}
-	err := json.Unmarshal([]byte(rg_facts), &details)
+	err := json.Unmarshal([]byte(acc_facts), &details)
 	if err != nil {
 		return err
 	}
 
-	log.Debugf("flattenAccount: decoded Account name %q / ID %d, status %q",
-		details.Name, details.ID, details.Status)
+	log.Debugf("flattenAccount: decoded Account name %q / ID %d, status %q", details.Name, details.ID, details.Status)
 
 	d.SetId(fmt.Sprintf("%d", details.ID))
 	d.Set("name", details.Name)
@@ -95,8 +93,8 @@ func dataSourceAccount() *schema.Resource {
 			"status": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Current status of the account."
-			}
+				Description: "Current status of the account.",
+			},
 
 			/* We keep the following attributes commented out, as we are not implementing account
 			   management with Terraform plugin, so we do not need this extra info.
@@ -129,8 +127,6 @@ func dataSourceAccount() *schema.Resource {
 				Description:  "IDs of VINSes created at the account level."
 			},
 			*/
-
-			},
 		},
 	}
 }

@@ -29,10 +29,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	// "github.com/hashicorp/terraform/helper/validation"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 
@@ -54,52 +55,52 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	//
 
 	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
+	urlValues := &url.Values{}
 
-	disk_id, arg_set := d.GetOk("disk_id")
-	if arg_set {
+	diskId, argSet := d.GetOk("disk_id")
+	if argSet {
 		// go straight for the disk by its ID
-		log.Debugf("utilityDiskCheckPresence: locating disk by its ID %d", disk_id.(int))
-		url_values.Add("diskId", fmt.Sprintf("%d", disk_id.(int)))
-		disk_facts, err := controller.decortAPICall("POST", DisksGetAPI, url_values)
+		log.Debugf("utilityDiskCheckPresence: locating disk by its ID %d", diskId.(int))
+		urlValues.Add("diskId", fmt.Sprintf("%d", diskId.(int)))
+		diskFacts, err := controller.decortAPICall("POST", DisksGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
-		return disk_facts, nil
+		return diskFacts, nil
 	}
 
-	disk_name, arg_set := d.GetOk("name")
-	if !arg_set {
+	diskName, argSet := d.GetOk("name")
+	if !argSet {
 		// no disk ID and no disk name - we cannot locate disk in this case
-		return "", fmt.Error("Cannot locate disk if name is empty and no disk ID specified.")
+		return "", fmt.Errorf("Cannot locate disk if name is empty and no disk ID specified")
 	}
 
 	// Valid account ID is required to locate disks
 	// obtain Account ID by account name - it should not be zero on success
-	validated_account_id, err := utilityGetAccountIdBySchema(d, m)
-	if err != nil {
-		return err
-	}
-
-	url_values.Add("accountId", fmt.Sprintf("%d", validated_account_id))
-	disk_facts, err := controller.decortAPICall("POST", DisksListAPI, url_values)
+	validatedAccountId, err := utilityGetAccountIdBySchema(d, m)
 	if err != nil {
 		return "", err
 	}
 
-	log.Debugf("utilityDiskCheckPresence: ready to unmarshal string %q", disk_facts) 
+	urlValues.Add("accountId", fmt.Sprintf("%d", validatedAccountId))
+	diskFacts, err := controller.decortAPICall("POST", DisksListAPI, urlValues)
+	if err != nil {
+		return "", err
+	}
 
-	disks_list := []DiskRecord
-	err = json.Unmarshal([]byte(disk_facts), &disks_list)
+	log.Debugf("utilityDiskCheckPresence: ready to unmarshal string %q", diskFacts) 
+
+	disksList := DisksListResp{}
+	err = json.Unmarshal([]byte(diskFacts), &disksList)
 	if err != nil {
 		return "", err
 	}
 
 	// log.Printf("%#v", vm_list)
-	log.Debugf("utilityDiskCheckPresence: traversing decoded JSON of length %d", len(disks_list))
-	for _, item := range disks_list {
+	log.Debugf("utilityDiskCheckPresence: traversing decoded JSON of length %d", len(disksList))
+	for index, item := range disksList {
 		// need to match disk by name, return the first match
-		if item.Name == disk_name.(string) && item.Status != "DESTROYED" {
+		if item.Name == diskName.(string) && item.Status != "DESTROYED" {
 			log.Printf("utilityDiskCheckPresence: index %d, matched disk name %q", index, item.Name)
 			// we found the disk we need - not get detailed information via API call to disks/get
 			/*
@@ -107,19 +108,19 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 			// in spite of the fact that we already have all required information about the disk in
 			// item variable
 			//
-			get_url_values := &url.Values{}
-			get_url_values.Add("diskId", fmt.Sprintf("%d", item.ID))
-			disk_facts, err = controller.decortAPICall("POST", DisksGetAPI, get_url_values)
+			get_urlValues := &url.Values{}
+			get_urlValues.Add("diskId", fmt.Sprintf("%d", item.ID))
+			diskFacts, err = controller.decortAPICall("POST", DisksGetAPI, get_urlValues)
 			if err != nil {
 				return "", err
 			}
-			return disk_facts, nil
+			return diskFacts, nil
 			*/
-			reencoded_item, err := json.Marshal(item)
+			reencodedItem, err := json.Marshal(item)
 			if err != nil {
 				return "", err
 			}
-			return reencoded_item.(string), nil 
+			return string(reencodedItem[:]), nil 
 		}
 	}
 

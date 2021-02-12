@@ -27,11 +27,12 @@ package decort
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/url"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {

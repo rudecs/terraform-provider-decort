@@ -25,11 +25,11 @@ package decort
 
 import (
 	"fmt"
-	"log"
 	"net/url"
-	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
@@ -60,7 +60,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	// quota settings are optional
 	set_quota := false
 	var quota_record QuotaRecord
-	arg_value, arg_set = d.GetOk("quota")
+	arg_value, arg_set := d.GetOk("quota")
 	if arg_set {
 		log.Debugf("resourceResgroupCreate: setting Quota on RG requested")
 		quota_record, _ = makeQuotaRecord(arg_value.([]interface{}))
@@ -68,15 +68,15 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	controller := m.(*ControllerCfg)
-	log.Debugf("resourceResgroupCreate: called by user %q for RG name %q, account  %q / ID %d, Grid ID %d",
-		controller.getdecortUsername(),
-		rg_name.(string), account_name.(string), validated_account_id, gird_id.(int))
+	log.Debugf("resourceResgroupCreate: called by user %q for RG name %q, account ID %d, Grid ID %d",
+		controller.getDecortUsername(),
+		rg_name.(string), validated_account_id, grid_id.(int))
 
 	url_values := &url.Values{}
 	url_values.Add("accountId", fmt.Sprintf("%d", validated_account_id))
 	url_values.Add("name", rg_name.(string))
 	url_values.Add("gid", fmt.Sprintf("%d", grid_id.(int)))
-	url_values.Add("owner", controller.getdecortUsername())
+	url_values.Add("owner", controller.getDecortUsername())
 
 	// pass quota values as set
 	if set_quota {
@@ -89,24 +89,24 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	// parse and handle network settings
-	def_net_type, arg_set = d.GetOk("def_net_type")
+	def_net_type, arg_set := d.GetOk("def_net_type")
 	if arg_set {
-		ulr_values.Add("def_net", def_net_type.(string)) // NOTE: in API default network type is set by "def_net" parameter
+		url_values.Add("def_net", def_net_type.(string)) // NOTE: in API default network type is set by "def_net" parameter
 	}
 
-	ipcidr, arg_set = d.GetOk("ipcidr")
+	ipcidr, arg_set := d.GetOk("ipcidr")
 	if arg_set {
-		ulr_values.Add("ipcidr", ipcidr.(string))
+		url_values.Add("ipcidr", ipcidr.(string))
 	}
 
-	ext_net_id, arg_set = d.GetOk("ext_net_id")
+	ext_net_id, arg_set := d.GetOk("ext_net_id")
 	if arg_set {
-		ulr_values.Add("extNetId", ext_net_id.(int))
+		url_values.Add("extNetId", fmt.Sprintf("%d", ext_net_id.(int)))
 	}
 
-	ext_ip, arg_set = d.GetOk("ext_ip")
+	ext_ip, arg_set := d.GetOk("ext_ip")
 	if arg_set {
-		ulr_values.Add("extIp", ext_ip.(string))
+		url_values.Add("extIp", ext_ip.(string))
 	}
 
 	api_resp, err := controller.decortAPICall("POST", ResgroupCreateAPI, url_values)
@@ -115,7 +115,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	d.SetId(api_resp) // rg/create API returns ID of the newly creted resource group on success
-	rg.ID, _ = strconv.Atoi(api_resp)
+	// rg.ID, _ = strconv.Atoi(api_resp)
 
 	// re-read newly created RG to make sure schema contains complete and up to date set of specifications
 	return resourceResgroupRead(d, m)
@@ -159,7 +159,7 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 	if quota_set {
 		log.Debugf("resourceResgroupUpdate: quota specified - looking for deltas from the old quota.")
 		quotarecord_new, _ := makeQuotaRecord(quota_value.([]interface{}))
-		quota_value_old, _ = d.GetChange("quota") // returns old as 1st, new as 2nd return value
+		quota_value_old, _ := d.GetChange("quota") // returns old as 1st, new as 2nd return value
 		quotarecord_old, _ := makeQuotaRecord(quota_value_old.([]interface{}))
 
 		if quotarecord_new.Cpu != quotarecord_old.Cpu {
@@ -182,8 +182,8 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 
 		if quotarecord_new.ExtTraffic != quotarecord_old.ExtTraffic {
 			do_update = true
-			log.Debugf("resourceResgroupUpdate: NetTraffic diff %d <- %d", quotarecord_new.ExtTraffic, quotarecord_old.ExtTraffic)
-			url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", quotarecord_new.NetTraffic))
+			log.Debugf("resourceResgroupUpdate: ExtTraffic diff %d <- %d", quotarecord_new.ExtTraffic, quotarecord_old.ExtTraffic)
+			url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", quotarecord_new.ExtTraffic))
 		}
 
 		if quotarecord_new.ExtIPs != quotarecord_old.ExtIPs {
@@ -323,12 +323,6 @@ func resourceResgroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IP address on the external netowrk to request, if def_net_type=PUBLIC",
-			},
-
-			"account_id": &schema.Schema{
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Unique ID of the account, which this resource group belongs to.",
 			},
 
 			"grid_id": &schema.Schema{ // change of Grid ID will require new RG

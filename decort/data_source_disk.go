@@ -16,23 +16,23 @@ limitations under the License.
 */
 
 /*
-This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration 
+This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration
 Technology platfom.
 
-Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates. 
+Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates.
 */
 
 package decort
 
 import (
-
 	"encoding/json"
 	"fmt"
-	"log"
 	// "net/url"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func flattenDisk(d *schema.ResourceData, disk_facts string) error {
@@ -41,14 +41,14 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
 	// from resourceDiskExists(...) method
 	model := DiskRecord{}
-	log.Debugf("flattenDisk: ready to unmarshal string %q", disk_facts) 
+	log.Debugf("flattenDisk: ready to unmarshal string %q", disk_facts)
 	err := json.Unmarshal([]byte(disk_facts), &model)
 	if err != nil {
 		return err
 	}
 
 	log.Debugf("flattenDisk: disk ID %d, disk AccountID %d", model.ID, model.AccountID)
-			   
+
 	d.SetId(fmt.Sprintf("%d", model.ID))
 	d.Set("disk_id", model.ID)
 	d.Set("name", model.Name)
@@ -67,7 +67,7 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 	d.Set("status", model.Status)
 	d.Set("tech_status", model.TechStatus)
 
-	/* we do not manage snapshots via Terraform yet, so keep this commented out for a while 
+	/* we do not manage snapshots via Terraform yet, so keep this commented out for a while
 	if len(model.Snapshots) > 0 {
 		log.Debugf("flattenDisk: calling flattenDiskSnapshots")
 		if err = d.Set("nics", flattenDiskSnapshots(model.Snapshots)); err != nil {
@@ -83,7 +83,7 @@ func dataSourceDiskRead(d *schema.ResourceData, m interface{}) error {
 	disk_facts, err := utilityDiskCheckPresence(d, m)
 	if disk_facts == "" {
 		// if empty string is returned from utilityDiskCheckPresence then there is no
-		// such Disk and err tells so - just return it to the calling party 
+		// such Disk and err tells so - just return it to the calling party
 		d.SetId("") // ensure ID is empty
 		return err
 	}
@@ -92,29 +92,29 @@ func dataSourceDiskRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func dataSourceDiskSchemaMake() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
 		"name": {
-			Type:          schema.TypeString,
-			Optional:      true,
-			Description:  "Name of this disk. NOTE: disk names are NOT unique within an account.",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Name of this disk. NOTE: disk names are NOT unique within an account.",
 		},
 
 		"disk_id": {
-			Type:         schema.TypeInt,
-			Optional:     true,
-			Description:  "ID of the disk to get. If disk ID is specified, then name, account and account ID are ignored.",
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "ID of the disk to get. If disk ID is specified, then name, account and account ID are ignored.",
 		},
 
 		"account_id": {
-			Type:         schema.TypeInt,
-			Optional:     true,
-			Description:  "ID of the account this disk belongs to.",
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "ID of the account this disk belongs to.",
 		},
 
 		"account_name": {
-			Type:          schema.TypeString,
-			Optional:      true,
-			Description:  "Name of the account this disk belongs to. If account ID is specified, account name is ignored.",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Name of the account this disk belongs to. If account ID is specified, account name is ignored.",
 		},
 
 		"description": {
@@ -142,14 +142,14 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 		},
 
 		/*
-		"snapshots": {
-			Type:        schema.TypeList,
-			Computed:    true,
-			Elem:          &schema.Resource {
-				Schema:    snapshotSubresourceSchemaMake(),
+			"snapshots": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:          &schema.Resource {
+					Schema:    snapshotSubresourceSchemaMake(),
+				},
+				Description: "List of user-created snapshots for this disk."
 			},
-			Description: "List of user-created snapshots for this disk."
-		},
 		*/
 
 		"sep_id": {
@@ -171,37 +171,38 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 		},
 
 		"status": {
-			Type:          schema.TypeString,
-			Computed:      true,
-			Description:  "Current model status of this disk.",
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Current model status of this disk.",
 		},
 
 		"tech_status": {
-			Type:          schema.TypeString,
-			Computed:      true,
-			Description:  "Current technical status of this disk.",
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Current technical status of this disk.",
 		},
 
 		"compute_id": {
-			Type:          schema.TypeInt,
-			Computed:      true,
-			Description:  "ID of the compute instance where this disk is attached to, or 0 for unattached disk.",
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of the compute instance where this disk is attached to, or 0 for unattached disk.",
 		},
 	}
 
-	return ret
+	return rets
 }
 
 func dataSourceDisk() *schema.Resource {
-	return &schema.Resource {
+	return &schema.Resource{
 		SchemaVersion: 1,
 
-		Read:   dataSourceDiskRead,
+		Read: dataSourceDiskRead,
 
-		Timeouts: &schema.ResourceTimeout {
+		Timeouts: &schema.ResourceTimeout{
 			Read:    &Timeout30s,
 			Default: &Timeout60s,
 		},
 
 		Schema: dataSourceDiskSchemaMake(),
+	}
 }

@@ -134,14 +134,14 @@ type ResgroupGetResp struct {
 	Usage       UsageRecord     `json:"Resources"`
 	AccountID   int             `json:"accountId"`
 	AccountName string          `json:"accountName"`
-
+	GridID int                  `json:"gid"`
 	CreatedBy      string      `json:"createdBy"`
 	CreatedTime    uint64      `json:"createdTime"`
 	DefaultNetID   int         `json:"def_net_id"`
 	DefaultNetType string      `json:"def_net_type"`
 	DeletedBy      string      `json:"deletedBy"`
 	DeletedTime    uint64      `json:"deletedTime"`
-	Decsription    string      `json:"desc"`
+	Desc           string      `json:"desc"`
 	ID             uint        `json:"id"`
 	LockStatus     string      `json:"lockStatus"`
 	Name           string      `json:"name"`
@@ -153,23 +153,6 @@ type ResgroupGetResp struct {
 	Computes       []int       `json:"vms"`
 
 	Ignored map[string]interface{} `json:"-"`
-}
-
-//
-// structures related to /cloudapi/rg/update API
-//
-const ResgroupUpdateAPI = "/restmachine/cloudapi/rg/update"
-
-type ResgroupUpdateParam struct {
-	ID          uint   `json:"rgId"`
-	Name        string `json:"name"`
-	Decsription string `json:"desc"`
-	Cpu         int    `json:"maxCPUCapacity"`
-	Ram         int    `json:"maxMemoryCapacity"`
-	Disk        int    `json:"maxVDiskCapacity"`
-	NetTraffic  int    `json:"maxNetworkPeerTransfer"`
-	ExtIPs      int    `json:"maxNumPublicIP"`
-	Reason      string `json:"reason"`
 }
 
 //
@@ -214,7 +197,7 @@ type KvmVmCreateParam struct { // this is unified structure for both x86 and PPC
 	NetId       int    `json:"netId"`
 	IPAddr      string `json:"ipAddr"`
 	UserData    string `json:"userdata"`
-	Description string `json:"desc"`
+	Desc        string `json:"desc"`
 	Start       bool   `json:"start"`
 }
 
@@ -364,7 +347,7 @@ type ComputeGetResp struct {
 	BootDiskSize       int               `json:"bootdiskSize"`
 	CloneReference     int               `json:"cloneReference"`
 	Clones             []int             `json:"clones"`
-	Cpus               int               `json:"cpus"`
+	Cpu                int               `json:"cpus"`
 	Desc               string            `json:"desc"`
 	Disks              []DiskRecord      `json:"disks"`
 	GridID             int               `json:"gid"`
@@ -514,3 +497,13 @@ const DisksCreateAPI = "/restmachine/cloudapi/disks/create"
 const DisksGetAPI = "/restmachine/cloudapi/disks/get" // Returns single DiskRecord on success
 
 const DisksListAPI = "/restmachine/cloudapi/disks/list" // Returns list of DiskRecord on success
+type DisksListResp []DiskRecord
+
+//
+// Auxiliary structures
+//
+type SshKeyConfig struct {
+	User      string
+	SshKey    string
+	UserShell string
+}

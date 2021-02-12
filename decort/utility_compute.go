@@ -16,23 +16,23 @@ limitations under the License.
 */
 
 /*
-This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration 
+This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration
 Technology platfom.
 
-Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates. 
+Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates.
 */
 
 package decort
 
 import (
-
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	// "github.com/hashicorp/terraform/helper/validation"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 /*
@@ -54,7 +54,7 @@ func (ctrl *ControllerCfg) utilityVmDisksProvision(mcfg *MachineConfig) error {
 			// failed to create disk - partial resource update
 			return err
 		}
-		// disk created - API call returns disk ID as a string - use it to update  
+		// disk created - API call returns disk ID as a string - use it to update
 		// disk ID in the corresponding MachineConfig.DiskConfig record
 
 		mcfg.DataDisks[index].ID, err = strconv.Atoi(disk_id_resp)
@@ -84,7 +84,7 @@ func (ctrl *ControllerCfg) utilityVmPortforwardsProvision(mcfg *MachineConfig) e
 		url_values := &url.Values{}
 		url_values.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
 		url_values.Add("cloudspaceId", fmt.Sprintf("%d", mcfg.ResGroupID))
-		url_values.Add("publicIp", mcfg.ExtIP) // this may be obsoleted by Resource group implementation 
+		url_values.Add("publicIp", mcfg.ExtIP) // this may be obsoleted by Resource group implementation
 		url_values.Add("publicPort", fmt.Sprintf("%d", rule.ExtPort))
 		url_values.Add("localPort", fmt.Sprintf("%d", rule.IntPort))
 		url_values.Add("protocol", rule.Proto)
@@ -115,8 +115,8 @@ func (ctrl *ControllerCfg) utilityVmNetworksProvision(mcfg *MachineConfig) error
 
 func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
 	// This function tries to locate Compute by one of the following approaches:
-	// - if compute_id is specified - locate by compute ID 
-	// - if compute_name is specified - locate by a combination of compute name and resource 
+	// - if compute_id is specified - locate by compute ID
+	// - if compute_name is specified - locate by a combination of compute name and resource
 	//   group ID
 	//
 	// If succeeded, it returns non-empty string that contains JSON formatted facts about the
@@ -126,6 +126,9 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	// This function does not modify its ResourceData argument, so it is safe to use it as core
 	// method for resource's Exists method.
 	//
+
+	controller := m.(*ControllerCfg)
+	url_values := &url.Values{}
 
 	compute_id, arg_set := d.GetOk("compute_id")
 	if arg_set {
@@ -141,24 +144,21 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 
 	compute_name, arg_set := d.GetOk("name")
 	if !arg_set {
-		return "", fmt.Error("Cannot locate compute instance if name is empty and no compute ID specified.")
+		return "", fmt.Errorf("Cannot locate compute instance if name is empty and no compute ID specified.")
 	}
 
 	rg_id, arg_set := d.GetOk("rg_id")
 	if !arg_set {
-		return "", fmt.Error("Cannot locate compute by name %s if no resource group ID is set", compute_name.(string))
+		return "", fmt.Errorf("Cannot locate compute by name %s if no resource group ID is set", compute_name.(string))
 	}
-
-
-	controller := m.(*ControllerCfg)
-	list_url_values := &url.Values{}
-	list_url_values.Add("rgId", fmt.Sprintf("%d",rg_id))
-	api_resp, err := controller.decortAPICall("POST", RgListComputesAPI, list_url_values)
+	
+	url_values.Add("rgId", fmt.Sprintf("%d", rg_id))
+	api_resp, err := controller.decortAPICall("POST", RgListComputesAPI, url_values)
 	if err != nil {
 		return "", err
 	}
 
-	log.Debugf("utilityComputeCheckPresence: ready to unmarshal string %q", api_resp) 
+	log.Debugf("utilityComputeCheckPresence: ready to unmarshal string %q", api_resp)
 
 	comp_list := RgListComputesResp{}
 	err = json.Unmarshal([]byte(api_resp), &comp_list)
@@ -168,9 +168,9 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 
 	// log.Printf("%#v", comp_list)
 	log.Debugf("utilityComputeCheckPresence: traversing decoded JSON of length %d", len(comp_list))
-	for _, item := range comp_list {
+	for index, item := range comp_list {
 		// need to match Compute by name, skip Computes with the same name in DESTROYED satus
-		if item.Name == name && item.Status != "DESTROYED" {
+		if item.Name == compute_name.(string) && item.Status != "DESTROYED" {
 			log.Debugf("utilityComputeCheckPresence: index %d, matched name %q", index, item.Name)
 			// we found the Compute we need - now get detailed information via compute/get API
 			get_url_values := &url.Values{}

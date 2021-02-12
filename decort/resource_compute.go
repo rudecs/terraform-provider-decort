@@ -16,35 +16,35 @@ limitations under the License.
 */
 
 /*
-This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration 
+This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration
 Technology platfom.
 
-Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates. 
+Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates.
 */
 
 package decort
 
 import (
-
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/url"
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-
 func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
+	/*
 	machine := &MachineConfig{
-		ResGroupID:       d.Get("rgid").(int),
-		Name:             d.Get("name").(string),
-		Cpu:              d.Get("cpu").(int),
-		Ram:              d.Get("ram").(int),
-		ImageID:          d.Get("image_id").(int),
-		Description:      d.Get("description").(string),
+		ResGroupID:  d.Get("rgid").(int),
+		Name:        d.Get("name").(string),
+		Cpu:         d.Get("cpu").(int),
+		Ram:         d.Get("ram").(int),
+		ImageID:     d.Get("image_id").(int),
+		Description: d.Get("description").(string),
 	}
 	// BootDisk
 	// DataDisks
@@ -52,7 +52,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	// PortForwards
 	// SshKeyData string
 	log.Printf("resourceComputeCreate: called for VM name %q, ResGroupID %d", machine.Name, machine.ResGroupID)
-	
+
 	var subres_list []interface{}
 	var subres_data map[string]interface{}
 	var arg_value interface{}
@@ -66,13 +66,12 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	machine.BootDisk.Pool = subres_data["pool"].(string)
 	machine.BootDisk.Provider = subres_data["provider"].(string)
 
-	
 	arg_value, arg_set = d.GetOk("data_disks")
 	if arg_set {
 		log.Printf("resourceComputeCreate: calling makeDisksConfig")
 		machine.DataDisks, _ = makeDisksConfig(arg_value.([]interface{}))
 	}
-	
+
 	arg_value, arg_set = d.GetOk("networks")
 	if arg_set {
 		log.Printf("resourceComputeCreate: calling makeNetworksConfig")
@@ -84,13 +83,13 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		log.Printf("resourceComputeCreate: calling makePortforwardsConfig")
 		machine.PortForwards, _ = makePortforwardsConfig(arg_value.([]interface{}))
 	}
-	
+
 	arg_value, arg_set = d.GetOk("ssh_keys")
 	if arg_set {
 		log.Printf("resourceComputeCreate: calling makeSshKeysConfig")
 		machine.SshKeys, _ = makeSshKeysConfig(arg_value.([]interface{}))
 	}
-	
+
 	// create basic VM (i.e. without port forwards and ext network connections - those will be done
 	// by separate API calls)
 	d.Partial(true)
@@ -126,7 +125,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 
 	if len(machine.DataDisks) > 0 || len(machine.PortForwards) > 0 {
 		// for data disk or port foreards provisioning we have to know Tenant ID
-		// and Grid ID so we call utilityResgroupConfigGet method to populate these 
+		// and Grid ID so we call utilityResgroupConfigGet method to populate these
 		// fields in the machine structure that will be passed to provisionVmDisks or
 		// provisionVmPortforwards
 		log.Printf("resourceComputeCreate: calling utilityResgroupConfigGet")
@@ -135,8 +134,8 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 			machine.TenantID = resgroup.TenantID
 			machine.GridID = resgroup.GridID
 			machine.ExtIP = resgroup.ExtIP
-			log.Printf("resourceComputeCreate: tenant ID %d, GridID %d, ExtIP %q", 
-			machine.TenantID, machine.GridID, machine.ExtIP)
+			log.Printf("resourceComputeCreate: tenant ID %d, GridID %d, ExtIP %q",
+				machine.TenantID, machine.GridID, machine.ExtIP)
 		}
 	}
 
@@ -164,7 +163,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	if disks_ok {
 		d.SetPartial("data_disks")
 	}
-	
+
 	//
 	// Configure port forward rules
 	pfws_ok := true
@@ -179,7 +178,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 			err := controller.utilityVmPortforwardsProvision(machine)
 			if err != nil {
 				pfws_ok = false
-			}	
+			}
 		}
 	}
 	if pfws_ok {
@@ -204,10 +203,11 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		d.SetPartial("networks")
 	}
 
-	if ( disks_ok && nets_ok && pfws_ok ) {
+	if disks_ok && nets_ok && pfws_ok {
 		// if there were no errors in setting any of the subresources, we may leave Partial mode
 		d.Partial(false)
 	}
+	*/
 
 	// resourceComputeRead will also update resource ID on success, so that Terraform will know
 	// that resource exists
@@ -215,9 +215,9 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("resourceComputeRead: called for VM name %q, ResGroupID %d", 
-	           d.Get("name").(string), d.Get("rgid").(int))
-	
+	log.Printf("resourceComputeRead: called for VM name %q, ResGroupID %d",
+		d.Get("name").(string), d.Get("rgid").(int))
+
 	comp_facts, err := utilityComputeCheckPresence(d, m)
 	if comp_facts == "" {
 		if err != nil {
@@ -230,8 +230,8 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 	if err = flattenCompute(d, comp_facts); err != nil {
 		return err
 	}
-	log.Printf("resourceComputeRead: after flattenCompute: VM ID %s, VM name %q, ResGroupID %d", 
-	           d.Id(), d.Get("name").(string), d.Get("rgid").(int))
+	log.Printf("resourceComputeRead: after flattenCompute: VM ID %s, VM name %q, ResGroupID %d",
+		d.Id(), d.Get("name").(string), d.Get("rgid").(int))
 
 	// Not all parameters, that we may need, are returned by machines/get API
 	// Continue with further reading of VM subresource parameters:
@@ -239,38 +239,39 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 	url_values := &url.Values{}
 
 	/*
-	// Obtain information on external networks
-	url_values.Add("machineId", d.Id())
-	body_string, err := controller.decortAPICall("POST", VmExtNetworksListAPI, url_values)
-	if err != nil {
-		return err
-	}
-
-	net_list := ExtNetworksResp{}
-	err = json.Unmarshal([]byte(body_string), &net_list)
-	if err != nil {
-		return err
-	}
-
-	if len(net_list) > 0 {
-		if err = d.Set("networks", flattenNetworks(net_list)); err != nil {
+		// Obtain information on external networks
+		url_values.Add("machineId", d.Id())
+		body_string, err := controller.decortAPICall("POST", VmExtNetworksListAPI, url_values)
+		if err != nil {
 			return err
 		}
-	}
+
+		net_list := ExtNetworksResp{}
+		err = json.Unmarshal([]byte(body_string), &net_list)
+		if err != nil {
+			return err
+		}
+
+		if len(net_list) > 0 {
+			if err = d.Set("networks", flattenNetworks(net_list)); err != nil {
+				return err
+			}
+		}
 	*/
 
 	/*
-	// Ext networks flattening is now done inside flattenCompute because it is currently based
-	// on data read into NICs component by machine/get API call
+		// Ext networks flattening is now done inside flattenCompute because it is currently based
+		// on data read into NICs component by machine/get API call
 
-	if err = d.Set("networks", flattenNetworks()); err != nil {
-		return err
-	}
+		if err = d.Set("networks", flattenNetworks()); err != nil {
+			return err
+		}
 	*/
 
 	//
 	// Obtain information on port forwards
-	url_values.Add("cloudspaceId", fmt.Sprintf("%d",d.Get("rgid")))
+	/*
+	url_values.Add("cloudspaceId", fmt.Sprintf("%d", d.Get("rgid")))
 	url_values.Add("machineId", d.Id())
 	pfw_list := PortforwardsResp{}
 	body_string, err := controller.decortAPICall("POST", PortforwardsListAPI, url_values)
@@ -287,26 +288,27 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
+	*/
 
 	return nil
 }
 
 func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("resourceComputeUpdate: called for VM name %q, ResGroupID %d", 
-			   d.Get("name").(string), d.Get("rgid").(int))
-			   
+	log.Printf("resourceComputeUpdate: called for VM name %q, ResGroupID %d",
+		d.Get("name").(string), d.Get("rgid").(int))
+
 	return resourceComputeRead(d, m)
 }
 
 func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 	// NOTE: this method destroys target VM with flag "permanently", so there is no way to
 	// restore destroyed VM
-	log.Printf("resourceComputeDelete: called for VM name %q, ResGroupID %d", 
-	           d.Get("name").(string), d.Get("rgid").(int))
-			   
+	log.Printf("resourceComputeDelete: called for VM name %q, ResGroupID %d",
+		d.Get("name").(string), d.Get("rgid").(int))
+
 	comp_facts, err := utilityComputeCheckPresence(d, m)
 	if comp_facts == "" {
-		// the target VM does not exist - in this case according to Terraform best practice 
+		// the target VM does not exist - in this case according to Terraform best practice
 		// we exit from Destroy method without error
 		return nil
 	}
@@ -326,9 +328,9 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 
 func resourceComputeExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
-	log.Printf("resourceComputeExist: called for VM name %q, ResGroupID %d", 
-			   d.Get("name").(string), d.Get("rgid").(int))
-			   
+	log.Printf("resourceComputeExist: called for VM name %q, ResGroupID %d",
+		d.Get("name").(string), d.Get("rgid").(int))
+
 	comp_facts, err := utilityComputeCheckPresence(d, m)
 	if comp_facts == "" {
 		if err != nil {
@@ -340,16 +342,16 @@ func resourceComputeExists(d *schema.ResourceData, m interface{}) (bool, error) 
 }
 
 func resourceCompute() *schema.Resource {
-	return &schema.Resource {
+	return &schema.Resource{
 		SchemaVersion: 1,
 
 		Create: resourceComputeCreate,
 		Read:   resourceComputeRead,
 		Update: resourceComputeUpdate,
 		Delete: resourceComputeDelete,
-		Exists:  resourceComputeExists,
+		Exists: resourceComputeExists,
 
-		Timeouts: &schema.ResourceTimeout {
+		Timeouts: &schema.ResourceTimeout{
 			Create:  &Timeout180s,
 			Read:    &Timeout30s,
 			Update:  &Timeout180s,
@@ -357,11 +359,11 @@ func resourceCompute() *schema.Resource {
 			Default: &Timeout60s,
 		},
 
-		Schema: map[string]*schema.Schema {
+		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:          schema.TypeString,
-				Required:      true,
-				Description:  "Name of this virtual machine. This parameter is case sensitive.",
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of this virtual machine. This parameter is case sensitive.",
 			},
 
 			"rgid": {
@@ -393,70 +395,70 @@ func resourceCompute() *schema.Resource {
 			},
 
 			"boot_disk": {
-				Type:        schema.TypeList,
-				Required:    true,
-				MaxItems:    1,
-				Elem:        &schema.Resource {
-					Schema:  diskSubresourceSchema(),
+				Type:     schema.TypeList,
+				Required: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: diskSubresourceSchema(),
 				},
 				Description: "Specification for a boot disk on this virtual machine.",
 			},
 
 			"data_disks": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				MaxItems:    12,
-				Elem:        &schema.Resource {
-					Schema:  diskSubresourceSchema(),
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 12,
+				Elem: &schema.Resource{
+					Schema: diskSubresourceSchema(),
 				},
 				Description: "Specification for data disks on this virtual machine.",
 			},
 
 			"guest_logins": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem:        &schema.Resource {
-					Schema:  loginsSubresourceSchema(),
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: loginsSubresourceSchema(),
 				},
 				Description: "Specification for guest logins on this virtual machine.",
 			},
-			
+
 			"networks": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				MaxItems:    8,
-				Elem:        &schema.Resource {
-					Schema:  networkSubresourceSchema(),
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 8,
+				Elem: &schema.Resource{
+					Schema: networkSubresourceSchema(),
 				},
 				Description: "Specification for the networks to connect this virtual machine to.",
 			},
 
 			"nics": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				MaxItems:    8,
-				Elem:        &schema.Resource {
-					Schema:  nicSubresourceSchema(),
+				Type:     schema.TypeList,
+				Computed: true,
+				MaxItems: 8,
+				Elem: &schema.Resource{
+					Schema: nicSubresourceSchema(),
 				},
 				Description: "Specification for the virutal NICs allocated to this virtual machine.",
 			},
-			
+
 			"ssh_keys": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				MaxItems:    12,
-				Elem:        &schema.Resource {
-					Schema:  sshSubresourceSchema(),
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 12,
+				Elem: &schema.Resource{
+					Schema: sshSubresourceSchema(),
 				},
 				Description: "SSH keys to authorize on this virtual machine.",
 			},
 
 			"port_forwards": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				MaxItems:    12,
-				Elem:        &schema.Resource {
-					Schema:  portforwardSubresourceSchema(),
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 12,
+				Elem: &schema.Resource{
+					Schema: portforwardSubresourceSchema(),
 				},
 				Description: "Specification for the port forwards to configure for this virtual machine.",
 			},
@@ -479,7 +481,6 @@ func resourceCompute() *schema.Resource {
 				Sensitive:   true,
 				Description: "Default password for the guest OS login on this virtual machine.",
 			},
-
 		},
 	}
 }

@@ -30,13 +30,18 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package main
 
 import (
-	"github.com/hashicorp/terraform/plugin"
-	"github.com/hashicorp/terraform/terraform"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/plugin"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 
 	"github.com/rudecs/terraform-provider-decort/decort"
 )
 
 func main() {
+	log.SetLevel(log.DebugLevel)
+	log.Debug("Debug logging enabled")
+
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: func() terraform.ResourceProvider {
 			return decort.Provider()

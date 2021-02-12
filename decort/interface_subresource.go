@@ -22,12 +22,14 @@ limitations under the License.
 package decort
 
 import (
-	"log"
-	"strconv"
-	"strings"
+	/*
+		"log"
+		"strconv"
+		"strings"
+	*/
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func interfaceSubresourceSchemaMake() map[string]*schema.Schema {
@@ -216,13 +218,11 @@ func flattenPortforwards(pfws []PortforwardRecord) []interface{} {
 
 func portforwardSubresourceSchema() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
-		/* this should be uncommented for the future release
 		"label": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Unique label of this network connection to identify it amnong other connections for this VM.",
 		},
-		*/
 
 		"ext_port": {
 			Type:         schema.TypeInt,
