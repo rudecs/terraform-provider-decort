@@ -26,7 +26,7 @@ import (
 
 
 // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
-func diskSubresourceSchema() map[string]*schema.Schema {
+func diskSubresourceSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"name": {
 			Type:        schema.TypeString,

@@ -35,74 +35,54 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-/*
+// TODO: implement do_delta logic
+func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceData, do_delta bool) error {
+	// d is filled with data according to computeResource schema, so extra disks config is retrieved via "extra_disks" key
+	// If do_delta is true, this function will identify changes between new and existing specs for extra disks and try to 
+	// update compute configuration accordingly
+	argVal, argSet := d.GetOk("extra_disks") 
+	if !argSet || len(argVal.([]interface{})) < 1 {
+		return nil
+	}
 
-func (ctrl *ControllerCfg) utilityVmDisksProvision(mcfg *MachineConfig) error {
-	for index, disk := range mcfg.DataDisks {
+	extra_disks_list := argVal.([]interface{}) // "extra_disks" is a list of ints
+
+	for _, disk := range extra_disks_list {
 		urlValues := &url.Values{}
-		// urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		urlValues.Add("accountId", fmt.Sprintf("%d", mcfg.TenantID))
-		urlValues.Add("gid", fmt.Sprintf("%d", mcfg.GridID))
-		urlValues.Add("name", fmt.Sprintf("%s", disk.Label))
-		urlValues.Add("description", fmt.Sprintf("Data disk for VM ID %d / VM Name: %s", mcfg.ID, mcfg.Name))
-		urlValues.Add("size", fmt.Sprintf("%d", disk.Size))
-		urlValues.Add("type", "D")
-		// urlValues.Add("iops", )
-
-		disk_id_resp, err := ctrl.decortAPICall("POST", DiskCreateAPI, urlValues)
+		urlValues.Add("computeId", d.Id())
+		urlValues.Add("diskId", fmt.Sprintf("%d", disk.(int)))
+		_, err := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
 		if err != nil {
-			// failed to create disk - partial resource update
-			return err
-		}
-		// disk created - API call returns disk ID as a string - use it to update
-		// disk ID in the corresponding MachineConfig.DiskConfig record
-
-		mcfg.DataDisks[index].ID, err = strconv.Atoi(disk_id_resp)
-		if err != nil {
-			// failed to convert disk ID into proper integer value - partial resource update
-			return err
-		}
-
-		// now that we have disk created and stored its ID in the mcfg.DataDisks[index].ID
-		// we can attempt attaching the disk to the VM
-		urlValues = &url.Values{}
-		// urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		urlValues.Add("diskId", disk_id_resp)
-		_, err = ctrl.decortAPICall("POST", DiskAttachAPI, urlValues)
-		if err != nil {
-			// failed to attach disk - partial resource update
+			// failed to attach extra disk - partial resource update
 			return err
 		}
 	}
 	return nil
 }
 
-
-func (ctrl *ControllerCfg) utilityVmPortforwardsProvision(mcfg *MachineConfig) error {
-	for _, rule := range mcfg.PortForwards {
-		urlValues := &url.Values{}
-		urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		urlValues.Add("cloudspaceId", fmt.Sprintf("%d", mcfg.ResGroupID))
-		urlValues.Add("publicIp", mcfg.ExtIP) // this may be obsoleted by Resource group implementation
-		urlValues.Add("publicPort", fmt.Sprintf("%d", rule.ExtPort))
-		urlValues.Add("localPort", fmt.Sprintf("%d", rule.IntPort))
-		urlValues.Add("protocol", rule.Proto)
-		_, err := ctrl.decortAPICall("POST", PortforwardingCreateAPI, urlValues)
-		if err != nil {
-			// failed to create port forward rule - partial resource update
-			return err
-		}
+// TODO: implement do_delta logic
+func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceData, do_delta bool) error {
+	// "d" is filled with data according to computeResource schema, so extra networks config is retrieved via "networks" key
+	// If do_delta is true, this function will identify changes between new and existing specs for network and try to 
+	// update compute configuration accordingly
+	argVal, argSet := d.GetOk("networks") 
+	if !argSet || len(argVal.([]interface{})) < 1 {
+		return nil
 	}
-	return nil
-}
 
-func (ctrl *ControllerCfg) utilityVmNetworksProvision(mcfg *MachineConfig) error {
-	for _, net := range mcfg.Networks {
+	net_list := argVal.([]interface{}) // networks" is a list of maps; for keys see func networkSubresourceSchemaMake() definition 
+
+	for _, net := range net_list {
 		urlValues := &url.Values{}
-		urlValues.Add("machineId", fmt.Sprintf("%d", mcfg.ID))
-		urlValues.Add("externalNetworkId", fmt.Sprintf("%d", net.NetworkID))
-		_, err := ctrl.decortAPICall("POST", AttachExternalNetworkAPI, urlValues)
+		net_data := net.(map[string]interface{}) 
+		urlValues.Add("computeId", fmt.Sprintf("%d", d.Id()))
+		urlValues.Add("netType", net_data["net_type"].(string))
+		urlValues.Add("netId", fmt.Sprintf("%d", net_data["net_id"].(int)))
+		ipaddr, ipSet := net_data["ipaddr"] // "ipaddr" key is optional
+		if ipSet {
+			urlValues.Add("ipAddr", ipaddr.(string))
+		}
+		_, err := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
 		if err != nil {
 			// failed to attach network - partial resource update
 			return err
@@ -110,8 +90,6 @@ func (ctrl *ControllerCfg) utilityVmNetworksProvision(mcfg *MachineConfig) error
 	}
 	return nil
 }
-
-*/
 
 func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
 	// This function tries to locate Compute by one of the following approaches:

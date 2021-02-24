@@ -24,6 +24,7 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+/*
 func makeSshKeysConfig(arg_list []interface{}) (sshkeys []SshKeyConfig, count int) {
 	count = len(arg_list)
 	if count < 1 {
@@ -41,8 +42,12 @@ func makeSshKeysConfig(arg_list []interface{}) (sshkeys []SshKeyConfig, count in
 
 	return sshkeys, count
 }
+*/
 
-func makeSshKeysArgString(sshkeys []SshKeyConfig) string {
+func makeSshKeysArgString(arg_list []interface{}) string {
+	// This function expects arg_list = data.Get("ssh_keys"), where "data" is a populated schema for Compute 
+	// Resource (see func resourceCompute() definition) or Compute Data Source (see func dataSourceCompute())
+
 	// Prepare a string with username and public ssh key value in a format recognized by cloud-init utility.
 	// It is designed to be passed as "userdata" argument of virtual machine create API call.
 	// The following format is expected:
@@ -55,15 +60,19 @@ func makeSshKeysArgString(sshkeys []SshKeyConfig) string {
 			- %s\n
 			shell: /bin/bash`
 	*/
-	if len(sshkeys) < 1 {
+
+	if len(arg_list) < 1 {
 		return ""
 	}
 
 	out := `{"users": [`
 	const UserdataTemplate = `%s{"ssh-authorized-keys": ["%s"], "shell": "%s", "name": "%s"}, `
 	const out_suffix = `]}`
-	for _, elem := range sshkeys {
-		out = fmt.Sprintf(UserdataTemplate, out, elem.SshKey, elem.UserShell, elem.User)
+
+	for _, value := range arg_list {
+		subres_data := value.(map[string]interface{})
+
+		out = fmt.Sprintf(UserdataTemplate, out, subres_data["public_key"].(string), subres_data["shell"].(string), subres_data["user"].(string))
 	}
 	out = fmt.Sprintf("%s %s", out, out_suffix)
 	return out

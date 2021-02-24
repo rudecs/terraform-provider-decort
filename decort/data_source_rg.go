@@ -56,7 +56,7 @@ func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
 	d.Set("account_name", details.AccountName)
 	d.Set("account_id", details.AccountID)
 	d.Set("grid_id", details.GridID)
-	d.Set("desc", details.Desc)
+	d.Set("description", details.Desc)
 	d.Set("status", details.Status)
 	d.Set("def_net_type", details.DefaultNetType)
 	d.Set("def_net_id", details.DefaultNetID)
@@ -119,7 +119,7 @@ func dataSourceResgroup() *schema.Resource {
 				Description: "Unique ID of the account, which this resource group belongs to. If account ID is specified, then account name is ignored.",
 			},
 
-			"desc": &schema.Schema{
+			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "User-defined text description of this resource group.",

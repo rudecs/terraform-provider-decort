@@ -32,3 +32,6 @@ const MaxSshKeysPerCompute=12
 
 // MaxExtraDisksPerCompute sets maximum number of extra disks that can be added when creating new compute
 const MaxExtraDisksPerCompute=12
+
+// MaxNetworksPerCompute sets maximum number of vNICs per compute
+const MaxNetworksPerCompute=8

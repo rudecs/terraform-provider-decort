@@ -150,7 +150,7 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 		log.Debugf("resourceResgroupUpdate: name specified - looking for deltas from the old settings.")
 		name_old, _ := d.GetChange("name")
 		if name_old.(string) != name_new.(string) {
-			do_update := true
+			do_update = true
 			url_values.Add("name", name_new.(string))
 		}
 	}
@@ -193,12 +193,12 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	desc_new, desc_set := d.GetOk("desc")
+	desc_new, desc_set := d.GetOk("description")
 	if desc_set {
 		log.Debugf("resourceResgroupUpdate: description specified - looking for deltas from the old settings.")
-		desc_old, _ := d.GetChange("desc")
+		desc_old, _ := d.GetChange("description")
 		if desc_old.(string) != desc_new.(string) {
-			do_update := true
+			do_update = true
 			url_values.Add("desc", desc_new.(string))
 		}
 	}
@@ -341,7 +341,7 @@ func resourceResgroup() *schema.Resource {
 				Description: "Quota settings for this resource group.",
 			},
 
-			"desc": {
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "User-defined text description of this resource group.",

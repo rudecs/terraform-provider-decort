@@ -37,274 +37,153 @@ import (
 )
 
 func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
-	/*
-	machine := &MachineConfig{
-		ResGroupID:  d.Get("rgid").(int),
-		Name:        d.Get("name").(string),
-		Cpu:         d.Get("cpu").(int),
-		Ram:         d.Get("ram").(int),
-		ImageID:     d.Get("image_id").(int),
-		Description: d.Get("description").(string),
-	}
-	// BootDisk
-	// DataDisks
-	// Networks
-	// PortForwards
-	// SshKeyData string
-	log.Printf("resourceComputeCreate: called for VM name %q, ResGroupID %d", machine.Name, machine.ResGroupID)
+	// we assume all mandatiry parameters it takes to create a comptue instance are properly 
+	// specified - we rely on schema "Required" attributes to let Terraform validate them for us
+	
+	log.Debugf("resourceComputeCreate: called for Compute name %q, RG ID %d", d.Get("name").(string), d.Get("rg_id").(int))
 
-	var subres_list []interface{}
-	var subres_data map[string]interface{}
-	var arg_value interface{}
-	var arg_set bool
-	// boot disk list is a required argument and has only one element,
-	// which is of type diskSubresourceSchema
-	subres_list = d.Get("boot_disk").([]interface{})
-	subres_data = subres_list[0].(map[string]interface{})
-	machine.BootDisk.Label = subres_data["label"].(string)
-	machine.BootDisk.Size = subres_data["size"].(int)
-	machine.BootDisk.Pool = subres_data["pool"].(string)
-	machine.BootDisk.Provider = subres_data["provider"].(string)
-
-	arg_value, arg_set = d.GetOk("data_disks")
-	if arg_set {
-		log.Printf("resourceComputeCreate: calling makeDisksConfig")
-		machine.DataDisks, _ = makeDisksConfig(arg_value.([]interface{}))
-	}
-
-	arg_value, arg_set = d.GetOk("networks")
-	if arg_set {
-		log.Printf("resourceComputeCreate: calling makeNetworksConfig")
-		machine.Networks, _ = makeNetworksConfig(arg_value.([]interface{}))
-	}
-
-	arg_value, arg_set = d.GetOk("port_forwards")
-	if arg_set {
-		log.Printf("resourceComputeCreate: calling makePortforwardsConfig")
-		machine.PortForwards, _ = makePortforwardsConfig(arg_value.([]interface{}))
-	}
-
-	arg_value, arg_set = d.GetOk("ssh_keys")
-	if arg_set {
-		log.Printf("resourceComputeCreate: calling makeSshKeysConfig")
-		machine.SshKeys, _ = makeSshKeysConfig(arg_value.([]interface{}))
-	}
-
-	// create basic VM (i.e. without port forwards and ext network connections - those will be done
-	// by separate API calls)
-	d.Partial(true)
+	// create basic Compute (i.e. without extra disks and network connections - those will be attached
+	// by subsequent individual API calls).
+	// creating Compute is a multi-step workflow, which may fail at some step, so we use "partial" feature of Terraform
+	d.Partial(true) 
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
-	urlValues.Add("cloudspaceId", fmt.Sprintf("%d", machine.ResGroupID))
-	urlValues.Add("name", machine.Name)
-	urlValues.Add("description", machine.Description)
-	urlValues.Add("vcpus", fmt.Sprintf("%d", machine.Cpu))
-	urlValues.Add("memory", fmt.Sprintf("%d", machine.Ram))
-	urlValues.Add("imageId", fmt.Sprintf("%d", machine.ImageID))
-	urlValues.Add("disksize", fmt.Sprintf("%d", machine.BootDisk.Size))
-	if len(machine.SshKeys) > 0 {
-		urlValues.Add("userdata", makeSshKeysArgString(machine.SshKeys))
+	urlValues.Add("rgId", fmt.Sprintf("%d", d.Get("rg_id").(int)))
+	urlValues.Add("name", d.Get("name").(string))
+	urlValues.Add("cpu", fmt.Sprintf("%d", d.Get("cpu").(int)))
+	urlValues.Add("ram", fmt.Sprintf("%d", d.Get("ram").(int)))
+	urlValues.Add("imageId", fmt.Sprintf("%d", d.Get("image_id").(int)))
+	urlValues.Add("bootDisk", fmt.Sprintf("%d", d.Get("boot_disk_size").(int)))
+	urlValues.Add("netType", "NONE") // at the 1st step create isolated compute
+	// urlValues.Add("start", "false") // at the 1st step create compute in a stopped state
+
+	argVal, argSet := d.GetOk("description") 
+	if argSet {
+		urlValues.Add("desc", argVal.(string))
 	}
-	api_resp, err := controller.decortAPICall("POST", MachineCreateAPI, urlValues)
+
+	sshKeysVal, sshKeysSet := d.GetOk("ssh_keys") 
+	if sshKeysSet {
+		// process SSH Key settings and set API values accordingly
+		log.Debugf("resourceComputeCreate: calling makeSshKeysArgString to setup SSH keys for guest login(s)")
+		urlValues.Add("userdata", makeSshKeysArgString(sshKeysVal.([]interface{})))
+	}
+
+	computeCreateAPI := KvmX86CreateAPI
+	arch := d.Get("arch").(string)
+	if arch == "KVM_PPC" {
+		computeCreateAPI = KvmPPCCreateAPI
+		log.Debugf("resourceComputeCreate: creating Compute of type KVM VM PowerPC")
+	} else { // note that we do not validate arch value for explicit "KVM_X86" here
+		log.Debugf("resourceComputeCreate: creating Compute of type KVM VM x86")
+	}
+	
+	apiResp, err := controller.decortAPICall("POST", computeCreateAPI, urlValues)
 	if err != nil {
 		return err
 	}
-	d.SetId(api_resp) // machines/create API plainly returns ID of the new VM on success
-	machine.ID, _ = strconv.Atoi(api_resp)
+	// Compute create API returns ID of the new Compute instance on success
+
+	d.SetId(apiResp) // update ID of the resource to tell Terraform that the resource exists, albeit partially
+	compId, _ := strconv.Atoi(apiResp)
 	d.SetPartial("name")
 	d.SetPartial("description")
 	d.SetPartial("cpu")
 	d.SetPartial("ram")
 	d.SetPartial("image_id")
-	d.SetPartial("boot_disk")
-	if len(machine.SshKeys) > 0 {
+	d.SetPartial("boot_disk_size")
+	if sshKeysSet {
 		d.SetPartial("ssh_keys")
 	}
 
-	log.Printf("resourceComputeCreate: new VM ID %d, name %q created", machine.ID, machine.Name)
+	log.Debugf("resourceComputeCreate: new simple Compute ID %d, name %q created", compId, d.Get("name").(string))
 
-	if len(machine.DataDisks) > 0 || len(machine.PortForwards) > 0 {
-		// for data disk or port foreards provisioning we have to know Tenant ID
-		// and Grid ID so we call utilityResgroupConfigGet method to populate these
-		// fields in the machine structure that will be passed to provisionVmDisks or
-		// provisionVmPortforwards
-		log.Printf("resourceComputeCreate: calling utilityResgroupConfigGet")
-		resgroup, err := controller.utilityResgroupConfigGet(machine.ResGroupID)
-		if err == nil {
-			machine.TenantID = resgroup.TenantID
-			machine.GridID = resgroup.GridID
-			machine.ExtIP = resgroup.ExtIP
-			log.Printf("resourceComputeCreate: tenant ID %d, GridID %d, ExtIP %q",
-				machine.TenantID, machine.GridID, machine.ExtIP)
-		}
-	}
-
-	//
-	// Configure data disks
-	disks_ok := true
-	if len(machine.DataDisks) > 0 {
-		log.Printf("resourceComputeCreate: calling utilityVmDisksProvision for disk count %d", len(machine.DataDisks))
-		if machine.TenantID == 0 {
-			// if TenantID is still 0 it means that we failed to get Resgroup Facts by
-			// a previous call to utilityResgroupGetFacts,
-			// hence we do not have technical ability to provision data disks
-			disks_ok = false
-		} else {
-			// provisionVmDisks accomplishes two steps for each data disk specification
-			// 1) creates the disks
-			// 2) attaches them to the VM
-			err = controller.utilityVmDisksProvision(machine)
-			if err != nil {
-				disks_ok = false
-			}
-		}
-	}
-
-	if disks_ok {
-		d.SetPartial("data_disks")
-	}
-
-	//
-	// Configure port forward rules
-	pfws_ok := true
-	if len(machine.PortForwards) > 0 {
-		log.Printf("resourceComputeCreate: calling utilityVmPortforwardsProvision for pfw rules count %d", len(machine.PortForwards))
-		if machine.ExtIP == "" {
-			// if ExtIP is still empty it means that we failed to get Resgroup Facts by
-			// a previous call to utilityResgroupGetFacts,
-			// hence we do not have technical ability to provision port forwards
-			pfws_ok = false
-		} else {
-			err := controller.utilityVmPortforwardsProvision(machine)
-			if err != nil {
-				pfws_ok = false
-			}
-		}
-	}
-	if pfws_ok {
-		//  there were no errors reported when configuring port forwards
-		d.SetPartial("port_forwards")
-	}
-
-	//
-	// Configure external networks
-	// NOTE: currently only one external network can be attached to each VM, so in the current
-	// implementation we ignore all but the 1st network definition
-	nets_ok := true
-	if len(machine.Networks) > 0 {
-		log.Printf("resourceComputeCreate: calling utilityVmNetworksProvision for networks count %d", len(machine.Networks))
-		err := controller.utilityVmNetworksProvision(machine)
+	// Configure data disks if any
+	extraDisksOk := true
+	argVal, argSet = d.GetOk("extra_disks") 
+	if argSet && len(argVal.([]interface{})) > 0 {
+		// urlValues.Add("desc", argVal.(string))
+		log.Debugf("resourceComputeCreate: calling utilityComputeExtraDisksConfigure to attach %d extra disk(s)", len(argVal.([]interface{})))
+		err = controller.utilityComputeExtraDisksConfigure(d, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
-			nets_ok = false
+			log.Errorf("resourceComputeCreate: error when attaching extra disks to a new Compute ID %s: %s", compId, err)
+			extraDisksOk = false
 		}
 	}
-	if nets_ok {
+	if extraDisksOk {
+		d.SetPartial("extra_disks")
+	}
+
+	// Configure external networks if any
+	netsOk := true
+	argVal, argSet = d.GetOk("networks") 
+	if argSet && len(argVal.([]interface{})) > 0 {
+		log.Debugf("resourceComputeCreate: calling utilityComputeNetworksConfigure to attach %d network(s)", len(argVal.([]interface{})))
+		err = controller.utilityComputeNetworksConfigure(d, false) // do_delta=false, as we are working on a new compute
+		if err != nil {
+			log.Errorf("resourceComputeCreate: error when attaching networks to a new Compute ID %d: %s", compId, err)
+			netsOk = false
+		}
+	}
+	if netsOk {
 		// there were no errors reported when configuring networks
 		d.SetPartial("networks")
 	}
 
-	if disks_ok && nets_ok && pfws_ok {
+	if extraDisksOk && netsOk {
 		// if there were no errors in setting any of the subresources, we may leave Partial mode
 		d.Partial(false)
 	}
-	*/
+	
+	log.Debugf("resourceComputeCreate: new Compute ID %d, name %q creation sequence complete", compId, d.Get("name").(string))
 
-	// resourceComputeRead will also update resource ID on success, so that Terraform will know
-	// that resource exists
-	return resourceComputeRead(d, m)
+	// We may reuse dataSourceComputeRead here as we maintain similarity 
+	// between Compute resource and Compute data source schemas
+	// Compute read function will also update resource ID on success, so that Terraform 
+	// will know the resource exists
+	return dataSourceComputeRead(d, m) 
 }
 
 func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
-	log.Printf("resourceComputeRead: called for VM name %q, ResGroupID %d",
-		d.Get("name").(string), d.Get("rgid").(int))
+	log.Debugf("resourceComputeRead: called for Compute name %q, RG ID %d",
+		d.Get("name").(string), d.Get("rg_id").(int))
 
 	compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
 		if err != nil {
 			return err
 		}
-		// VM was not found
+		// Compute with such name and RG ID was not found
 		return nil
 	}
 
 	if err = flattenCompute(d, compFacts); err != nil {
 		return err
 	}
-	log.Printf("resourceComputeRead: after flattenCompute: VM ID %s, VM name %q, ResGroupID %d",
-		d.Id(), d.Get("name").(string), d.Get("rgid").(int))
-
-	// Not all parameters, that we may need, are returned by machines/get API
-	// Continue with further reading of VM subresource parameters:
-	controller := m.(*ControllerCfg)
-	urlValues := &url.Values{}
-
-	/*
-		// Obtain information on external networks
-		urlValues.Add("machineId", d.Id())
-		body_string, err := controller.decortAPICall("POST", VmExtNetworksListAPI, urlValues)
-		if err != nil {
-			return err
-		}
-
-		net_list := ExtNetworksResp{}
-		err = json.Unmarshal([]byte(body_string), &net_list)
-		if err != nil {
-			return err
-		}
-
-		if len(net_list) > 0 {
-			if err = d.Set("networks", flattenNetworks(net_list)); err != nil {
-				return err
-			}
-		}
-	*/
-
-	/*
-		// Ext networks flattening is now done inside flattenCompute because it is currently based
-		// on data read into NICs component by machine/get API call
-
-		if err = d.Set("networks", flattenNetworks()); err != nil {
-			return err
-		}
-	*/
-
-	//
-	// Obtain information on port forwards
-	/*
-	urlValues.Add("cloudspaceId", fmt.Sprintf("%d", d.Get("rgid")))
-	urlValues.Add("machineId", d.Id())
-	pfw_list := PortforwardsResp{}
-	body_string, err := controller.decortAPICall("POST", PortforwardsListAPI, urlValues)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal([]byte(body_string), &pfw_list)
-	if err != nil {
-		return err
-	}
-
-	if len(pfw_list) > 0 {
-		if err = d.Set("port_forwards", flattenPortforwards(pfw_list)); err != nil {
-			return err
-		}
-	}
-	*/
+	
+	log.Debugf("resourceComputeRead: after flattenCompute: Compute ID %s, name %q, RG ID %d",
+		d.Id(), d.Get("name").(string), d.Get("rg_id").(int))
 
 	return nil
 }
 
 func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Printf("resourceComputeUpdate: called for VM name %q, ResGroupID %d",
-		d.Get("name").(string), d.Get("rgid").(int))
+	log.Debugf("resourceComputeUpdate: called for Compute name %q,  RGID %d",
+		d.Get("name").(string), d.Get("rg_id").(int))
 
-	return resourceComputeRead(d, m)
+	log.Printf("resourceComputeUpdate: NOT IMPLEMENTED YET!")
+
+	// we may reuse dataSourceComputeRead here as we maintain similarity 
+	// between Compute resource and Compute data source schemas
+	return dataSourceComputeRead(d, m) 
 }
 
 func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
-	// NOTE: this method destroys target Compute instance with flag "permanently", so 
-	// there is no way to restore destroyed Compute
-	log.Printf("resourceComputeDelete: called for VM name %q, ResGroupID %d",
-		d.Get("name").(string), d.Get("rgid").(int))
+	// NOTE: this function destroys target Compute instance "permanently", so 
+	// there is no way to restore it. It also destroys all extra disks
+	// attached to this compute, so "User, ye be warned!"
+	log.Debugf("resourceComputeDelete: called for Compute name %q, RG ID %d",
+		d.Get("name").(string), d.Get("rg_id").(int))
 
 	compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
@@ -328,8 +207,8 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 
 func resourceComputeExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
-	log.Printf("resourceComputeExist: called for VM name %q, ResGroupID %d",
-		d.Get("name").(string), d.Get("rgid").(int))
+	log.Debugf("resourceComputeExist: called for Compute name %q, RG ID %d",
+		d.Get("name").(string), d.Get("rg_id").(int))
 
 	compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
@@ -415,6 +294,16 @@ func resourceCompute() *schema.Resource {
 					Type: schema.TypeInt,
 				},
 				Description: "Optional list of IDs of the extra disks to attach to this compute.",
+			},
+
+			"networks": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: MaxNetworksPerCompute,
+				Elem: &schema.Resource{
+					Schema: networkSubresourceSchemaMake(),
+				},
+				Description: "Optional list of networks to attach this compute to.",
 			},
 
 			"ssh_keys": {

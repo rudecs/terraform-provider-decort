@@ -120,7 +120,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 		return err
 	}
 
-	log.Debugf("flattenCompute: ID %d, RgID %d", model.ID, model.RgID)
+	log.Debugf("flattenCompute: ID %d, RG ID %d", model.ID, model.RgID)
 
 	d.SetId(fmt.Sprintf("%d", model.ID))
 	d.Set("compute_id", model.ID)
