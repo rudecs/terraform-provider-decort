@@ -105,12 +105,12 @@ type ResgroupUpdateParam struct {
 // structures related to /cloudapi/rg/get API call
 //
 type QuotaRecord struct { // this is how quota is reported by /api/.../rg/get
-	Cpu        int `json:"CU_C"`      // CPU count in pcs
-	Ram        int `json:"CU_M"`      // RAM volume in MB
-	Disk       int `json:"CU_D"`      // Disk capacity in GB
-	ExtIPs     int `json:"CU_I"`      // Ext IPs count
-	ExtTraffic int `json:"CU_NP"`     // Ext network traffic
-	GpuUnits   int `json:"gpu_units"` // GPU count
+	Cpu        int   `json:"CU_C"`      // CPU count in pcs
+	Ram    float32   `json:"CU_M"`      // RAM volume in MB, it is STILL reported as FLOAT
+	Disk       int   `json:"CU_D"`      // Disk capacity in GB
+	ExtIPs     int   `json:"CU_I"`      // Ext IPs count
+	ExtTraffic int   `json:"CU_NP"`     // Ext network traffic
+	GpuUnits   int   `json:"gpu_units"` // GPU count
 }
 
 type ResourceRecord struct { // this is how actual usage is reported by /api/.../rg/get
@@ -245,7 +245,7 @@ type ComputeRecord struct {
 	AccountName    string            `json:"accountName"`
 	ACLs           []UserAclRecord   `json:"acl"`
 	Arch           string            `json:"arch"`
-	BootDiskSize   int               `json:"bootdiskSize"`
+	BootDiskSize   int               `json:"bootdiskSize"` // NOTE: this key is always 0 in compute/get API response 
 	CloneReference int               `json:"cloneReference"`
 	Clones         []int             `json:"clones"`
 	Cpus           int               `json:"cpus"`
@@ -258,7 +258,7 @@ type ComputeRecord struct {
 	GridID         int               `json:"gid"`
 	ID             uint              `json:"id"`
 	ImageID        int               `json:"imageId"`
-	Interfaces     []InterfaceRecord `json:"interfaces`
+	Interfaces     []InterfaceRecord `json:"interfaces"`
 	LockStatus     string            `json:"lockStatus"`
 	ManagerID      int               `json:"managerId"`
 	Name           string            `json:"name"`
@@ -297,7 +297,7 @@ type DiskRecord struct {
 	// ACLs `json:"ACL"` - it is a dictionary, special parsing required
 	// was - Acl map[string]string  `json:"acl"`
 	AccountID       int    `json:"accountId"`
-	AccountName     string `json:"accountName"` // NOTE: absent from compute/get output
+	AccountName     string `json:"accountName"`    // NOTE: absent from compute/get output
 	BootPartition   int    `json:"bootPartition"`
 	CreatedTime     uint64 `json:"creationTime"`
 	DeletedTime     uint64 `json:"deletionTime"`
@@ -320,7 +320,7 @@ type DiskRecord struct {
 	PurgeTime uint64 `json:"purgeTime"`
 	// Role string            `json:"role"`
 	SepType    string           `json:"sepType"`
-	SepID      int              `json:"sepid"`
+	SepID      int              `json:"sepid"`    // NOTE: absent from compute/get output
 	SizeMax    int              `json:"sizeMax"`
 	SizeUsed   int              `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
 	Snapshots  []SnapshotRecord `json:"snapshots"`

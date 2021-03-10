@@ -32,19 +32,19 @@ import (
 
 func networkSubresourceSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
-		"net_type": &schema.Schema{
+		"net_type": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Type of the network for this connection, either EXTNET or VINS.",
 		},
 
-		"net_id": &schema.Schema{
+		"net_id": {
 			Type:        schema.TypeInt,
 			Required:    true,
 			Description: "ID of the network for this connection.",
 		},
 
-		"ipaddr": &schema.Schema{
+		"ip_address": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Optional IP address to assign to this connection. This IP should belong to the selected network and free for use.",

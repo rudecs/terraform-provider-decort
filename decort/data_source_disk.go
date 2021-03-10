@@ -39,7 +39,7 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 	// This function expects disk_facts string to contain a response from disks/get API
 	//
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
-	// from resourceDiskExists(...) method
+	// from resourceDiskExists(...) method. Use utilityDiskCheckPresence instead.
 	model := DiskRecord{}
 	log.Debugf("flattenDisk: ready to unmarshal string %q", disk_facts)
 	err := json.Unmarshal([]byte(disk_facts), &model)
@@ -153,7 +153,7 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 		*/
 
 		"sep_id": {
-			Type:        schema.TypeString,
+			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "Storage end-point provider serving this disk.",
 		},

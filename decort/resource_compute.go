@@ -341,6 +341,7 @@ func resourceCompute() *schema.Resource {
 				Description: "Name of the account this compute instance belongs to.",
 			},
 
+			/*
 			"disks": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -358,6 +359,7 @@ func resourceCompute() *schema.Resource {
 				},
 				Description: "Specification for the virtual NICs configured on this compute instance.",
 			},
+			*/
 
 			"guest_logins": {
 				Type:     schema.TypeList,

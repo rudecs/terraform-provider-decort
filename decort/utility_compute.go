@@ -167,7 +167,7 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		urlValues.Add("computeId", d.Id())
 		urlValues.Add("netType", net_data["net_type"].(string))
 		urlValues.Add("netId", fmt.Sprintf("%d", net_data["net_id"].(int)))
-		ipaddr, ipSet := net_data["ipaddr"] // "ipaddr" key is optional
+		ipaddr, ipSet := net_data["ip_address"] // "ip_address" key is optional
 		if ipSet {
 			urlValues.Add("ipAddr", ipaddr.(string))
 		}

@@ -31,7 +31,7 @@ import (
 func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 	quota := QuotaRecord{
 		Cpu:        -1,
-		Ram:        -1,
+		Ram:        -1.,
 		Disk:       -1,
 		ExtTraffic: -1,
 		ExtIPs:     -1,
@@ -48,7 +48,7 @@ func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 	}
 
 	if subres_data["ram"].(int) > 0 {
-		quota.Ram = subres_data["ram"].(int) // RAM volume in MB
+		quota.Ram = subres_data["ram"].(float32) // RAM volume in MB, as float!
 	}
 
 	if subres_data["ext_traffic"].(int) > 0 {
@@ -70,7 +70,7 @@ func parseQuota(quota QuotaRecord) []interface{} {
 	quota_map := make(map[string]interface{})
 
 	quota_map["cpu"] = quota.Cpu
-	quota_map["ram"] = quota.Ram
+	quota_map["ram"] = quota.Ram // MB; this is float32, unlike the rest of values
 	quota_map["disk"] = quota.Disk
 	quota_map["ext_traffic"] = quota.ExtTraffic
 	quota_map["ext_ips"] = quota.ExtIPs
@@ -84,42 +84,42 @@ func parseQuota(quota QuotaRecord) []interface{} {
 
 func quotaRgSubresourceSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
-		"cpu": &schema.Schema{
+		"cpu": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total number of CPUs in this resource group.",
 		},
 
-		"ram": &schema.Schema{
-			Type:        schema.TypeInt, // NB: old API expects and returns this as float! This may be changed in the future.
+		"ram": {
+			Type:        schema.TypeFloat, // NB: API expects and returns this as float in units of MB! This may be changed in the future.
 			Optional:    true,
-			Default:     -1,
+			Default:     -1.,
 			Description: "Limit on the total amount of RAM in this resource group, specified in MB.",
 		},
 
-		"disk": &schema.Schema{
+		"disk": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total volume of storage resources in this resource group, specified in GB.",
 		},
 
-		"ext_traffic": &schema.Schema{
+		"ext_traffic": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total ingress network traffic for this resource group, specified in GB.",
 		},
 
-		"ext_ips": &schema.Schema{
+		"ext_ips": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,
 			Description: "Limit on the total number of external IP addresses this resource group can use.",
 		},
 
-		"gpu_units": &schema.Schema{
+		"gpu_units": {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     -1,

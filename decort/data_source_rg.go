@@ -101,31 +101,31 @@ func dataSourceResgroup() *schema.Resource {
 				Description: "Name of the resource group. Names are case sensitive and unique within the context of an account.",
 			},
 
-			"rg_id": &schema.Schema{
+			"rg_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Unique ID of the resource group. If this ID is specified, then resource group name is ignored.",
 			},
 
-			"account_name": &schema.Schema{
+			"account_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Name of the account, which this resource group belongs to.",
 			},
 
-			"account_id": &schema.Schema{
+			"account_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Unique ID of the account, which this resource group belongs to. If account ID is specified, then account name is ignored.",
 			},
 
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "User-defined text description of this resource group.",
 			},
 
-			"grid_id": &schema.Schema{
+			"grid_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Unique ID of the grid, where this resource group is deployed.",
@@ -133,7 +133,7 @@ func dataSourceResgroup() *schema.Resource {
 
 			"quota": {
 				Type:     schema.TypeList,
-				Optional: true,
+				Computed: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: quotaRgSubresourceSchemaMake(), // this is a dictionary
@@ -147,13 +147,13 @@ func dataSourceResgroup() *schema.Resource {
 				Description: "Current status of this resource group.",
 			},
 
-			"def_net_type": &schema.Schema{
+			"def_net_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Type of the default network for this resource group.",
 			},
 
-			"def_net_id": &schema.Schema{
+			"def_net_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "ID of the default network for this resource group (if any).",

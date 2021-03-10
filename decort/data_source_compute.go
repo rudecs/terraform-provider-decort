@@ -35,11 +35,53 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
+	// this return value will be used to d.Set("extra_disks",) item of dataSourceCompute schema, 
+	// which is a simple list of integer disk IDs excluding boot disk ID
+	length := len(disks)
+	log.Debugf("parseComputeDisksToExtraDisks: called for %d disks", length)
+	
+	if length == 1 && disks[0].Type == "B" {
+		// there is only one disk in the list and it is a boot disk;
+		// as we skip boot disks, the result will be of 0 length
+		length = 0
+	}
+	
+	result := make([]interface{}, length)
+
+	if length == 0 {
+		return result
+	}
+
+	idx := 0
+	for _, value := range disks {
+		if value.Type == "B" {
+			// skip boot disk when iterating over the list of disks
+			continue
+		}
+
+		result[idx] = value.ID
+		idx++
+	}
+
+	return result 
+}
+
 func parseComputeDisks(disks []DiskRecord) []interface{} {
+	// return value was designed to d.Set("disks",) item of dataSourceCompute schema
 	length := len(disks)
 	log.Debugf("parseComputeDisks: called for %d disks", length)
-
+	
+	/*
+	if length == 1 && disks[0].Type == "B" {
+		// there is only one disk in the list and it is a boot disk
+		// as we skip boot disks, the result will be of 0 lenght
+		length = 0
+	}
+	*/
+	
 	result := make([]interface{}, length)
+
 	if length == 0 {
 		return result
 	}
@@ -47,6 +89,12 @@ func parseComputeDisks(disks []DiskRecord) []interface{} {
 	elem := make(map[string]interface{})
 
 	for i, value := range disks {
+		/*
+		if value.Type == "B" {
+			// skip boot disk when parsing the list of disks
+			continue
+		}
+		*/
 		// keys in this map should correspond to the Schema definition
 		// as returned by dataSourceDiskSchemaMake()
 		elem["name"] = value.Name
@@ -66,14 +114,57 @@ func parseComputeDisks(disks []DiskRecord) []interface{} {
 		result[i] = elem
 	}
 
-	return result // this result will be used to d.Set("disks",) item of dataSourceCompute schema
+	return result 
+}
+
+func parseBootDiskSize(disks []DiskRecord) int {
+	// this return value will be used to d.Set("boot_disk_size",) item of dataSourceCompute schema
+	if len(disks) == 0 {
+		return 0
+	}
+
+	for _, value := range disks {
+		if value.Type == "B" {
+			return value.SizeMax
+		}
+	}
+
+	return 0 
+}
+
+func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
+	// return value will be used to d.Set("networks",) item of dataSourceCompute schema
+	length := len(ifaces)
+	log.Debugf("parseComputeInterfacesToNetworks: called for %d ifaces", length)
+
+	result := make([]interface{}, length)
+
+	if length == 0 {
+		return result
+	}
+
+	elem := make(map[string]interface{})
+
+	for i, value := range ifaces {
+		// Keys in this map should correspond to the Schema definition
+		// as returned by networkSubresourceSchemaMake()
+		elem["net_id"] = value.NetID
+		elem["net_type"] = value.NetType
+		elem["ip_address"] = value.IPAddress
+
+		result[i] = elem
+	}
+
+	return result 
 }
 
 func parseComputeInterfaces(ifaces []InterfaceRecord) []interface{} {
+	// return value was designed to d.Set("interfaces",) item of dataSourceCompute schema
 	length := len(ifaces)
 	log.Debugf("parseComputeInterfaces: called for %d ifaces", length)
 
 	result := make([]interface{}, length)
+
 	if length == 0 {
 		return result
 	}
@@ -93,7 +184,7 @@ func parseComputeInterfaces(ifaces []InterfaceRecord) []interface{} {
 		elem["connection_id"] = value.ConnID
 		elem["connection_type"] = value.ConnType
 
-		/* TODO: add code to read in quota
+		/* TODO: add code to parse QoS
 		qos_schema := interfaceQosSubresourceSchemaMake()
 		qos_schema.Set("egress_rate", value.QOS.ERate)
 		qos_schema.Set("ingress_rate", value.QOS.InRate)
@@ -104,7 +195,7 @@ func parseComputeInterfaces(ifaces []InterfaceRecord) []interface{} {
 		result[i] = elem
 	}
 
-	return result // this result will be used to d.Set("interfaces",) item of dataSourceCompute schema
+	return result 
 }
 
 func flattenCompute(d *schema.ResourceData, compFacts string) error {
@@ -132,7 +223,8 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("arch", model.Arch)
 	d.Set("cpu", model.Cpu)
 	d.Set("ram", model.Ram)
-	d.Set("boot_disk_size", model.BootDiskSize)
+	// d.Set("boot_disk_size", model.BootDiskSize) - bootdiskSize key in API compute/get is always zero, so we set boot_disk_size in another way
+	d.Set("boot_disk_size", parseBootDiskSize(model.Disks))
 	d.Set("image_id", model.ImageID)
 	d.Set("description", model.Desc)
 	d.Set("status", model.Status)
@@ -140,14 +232,14 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 
 	if len(model.Disks) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeDisks for %d disks", len(model.Disks))
-		if err = d.Set("disks", parseComputeDisks(model.Disks)); err != nil {
+		if err = d.Set("extra_disks", parseComputeDisksToExtraDisks(model.Disks)); err != nil {
 			return err
 		}
 	}
 
 	if len(model.Interfaces) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeInterfaces for %d interfaces", len(model.Interfaces))
-		if err = d.Set("interfaces", parseComputeInterfaces(model.Interfaces)); err != nil {
+		if err = d.Set("networks", parseComputeInterfacesToNetworks(model.Interfaces)); err != nil {
 			return err
 		}
 	}
@@ -258,6 +350,17 @@ func dataSourceCompute() *schema.Resource {
 				Description: "This compute instance boot disk size in GB.",
 			},
 
+			"extra_disks": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				MaxItems: MaxExtraDisksPerCompute,
+				Elem: &schema.Schema {
+					Type:  schema.TypeInt,
+				},
+				Description: "IDs of the extra disks attached to this compute.",
+			},
+			
+			/*
 			"disks": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -266,6 +369,28 @@ func dataSourceCompute() *schema.Resource {
 				},
 				Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
 			},
+			*/
+
+			"networks": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: MaxNetworksPerCompute,
+				Elem: &schema.Resource{
+					Schema: networkSubresourceSchemaMake(),
+				},
+				Description: "Networks this compute is attached to.",
+			},
+
+			/*
+			"interfaces": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: interfaceSubresourceSchemaMake(),
+				},
+				Description: "Specification for the virtual NICs configured on this compute instance.",
+			},
+			*/
 
 			"guest_logins": {
 				Type:     schema.TypeList,
@@ -274,15 +399,6 @@ func dataSourceCompute() *schema.Resource {
 					Schema: loginsSubresourceSchemaMake(),
 				},
 				Description: "Details about the guest OS users provisioned together with this compute instance.",
-			},
-
-			"interfaces": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: interfaceSubresourceSchemaMake(),
-				},
-				Description: "Specification for the virtual NICs configured on this compute instance.",
 			},
 
 			"description": {

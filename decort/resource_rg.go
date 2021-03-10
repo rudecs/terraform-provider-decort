@@ -174,7 +174,7 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 			url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", quotarecord_new.Disk))
 		}
 
-		if quotarecord_new.Ram != quotarecord_old.Ram {
+		if quotarecord_new.Ram != quotarecord_old.Ram { // NB: quota on RAM is stored as float32, in units of MB
 			do_update = true
 			log.Debugf("resourceResgroupUpdate: Ram diff %f <- %f", quotarecord_new.Ram, quotarecord_old.Ram)
 			url_values.Add("maxMemoryCapacity", fmt.Sprintf("%f", quotarecord_new.Ram))
@@ -275,57 +275,57 @@ func resourceResgroup() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of this resource group. Names are case sensitive and unique within the context of a account.",
 			},
 
-			"account_id": &schema.Schema{
+			"account_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Unique ID of the account, which this resource group belongs to. If account ID is specified, then account name is ignored.",
 			},
 
-			"account_name": &schema.Schema{
+			"account_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Name of the account, which this resource group belongs to.",
 			},
 
-			"def_net_type": &schema.Schema{
+			"def_net_type": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "PRIVATE",
 				Description: "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
 			},
 
-			"def_net_id": &schema.Schema{
+			"def_net_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "ID of the default network for this resource group (if any).",
 			},
 
-			"ipcidr": &schema.Schema{
+			"ipcidr": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Address of the netowrk inside the private network segment (aka ViNS) if def_net_type=PRIVATE",
 			},
 
-			"ext_net_id": &schema.Schema{
+			"ext_net_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
 				Description: "ID of the external network, which this resource group will use as default for its computes if def_net_type=PUBLIC",
 			},
 
-			"ext_ip": &schema.Schema{
+			"ext_ip": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IP address on the external netowrk to request, if def_net_type=PUBLIC",
 			},
 
-			"grid_id": &schema.Schema{ // change of Grid ID will require new RG
+			"grid_id": { // change of Grid ID will require new RG
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "Unique ID of the grid, where this resource group is deployed.",

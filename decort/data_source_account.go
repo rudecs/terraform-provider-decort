@@ -84,13 +84,13 @@ func dataSourceAccount() *schema.Resource {
 				Description: "Name of the account. Names are case sensitive and unique.",
 			},
 
-			"account_id": &schema.Schema{
+			"account_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Unique ID of the account. If account ID is specified, then account name is ignored.",
 			},
 
-			"status": &schema.Schema{
+			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Current status of the account.",

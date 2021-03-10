@@ -89,11 +89,12 @@ func interfaceSubresourceSchemaMake() map[string]*schema.Schema {
 		},
 
 		"qos": {
-			Computed: true,
+			Type:        schema.TypeList,
+			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: interfaceQosSubresourceSchemaMake(),
 			},
-			Description: "Details about the guest OS users provisioned together with this compute instance.",
+			Description: "QoS settings for this interface.",
 		},
 	}
 
