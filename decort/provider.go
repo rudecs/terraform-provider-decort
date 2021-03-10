@@ -78,14 +78,14 @@ func Provider() *schema.Provider {
 			"app_secret": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DECSORTAPP_SECRET", nil),
+				DefaultFunc: schema.EnvDefaultFunc("DECORT_APP_SECRET", nil),
 				Description: "Application secret to access DECORT cloud API in 'oauth2' authentication mode.",
 			},
 
 			"jwt": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("DECS_JWT", nil),
+				DefaultFunc: schema.EnvDefaultFunc("DECORT_JWT", nil),
 				Description: "JWT to access DECORT cloud API in 'jwt' authentication mode.",
 			},
 

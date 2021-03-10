@@ -25,7 +25,7 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -160,7 +160,7 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 	if err = flattenCompute(d, compFacts); err != nil {
 		return err
 	}
-	
+
 	log.Debugf("resourceComputeRead: after flattenCompute: Compute ID %s, name %q, RG ID %d",
 		d.Id(), d.Get("name").(string), d.Get("rg_id").(int))
 

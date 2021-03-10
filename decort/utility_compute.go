@@ -35,28 +35,117 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-// TODO: implement do_delta logic
 func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceData, do_delta bool) error {
 	// d is filled with data according to computeResource schema, so extra disks config is retrieved via "extra_disks" key
 	// If do_delta is true, this function will identify changes between new and existing specs for extra disks and try to 
 	// update compute configuration accordingly
-	argVal, argSet := d.GetOk("extra_disks") 
-	if !argSet || len(argVal.([]interface{})) < 1 {
+
+	// Note that this function will not abort on API errors, but will continue to configure (attach / detach) other individual 
+	// disks via atomic API calls. However, it will not retry failed manipulation on the same disk.
+
+	old_set, new_set := d.GetChange("extra_disks")
+
+	old_disks := old_set.([]interface{}) // NB: "extra_disks" is an array of ints
+	new_disks := new_set.([]interface{})
+
+	apiErrCount := 0
+	var lastSavedError error
+
+	if !do_delta {
+		log.Debugf("utilityComputeExtraDisksConfigure: called for Compute ID %s with do_delta = false", d.Id())
+		if len(new_disks) < 1 {
+			return nil
+		}
+
+		for _, disk := range new_disks {
+			urlValues := &url.Values{}
+			urlValues.Add("computeId", d.Id())
+			urlValues.Add("diskId", fmt.Sprintf("%d", disk.(int)))
+			_, err := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
+			if err != nil {
+				// failed to attach extra disk - partial resource update
+				apiErrCount++
+				lastSavedError = err
+			}
+		}
+
+		if apiErrCount > 0 {
+			log.Errorf("utilityComputeExtraDisksConfigure: there were %d error(s) when attaching disks to Compute ID %s. Last error was: %s", 
+			           apiErrCount, d.Id(), lastSavedError)
+			return lastSavedError
+		}
+		
 		return nil
 	}
 
-	extra_disks_list := argVal.([]interface{}) // "extra_disks" is a list of ints
-
-	for _, disk := range extra_disks_list {
-		urlValues := &url.Values{}
-		urlValues.Add("computeId", d.Id())
-		urlValues.Add("diskId", fmt.Sprintf("%d", disk.(int)))
-		_, err := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
-		if err != nil {
-			// failed to attach extra disk - partial resource update
-			return err
+	attach_list := make([]int, 0, MaxExtraDisksPerCompute)
+	detach_list := make([]int, 0, MaxExtraDisksPerCompute)
+	attIdx := 0
+	detIdx := 0
+	match := false
+	
+	for _, oDisk := range old_disks {
+		match = false
+		for _, nDisk := range new_disks {
+			if oDisk.(int) == nDisk.(int) {
+				match = true
+				break
+			}
+		}
+		if !match {
+			detach_list[detIdx] = oDisk.(int)
+			detIdx++
 		}
 	}
+	log.Debugf("utilityComputeExtraDisksConfigure: detach list has %d items for Compute ID %s", len(detach_list), d.Id())
+
+	for _, nDisk := range new_disks {
+		match = false
+		for _, oDisk := range old_disks {
+			if nDisk.(int) == oDisk.(int) {
+				match = true
+				break
+			}
+		}
+		if !match {
+			attach_list[attIdx] = nDisk.(int)
+			attIdx++
+		}
+	}
+	log.Debugf("utilityComputeExtraDisksConfigure: attach list has %d items for Compute ID %s", len(attach_list), d.Id())
+
+	for _, diskId := range detach_list {
+		urlValues := &url.Values{}
+		urlValues.Add("computeId", d.Id())
+		urlValues.Add("diskId", fmt.Sprintf("%d", diskId))
+		_, err := ctrl.decortAPICall("POST", ComputeDiskDetachAPI, urlValues)
+		if err != nil {
+			// failed to detach disk - there will be partial resource update
+			log.Debugf("utilityComputeExtraDisksConfigure: failed to detach disk ID %d from Compute ID %s: %s", diskId, d.Id(), err)
+			apiErrCount++
+			lastSavedError = err
+		}
+	}
+
+	for _, diskId := range attach_list {
+		urlValues := &url.Values{}
+		urlValues.Add("computeId", d.Id())
+		urlValues.Add("diskId", fmt.Sprintf("%d", diskId))
+		_, err := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
+		if err != nil {
+			// failed to attach disk - there will be partial resource update
+			log.Debugf("utilityComputeExtraDisksConfigure: failed to attach disk ID %d to Compute ID %s: %s", diskId, d.Id(), err)
+			apiErrCount++
+			lastSavedError = err
+		}
+	}
+
+	if apiErrCount > 0 {
+		log.Errorf("utilityComputeExtraDisksConfigure: there were %d error(s) when managing disks on Compute ID %s. Last error was: %s", 
+				   apiErrCount, d.Id(), lastSavedError)
+		return lastSavedError
+	}
+
 	return nil
 }
 
@@ -70,12 +159,12 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		return nil
 	}
 
-	net_list := argVal.([]interface{}) // networks" is a list of maps; for keys see func networkSubresourceSchemaMake() definition 
+	net_list := argVal.([]interface{}) // networks" is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
 
 	for _, net := range net_list {
 		urlValues := &url.Values{}
 		net_data := net.(map[string]interface{}) 
-		urlValues.Add("computeId", fmt.Sprintf("%d", d.Id()))
+		urlValues.Add("computeId", d.Id())
 		urlValues.Add("netType", net_data["net_type"].(string))
 		urlValues.Add("netId", fmt.Sprintf("%d", net_data["net_id"].(int)))
 		ipaddr, ipSet := net_data["ipaddr"] // "ipaddr" key is optional
@@ -108,7 +197,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	computeId, argSet := d.GetOk("compute_id")
+	computeId, argSet := d.GetOk("compute_id") // NB: compute_id is NOT present in computeResource schema!
 	if argSet {
 		// compute ID is specified, try to get compute instance straight by this ID
 		log.Debugf("utilityComputeCheckPresence: locating compute by its ID %d", computeId.(int))
