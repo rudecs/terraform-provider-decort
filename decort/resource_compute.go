@@ -359,7 +359,6 @@ func resourceCompute() *schema.Resource {
 				},
 				Description: "Specification for the virtual NICs configured on this compute instance.",
 			},
-			*/
 
 			"guest_logins": {
 				Type:     schema.TypeList,
@@ -369,6 +368,7 @@ func resourceCompute() *schema.Resource {
 				},
 				Description: "Specification for guest logins on this compute instance.",
 			},
+			*/
 
 			"status": {
 				Type:        schema.TypeString,

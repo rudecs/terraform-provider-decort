@@ -82,7 +82,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	if set_quota {
 		url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", quota_record.Cpu))
 		url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", quota_record.Disk))
-		url_values.Add("maxMemoryCapacity", fmt.Sprintf("%d", quota_record.Ram))
+		url_values.Add("maxMemoryCapacity", fmt.Sprintf("%f", quota_record.Ram)) // RAM quota is float; this may change in the future
 		url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", quota_record.ExtTraffic))
 		url_values.Add("maxNumPublicIP", fmt.Sprintf("%d", quota_record.ExtIPs))
 		// url_values.Add("???", fmt.Sprintf("%d", quota_record.GpuUnits))
@@ -353,6 +353,7 @@ func resourceResgroup() *schema.Resource {
 				Description: "Current status of this resource group.",
 			},
 
+			/*
 			"vins": {
 				Type:     schema.TypeList, // this is a list of ints
 				Computed: true,
@@ -371,6 +372,7 @@ func resourceResgroup() *schema.Resource {
 				},
 				Description: "List of computes deployed in this resource group.",
 			},
+			*/
 		},
 	}
 }

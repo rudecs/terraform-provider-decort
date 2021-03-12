@@ -60,8 +60,10 @@ func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
 	d.Set("status", details.Status)
 	d.Set("def_net_type", details.DefaultNetType)
 	d.Set("def_net_id", details.DefaultNetID)
+	/*
 	d.Set("vins", details.Vins)
 	d.Set("computes", details.Computes)
+	*/
 
 	log.Debugf("flattenResgroup: calling flattenQuota()")
 	if err = d.Set("quota", parseQuota(details.Quota)); err != nil {
@@ -159,6 +161,7 @@ func dataSourceResgroup() *schema.Resource {
 				Description: "ID of the default network for this resource group (if any).",
 			},
 
+			/*
 			"vins": {
 				Type:     schema.TypeList, // this is a list of ints
 				Computed: true,
@@ -177,6 +180,7 @@ func dataSourceResgroup() *schema.Resource {
 				},
 				Description: "List of computes deployed in this resource group.",
 			},
+			*/
 		},
 	}
 }

@@ -35,6 +35,8 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+// Parse list of all disks from API compute/get into a list of "extra disks" attached to this compute
+// Extra disks are all compute disks but a boot disk. 
 func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 	// this return value will be used to d.Set("extra_disks",) item of dataSourceCompute schema, 
 	// which is a simple list of integer disk IDs excluding boot disk ID
@@ -68,7 +70,9 @@ func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 }
 
 func parseComputeDisks(disks []DiskRecord) []interface{} {
-	// return value was designed to d.Set("disks",) item of dataSourceCompute schema
+	// Return value was designed to d.Set("disks",) item of dataSourceCompute schema
+	// However, this item was excluded from the schema as it is not directly
+	// managed through Terraform 
 	length := len(disks)
 	log.Debugf("parseComputeDisks: called for %d disks", length)
 	
@@ -132,6 +136,8 @@ func parseBootDiskSize(disks []DiskRecord) int {
 	return 0 
 }
 
+// Parse the list of interfaces from compute/get response into a list of networks 
+// attached to this compute
 func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 	// return value will be used to d.Set("networks",) item of dataSourceCompute schema
 	length := len(ifaces)
@@ -160,6 +166,8 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 
 func parseComputeInterfaces(ifaces []InterfaceRecord) []interface{} {
 	// return value was designed to d.Set("interfaces",) item of dataSourceCompute schema
+	// However, this item was excluded from the schema as it is not directly
+	// managed through Terraform 
 	length := len(ifaces)
 	log.Debugf("parseComputeInterfaces: called for %d ifaces", length)
 
@@ -231,25 +239,27 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("tech_status", model.TechStatus)
 
 	if len(model.Disks) > 0 {
-		log.Debugf("flattenCompute: calling parseComputeDisks for %d disks", len(model.Disks))
+		log.Debugf("flattenCompute: calling parseComputeDisksToExtraDisks for %d disks", len(model.Disks))
 		if err = d.Set("extra_disks", parseComputeDisksToExtraDisks(model.Disks)); err != nil {
 			return err
 		}
 	}
 
 	if len(model.Interfaces) > 0 {
-		log.Debugf("flattenCompute: calling parseComputeInterfaces for %d interfaces", len(model.Interfaces))
+		log.Debugf("flattenCompute: calling parseComputeInterfacesToNetworks for %d interfaces", len(model.Interfaces))
 		if err = d.Set("networks", parseComputeInterfacesToNetworks(model.Interfaces)); err != nil {
 			return err
 		}
 	}
 
+	/*
 	if len(model.OsUsers) > 0 {
 		log.Debugf("flattenCompute: calling parseGuestLogins for %d logins", len(model.OsUsers))
 		if err = d.Set("guest_logins", parseGuestLogins(model.OsUsers)); err != nil {
 			return err
 		}
 	}
+	*/
 
 	return nil
 }
@@ -390,7 +400,6 @@ func dataSourceCompute() *schema.Resource {
 				},
 				Description: "Specification for the virtual NICs configured on this compute instance.",
 			},
-			*/
 
 			"guest_logins": {
 				Type:     schema.TypeList,
@@ -400,6 +409,7 @@ func dataSourceCompute() *schema.Resource {
 				},
 				Description: "Details about the guest OS users provisioned together with this compute instance.",
 			},
+			*/
 
 			"description": {
 				Type:        schema.TypeString,
