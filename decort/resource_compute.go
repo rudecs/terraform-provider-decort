@@ -197,7 +197,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 	params.Add("permanently", "true")
 
 	controller := m.(*ControllerCfg)
-	compFacts, err = controller.decortAPICall("POST", ComputeDeleteAPI, params)
+	_, err = controller.decortAPICall("POST", ComputeDeleteAPI, params)
 	if err != nil {
 		return err
 	}

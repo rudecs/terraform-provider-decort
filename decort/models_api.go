@@ -476,17 +476,25 @@ const ComputeDiskDetachAPI = "/restmachine/cloudapi/compute/diskDetach"
 //
 // structures related to /cloudapi/disks/create
 //
-const DiskCreateAPI = "/restmachine/cloudapi/disks/create"
+const DisksCreateAPI = "/restmachine/cloudapi/disks/create"
 
 //
 // structures related to /cloudapi/disks/get
 //
-const DisksCreateAPI = "/restmachine/cloudapi/disks/create"
-
 const DisksGetAPI = "/restmachine/cloudapi/disks/get" // Returns single DiskRecord on success
 
 const DisksListAPI = "/restmachine/cloudapi/disks/list" // Returns list of DiskRecord on success
 type DisksListResp []DiskRecord
+
+//
+// structures related to /cloudapi/disks/resize
+//
+const DisksResizeAPI = "/restmachine/cloudapi/disks/resize2"
+
+//
+// structures related to /cloudapi/disks/delete
+//
+const DisksDeleteAPI = "/restmachine/cloudapi/disks/delete"
 
 //
 // Grid ID structures

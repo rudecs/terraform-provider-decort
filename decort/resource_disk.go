@@ -55,7 +55,7 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 		urlValues.Add("decs", argVal.(string))
 	} 
 
-	apiResp, err := controller.decortAPICall("POST", DiskCreateAPI, urlValues)
+	apiResp, err := controller.decortAPICall("POST", DisksCreateAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 	d.SetId(apiResp) // update ID of the resource to tell Terraform that the disk resource exists
 	diskId, _ := strconv.Atoi(apiResp)
 
-	log.Debugf("resourceDiskCreate: new Disk ID %d, name %q creation sequence complete", diskId, d.Get("name").(string))
+	log.Debugf("resourceDiskCreate: new Disk ID / name %d / %s creation sequence complete", diskId, d.Get("name").(string))
 
 	// We may reuse dataSourceDiskRead here as we maintain similarity 
 	// between Disk resource and Disk data source schemas
@@ -73,22 +73,45 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceDiskRead(d *schema.ResourceData, m interface{}) error {
-	disk_facts, err := utilityDiskCheckPresence(d, m)
-	if disk_facts == "" {
+	diskFacts, err := utilityDiskCheckPresence(d, m)
+	if diskFacts == "" {
 		// if empty string is returned from utilityDiskCheckPresence then there is no
 		// such Disk and err tells so - just return it to the calling party
 		d.SetId("") // ensure ID is empty
 		return err
 	}
 
-	return flattenDisk(d, disk_facts)
+	return flattenDisk(d, diskFacts)
 }
 
 func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceDiskUpdate: called for disk name %q,  Account ID %d",
-		d.Get("name").(string), d.Get("account_id").(int))
+	// update will only change Disk size and, to keep data safe, will not allow
+	// shrinking disk.
+	// Attempt to reduce disk size will throw an error
+	log.Debugf("resourceDiskUpdate: called for Disk ID / name % d / %s,  Account ID %d",
+		d.Get("disk_id").(int), d.Get("name").(string), d.Get("account_id").(int))
 
-	log.Warn("resourceDiskUpdate: NOT IMPLEMENTED YET!")
+	oldSize, newSize := d.GetChange("size")
+	if oldSize.(int) > newSize.(int) {
+		return fmt.Errorf("resourceDiskUpdate: Disk ID %d - shrinking disk size from %d to %d not allowed",
+		                  d.Get("disk_id").(int), oldSize.(int), newSize.(int))
+	}
+	
+	if oldSize.(int) == newSize.(int) {
+		log.Debugf("resourceDiskUpdate: Disk ID %d - no size change required", d.Get("disk_id").(int))
+		// and there is no need to re-read disk specs either 
+		return nil
+	}
+
+	params := &url.Values{}
+	params.Add("diskId", d.Id())
+	params.Add("size", fmt.Sprintf("%d", newSize.(int)))
+
+	controller := m.(*ControllerCfg)
+	_, err := controller.decortAPICall("POST", DisksResizeAPI, params)
+	if err != nil {
+		return err
+	}
 
 	// we may reuse dataSourceDiskRead here as we maintain similarity 
 	// between Compute resource and Compute data source schemas
@@ -96,14 +119,38 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceDiskDelete(d *schema.ResourceData, m interface{}) error {
-	log.Warn("resourceDiskDelete: NOT IMPLEMENTED YET!")
+	// NOTE: this function tries to destroy target Disk "permanently", so 
+	// there is no way to restore it. 
+	// If, however, the disk is attached to a compute, the method will
+	// fail (by failing the underpinning DECORt API call, which is issued with detach=false)
+	log.Debugf("resourceDiskDelete: called for Disk ID / name %d / %s, Account ID %d",
+		d.Get("disk_id").(int), d.Get("name").(string), d.Get("account_id").(int))
+
+	diskFacts, err := utilityDiskCheckPresence(d, m)
+	if diskFacts == "" {
+		// the specified Disk does not exist - in this case according to Terraform best practice
+		// we exit from Destroy method without error
+		return nil
+	}
+
+	params := &url.Values{}
+	params.Add("diskId", d.Id())
+	params.Add("detach", "false")
+	params.Add("permanently", "true")
+
+	controller := m.(*ControllerCfg)
+	_, err = controller.decortAPICall("POST", DisksDeleteAPI, params)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func resourceDiskExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
-	log.Debugf("resourceDiskExists: called for Disk name %q, Account ID %d",
-		d.Get("name").(string), d.Get("account_id").(int))
+	log.Debugf("resourceDiskExists: called for Disk ID / name %d / %s, Account ID %d",
+		d.Get("disk_id").(int), d.Get("name").(string), d.Get("account_id").(int))
 
 	diskFacts, err := utilityDiskCheckPresence(d, m)
 	if diskFacts == "" {

@@ -67,7 +67,8 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 	// d.Set("status", model.Status)
 	// d.Set("tech_status", model.TechStatus)
 
-	/* we do not manage snapshots via Terraform yet, so keep this commented out for a while
+	/* we do not manage snapshots via Terraform yet (and probably, never will), so 
+	// keep this block commented out for a while
 	if len(model.Snapshots) > 0 {
 		log.Debugf("flattenDisk: calling flattenDiskSnapshots")
 		if err = d.Set("nics", flattenDiskSnapshots(model.Snapshots)); err != nil {
