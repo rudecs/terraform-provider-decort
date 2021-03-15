@@ -37,7 +37,7 @@ import (
 )
 
 func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
-	// we assume all mandatiry parameters it takes to create a comptue instance are properly 
+	// we assume all mandatory parameters it takes to create a comptue instance are properly 
 	// specified - we rely on schema "Required" attributes to let Terraform validate them for us
 	
 	log.Debugf("resourceComputeCreate: called for Compute name %q, RG ID %d", d.Get("name").(string), d.Get("rg_id").(int))

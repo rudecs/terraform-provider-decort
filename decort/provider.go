@@ -18,6 +18,7 @@ limitations under the License.
 package decort
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -110,7 +111,7 @@ func Provider() *schema.Provider {
 			"decort_resgroup": dataSourceResgroup(),
 			"decort_kvmvm":    dataSourceCompute(),
 			"decort_image":    dataSourceImage(),
-			// "decort_disk":     dataSourceDisk(),
+			"decort_disk":     dataSourceDisk(),
 			// "decort_vins":     dataSourceVins(),
 			// "decort_pfw": dataSourcePfw(),
 		},
@@ -128,5 +129,15 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// initialize global default Grid ID - it will be needed to create some resource types, e.g. disks
+	gridId, err := decsController.utilityLocationGetDefaultGridID()
+	if err != nil {
+		return nil, err
+	}
+	if gridId == 0 {
+		return nil, fmt.Errorf("providerConfigure: invalid default Grid ID = 0")
+	}
+
 	return decsController, nil
 }

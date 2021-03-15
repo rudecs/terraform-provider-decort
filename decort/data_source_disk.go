@@ -61,11 +61,11 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 	d.Set("sep_id", model.SepID)
 	d.Set("sep_type", model.SepType)
 	d.Set("pool", model.Pool)
-	d.Set("compute_id", model.ComputeID)
+	// d.Set("compute_id", model.ComputeID)
 
 	d.Set("description", model.Desc)
-	d.Set("status", model.Status)
-	d.Set("tech_status", model.TechStatus)
+	// d.Set("status", model.Status)
+	// d.Set("tech_status", model.TechStatus)
 
 	/* we do not manage snapshots via Terraform yet, so keep this commented out for a while
 	if len(model.Snapshots) > 0 {
@@ -96,37 +96,32 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 		"name": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "Name of this disk. NOTE: disk names are NOT unique within an account.",
+			Description: "Name of this disk. NOTE: disk names are NOT unique within an account. If disk ID is specified, disk name is ignored.",
 		},
 
 		"disk_id": {
 			Type:        schema.TypeInt,
 			Optional:    true,
-			Description: "ID of the disk to get. If disk ID is specified, then name, account and account ID are ignored.",
+			Description: "ID of the disk to get. If disk ID is specified, then disk name and account ID are ignored.",
 		},
 
 		"account_id": {
 			Type:        schema.TypeInt,
 			Optional:    true,
-			Description: "ID of the account this disk belongs to.",
+			Description: "ID of the account this disk belongs to. If disk ID is specified, then account ID is ignored.",
 		},
 
-		"account_name": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "Name of the account this disk belongs to. If account ID is specified, account name is ignored.",
-		},
-
-		"description": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "User-defined text description of this disk.",
-		},
-
-		"image_id": {
+		// The rest of the data source Disk schema are all computed 
+		"sep_id": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "ID of the image, which this disk was cloned from.",
+			Description: "Storage end-point provider serving this disk.",
+		},
+
+		"pool": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Pool where this disk is located.",
 		},
 
 		"size": {
@@ -141,6 +136,30 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 			Description: "Type of this disk.",
 		},
 
+		"description": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "User-defined text description of this disk.",
+		},
+
+		"account_name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the account this disk belongs to. If account ID is specified, account name is ignored.",
+		},
+
+		"image_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of the image, which this disk was cloned from (valid for disk clones only).",
+		},
+
+		"sep_type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Type of the storage end-point provider serving this disk.",
+		},
+
 		/*
 			"snapshots": {
 				Type:        schema.TypeList,
@@ -150,25 +169,6 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 				},
 				Description: "List of user-created snapshots for this disk."
 			},
-		*/
-
-		"sep_id": {
-			Type:        schema.TypeInt,
-			Computed:    true,
-			Description: "Storage end-point provider serving this disk.",
-		},
-
-		"sep_type": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "Type of the storage end-point provider serving this disk.",
-		},
-
-		"pool": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "Pool where this disk is located.",
-		},
 
 		"status": {
 			Type:        schema.TypeString,
@@ -187,6 +187,7 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "ID of the compute instance where this disk is attached to, or 0 for unattached disk.",
 		},
+		*/
 	}
 
 	return rets

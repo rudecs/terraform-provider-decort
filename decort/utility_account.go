@@ -122,7 +122,7 @@ func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, er
 
 	accName, argSet := d.GetOk("account_name")
 	if !argSet {
-		return 0, fmt.Errorf("Either non-empty account name or positive account ID must be specified")
+		return 0, fmt.Errorf("Either non-empty account name or valid account ID must be specified")
 	}
 
 	controller := m.(*ControllerCfg)

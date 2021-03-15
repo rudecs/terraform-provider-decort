@@ -476,17 +476,6 @@ const ComputeDiskDetachAPI = "/restmachine/cloudapi/compute/diskDetach"
 //
 // structures related to /cloudapi/disks/create
 //
-type DiskCreateParam struct {
-	AccountID   int    `json:"accountId`
-	GridID      int    `json:"gid"`
-	Name        string `json:"string"`
-	Description string `json:"description"`
-	Size        int    `json:"size"`
-	Type        string `json:"type"`
-	SepID       int    `json:"sep_id"`
-	Pool        string `json:"pool"`
-}
-
 const DiskCreateAPI = "/restmachine/cloudapi/disks/create"
 
 //
@@ -498,6 +487,20 @@ const DisksGetAPI = "/restmachine/cloudapi/disks/get" // Returns single DiskReco
 
 const DisksListAPI = "/restmachine/cloudapi/disks/list" // Returns list of DiskRecord on success
 type DisksListResp []DiskRecord
+
+//
+// Grid ID structures
+// 
+type LocationRecord struct {
+	GridID          int    `json:"gid"`
+	Id              int    `json:"id"`
+	LocationCode    string `json:"locationCode"`
+	Name            string `json:"name"`
+	Flag            string `json:"flag"`
+}
+
+const LocationsListAPI = "/restmachine/cloudapi/locations/list" // Returns list of GridRecord on success
+type LocationsListResp []LocationRecord
 
 //
 // Auxiliary structures
