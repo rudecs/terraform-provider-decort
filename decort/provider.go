@@ -101,7 +101,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"decort_resgroup": resourceResgroup(),
 			"decort_kvmvm":    resourceCompute(),
-			// "decort_disk":     resourceDisk(),
+			"decort_disk":     resourceDisk(),
 			// "decort_vins":     resourceVins(),
 			// "decort_pfw": resourcePfw(),
 		},

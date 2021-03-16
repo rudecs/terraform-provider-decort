@@ -25,7 +25,7 @@ import (
 	// "net/url"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 // This is subresource of compute resource used when creating/managing compute network connections
@@ -35,6 +35,7 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 		"net_type": {
 			Type:        schema.TypeString,
 			Required:    true,
+			ValidateFunc: validation.StringInSlice([]string{"EXTNET", "VINS"}, false), // observe case while validating
 			Description: "Type of the network for this connection, either EXTNET or VINS.",
 		},
 

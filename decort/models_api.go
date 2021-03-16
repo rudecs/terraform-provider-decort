@@ -496,6 +496,58 @@ const DisksResizeAPI = "/restmachine/cloudapi/disks/resize2"
 //
 const DisksDeleteAPI = "/restmachine/cloudapi/disks/delete"
 
+
+//
+// ViNS structures 
+//
+
+// this is the structure of the element in the list returned by vins/search API
+type VinsSearchRecord struct { 
+	ID              int     `json:"id"`
+	Name            string  `json:"name"`
+	IPCidr          string  `json:"network"`
+	VxLanID         int     `json:"vxlanId"`
+	ExternalIP      string  `json:"externalIP"`
+    AccountID       int     `json:"accountId"`
+	AccountName     string  `json:"accountName"`
+	RgID            int     `json:"rgid"`
+	RgName          string  `json:"rgName"`
+}
+
+const VinsSearchAPI = "/restmachine/cloudapi/vins/search"
+type VinsSearchResp []VinsSearchRecord
+
+type VnfRecord struct {
+	ID              int     `json:"id"`
+	AccountID       int     `json:"accountId"`
+	Type            string  `json:"type"`      // "DHCP", "NAT", "GW" etc
+	Config          string  `json:"config"`    // NOTE: VNF specs vary by VNF type
+}
+
+type VnfGwConfigRecord struct { // describes GW VNF config structure
+	ExtNetID        int     `json:"ext_net_id"`
+	ExtNetIP        string  `json:"ext_net_ip"`
+	ExtNetMask      int     `json:"ext_net_mask"`
+	DefaultGW       string  `json:"default_gw"`
+}
+type VinsRecord struct { // represents part of the response from API vins/get
+	ID              int     `json:"id"`
+	Name            string  `json:"name"`
+	IPCidr          string  `json:"network"`
+	VxLanID         int     `json:"vxlanId"`
+	ExternalIP      string  `json:"externalIP"`
+    AccountID       int     `json:"accountId"`
+	AccountName     string  `json:"accountName"`
+	RgID            int     `json:"rgid"`
+	RgName          string  `json:"rgName"`
+	VNFs map[string]VnfRecord  `json:"vnfs"` 
+}
+
+const VinsGetAPI = "/restmachine/cloudapi/vins/get"
+
+const VinsCreateAPI = "/restmachine/cloudapi/vins/create"
+const VinsDeleteAPI = "/restmachine/cloudapi/vins/delete"
+
 //
 // Grid ID structures
 // 

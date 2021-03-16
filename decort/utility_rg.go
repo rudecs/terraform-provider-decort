@@ -76,8 +76,8 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	//    - if resource group name is specifeid -> by RG name and either account ID or account name
 	//
 	// If succeeded, it returns non empty string that contains JSON formatted facts about the
-	// resource group as returned by cloudspaces/get API call.
-	// Otherwise it returns empty string and meaningful error.
+	// resource group as returned by rg/get API call.
+	// Otherwise it returns empty string and a meaningful error.
 	//
 	// NOTE: As our provider always deletes RGs permanently, there is no "restore" method and
 	// consequently we are not interested in matching RGs in DELETED state. Hence, we call
@@ -90,7 +90,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	rgId, argSet := d.GetOk("rgId")
+	rgId, argSet := d.GetOk("rg_id")
 	if argSet {
 		// go straight for the RG by its ID
 		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", rgId.(int))

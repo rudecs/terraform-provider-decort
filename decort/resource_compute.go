@@ -256,6 +256,7 @@ func resourceCompute() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
+				ValidateFunc: validation.StringInSlice([]string{"KVM_X86", "KVM_PPC"}, false), // observe case while validating
 				Description: "Hardware architecture of this compute instance.",
 			},
 
