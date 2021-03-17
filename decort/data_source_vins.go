@@ -40,7 +40,7 @@ import (
 func flattenVins(d *schema.ResourceData, vins_facts string) error {
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
 	// from resourceVinsExists(...) method
-	log.Debugf("flattenVins: ready to decode response body from API %s", vins_facts)
+	// log.Debugf("flattenVins: ready to decode response body from API %s", vins_facts)
 	vinsRecord := VinsRecord{}
 	err := json.Unmarshal([]byte(vins_facts), &vinsRecord)
 	if err != nil {
@@ -51,9 +51,9 @@ func flattenVins(d *schema.ResourceData, vins_facts string) error {
 	vinsRecord.Name, vinsRecord.ID, vinsRecord.AccountID, vinsRecord.RgID)
 
 	d.SetId(fmt.Sprintf("%d", vinsRecord.ID))
-	d.Set("account_id", fmt.Sprintf("%d", vinsRecord.AccountID))
+	d.Set("account_id", vinsRecord.AccountID)
 	d.Set("account_name", vinsRecord.AccountName)
-	d.Set("rg_id", fmt.Sprintf("%d", vinsRecord.RgID))
+	err = d.Set("rg_id", vinsRecord.RgID)
 	d.Set("description", vinsRecord.Desc)
 	d.Set("ipcidr", vinsRecord.IPCidr)
 
@@ -63,26 +63,17 @@ func flattenVins(d *schema.ResourceData, vins_facts string) error {
 			extNetID, idOk := value.Config["ext_net_id"] // NOTE: unknown numbers are unmarshalled to float64. This is by design!
 			extNetIP, ipOk := value.Config["ext_net_ip"]
 			if idOk && ipOk {
-				d.Set("ext_ip_addr", extNetIP.(string))
-				d.Set("ext_net_id", fmt.Sprintf("%d", int(extNetID.(float64))))
 				log.Debugf("flattenVins: ViNS ext_net_id=%d, ext_net_ip=%s", int(extNetID.(float64)), extNetIP.(string))
+				d.Set("ext_ip_addr", extNetIP.(string))
+				d.Set("ext_net_id", int(extNetID.(float64)))
 			} else {
 				return fmt.Errorf("Failed to unmarshal VNF GW Config - structure is invalid.")
 			}
-			
-			/* log.Debugf("flattenVins: ready to decode Config string %s", value.Config)
-			vnfRec := &VnfGwConfigRecord{}
-			err = json.Unmarshal([]byte(value.Config), vnfRec)
-			if err != nil {
-				return err
-			}
-			d.Set("ext_ip_addr", vnfRec.ExtNetIP)
-			d.Set("ext_net_id", fmt.Sprintf("%d", vnfRec.ExtNetID))
-			log.Debugf("flattenVins: ViNS ext_net_id=%d, ext_net_ip=%s", vnfRec.ExtNetID, vnfRec.ExtNetIP)
-			*/
 			break
 		}
 	}
+
+	log.Debugf("flattenVins: EXTRA CHECK - schema rg_id=%d, ext_net_id=%d", d.Get("rg_id").(int), d.Get("ext_net_id").(int))
 
 	return nil
 }

@@ -38,19 +38,19 @@ import (
 func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 	name := d.Get("name").(string)
 	// rg_id, rgid_set := d.GetOk("rg_id")
-	account_id, account_set := d.GetOk("account_id")
+	accId, accSet := d.GetOk("account_id")
 
 	controller := m.(*ControllerCfg)
 	url_values := &url.Values{}
-	if account_set {
-		url_values.Add("accountId", fmt.Sprintf("%d", account_id.(int)))
+	if accSet {
+		url_values.Add("accountId", fmt.Sprintf("%d", accId.(int)))
 	}
 	body_string, err := controller.decortAPICall("POST", ImagesListAPI, url_values)
 	if err != nil {
 		return err
 	}
 
-	log.Debugf("dataSourceImageRead: ready to decode response body from %q", ImagesListAPI)
+	log.Debugf("dataSourceImageRead: ready to decode response body from %s", ImagesListAPI)
 	model := ImagesListResp{}
 	err = json.Unmarshal([]byte(body_string), &model)
 	if err != nil {
@@ -62,7 +62,7 @@ func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 	for index, item := range model {
 		// need to match Image by name
 		if item.Name == name {
-			log.Printf("dataSourceImageRead: index %d, matched name %q", index, item.Name)
+			log.Printf("dataSourceImageRead: index %d, matched name %s", index, item.Name)
 			d.SetId(fmt.Sprintf("%d", item.ID))
 			d.Set("account_id", item.AccountID)
 			d.Set("arch", item.Arch)
@@ -75,7 +75,7 @@ func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 
-	return fmt.Errorf("Cannot find OS Image name %q", name)
+	return fmt.Errorf("Cannot find Image name %s", name)
 }
 
 func dataSourceImage() *schema.Resource {
@@ -93,7 +93,7 @@ func dataSourceImage() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the OS image to locate. This parameter is case sensitive.",
+				Description: "Name of the image to locate. This parameter is case sensitive.",
 			},
 
 			"account_id": {
@@ -106,11 +106,11 @@ func dataSourceImage() *schema.Resource {
 			"arch": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Binary architecture this image is created for.",
+				Description: "Binary architecture of this image.",
 			},
 
 			"sep_id": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Storage end-point provider serving this image.",
 			},
@@ -138,7 +138,7 @@ func dataSourceImage() *schema.Resource {
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Current model status of this disk.",
+				Description: "Current model status of this image.",
 			},
 		},
 	}
