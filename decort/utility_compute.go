@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -197,11 +198,24 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	computeId, argSet := d.GetOk("compute_id") // NB: compute_id is NOT present in computeResource schema!
-	if argSet {
+	// make it possible to use "read" & "check presence" functions with comptue ID set so
+	// that Import of Compute resource is possible
+	idSet := false
+	theId, err := strconv.Atoi(d.Id())
+	if err != nil || theId <= 0 {
+		computeId, argSet := d.GetOk("compute_id") // NB: compute_id is NOT present in computeResource schema!
+		if argSet {
+			theId = computeId.(int)
+			idSet = true
+		}
+	} else {
+		idSet = true
+	}
+
+	if idSet {
 		// compute ID is specified, try to get compute instance straight by this ID
-		log.Debugf("utilityComputeCheckPresence: locating compute by its ID %d", computeId.(int))
-		urlValues.Add("computeId", fmt.Sprintf("%d", computeId.(int)))
+		log.Debugf("utilityComputeCheckPresence: locating compute by its ID %d", theId)
+		urlValues.Add("computeId", fmt.Sprintf("%d", theId))
 		computeFacts, err := controller.decortAPICall("POST", ComputeGetAPI, urlValues)
 		if err != nil {
 			return "", err
@@ -209,6 +223,8 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 		return computeFacts, nil
 	}
 
+	// ID was not set in the schema upon entering this function - work through Compute name
+	// and RG ID
 	computeName, argSet := d.GetOk("name")
 	if !argSet {
 		return "", fmt.Errorf("Cannot locate compute instance if name is empty and no compute ID specified")
@@ -251,5 +267,4 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	}
 
 	return "", nil // there should be no error if Compute does not exist
-	// return "", fmt.Errorf("Cannot find Compute name %q in resource group ID %d", name, rgid)
 }

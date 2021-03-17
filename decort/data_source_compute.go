@@ -112,8 +112,8 @@ func parseComputeDisks(disks []DiskRecord) []interface{} {
 		elem["sep_id"] = value.SepID
 		elem["sep_type"] = value.SepType
 		elem["pool"] = value.Pool
-		elem["status"] = value.Status
-		elem["tech_status"] = value.TechStatus
+		// elem["status"] = value.Status
+		// elem["tech_status"] = value.TechStatus
 		elem["compute_id"] = value.ComputeID
 		result[i] = elem
 	}
@@ -417,6 +417,7 @@ func dataSourceCompute() *schema.Resource {
 				Description: "User-defined text description of this compute instance.",
 			},
 
+			/*
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -429,12 +430,11 @@ func dataSourceCompute() *schema.Resource {
 				Description: "Current technical status of this compute instance.",
 			},
 
-			/*
-				"internal_ip": {
-					Type:          schema.TypeString,
-					Computed:      true,
-					Description:  "Internal IP address of this Compute.",
-				},
+			"internal_ip": {
+				Type:          schema.TypeString,
+				Computed:      true,
+				Description:  "Internal IP address of this Compute.",
+			},
 			*/
 		},
 	}

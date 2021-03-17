@@ -230,6 +230,10 @@ func resourceCompute() *schema.Resource {
 		Delete: resourceComputeDelete,
 		Exists: resourceComputeExists,
 
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
+
 		Timeouts: &schema.ResourceTimeout{
 			Create:  &Timeout180s,
 			Read:    &Timeout30s,
@@ -369,7 +373,6 @@ func resourceCompute() *schema.Resource {
 				},
 				Description: "Specification for guest logins on this compute instance.",
 			},
-			*/
 
 			"status": {
 				Type:        schema.TypeString,
@@ -382,6 +385,7 @@ func resourceCompute() *schema.Resource {
 				Computed:    true,
 				Description: "Current technical status of this compute instance.",
 			},
+			*/
 		},
 	}
 }
