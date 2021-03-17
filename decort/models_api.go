@@ -521,10 +521,10 @@ type VnfRecord struct {
 	ID              int     `json:"id"`
 	AccountID       int     `json:"accountId"`
 	Type            string  `json:"type"`      // "DHCP", "NAT", "GW" etc
-	Config          string  `json:"config"`    // NOTE: VNF specs vary by VNF type
+	Config          map[string]interface{}  `json:"config"`    // NOTE: VNF specs vary by VNF type
 }
 
-type VnfGwConfigRecord struct { // describes GW VNF config structure
+type VnfGwConfigRecord struct { // describes GW VNF config structure inside ViNS, as returned by API vins/get
 	ExtNetID        int     `json:"ext_net_id"`
 	ExtNetIP        string  `json:"ext_net_ip"`
 	ExtNetMask      int     `json:"ext_net_mask"`
@@ -541,6 +541,7 @@ type VinsRecord struct { // represents part of the response from API vins/get
 	RgID            int     `json:"rgid"`
 	RgName          string  `json:"rgName"`
 	VNFs map[string]VnfRecord  `json:"vnfs"` 
+	Desc            string  `json:"desc"`
 }
 
 const VinsGetAPI = "/restmachine/cloudapi/vins/get"

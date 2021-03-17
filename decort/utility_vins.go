@@ -81,6 +81,7 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		return "", fmt.Errorf("Cannot check ViNS presence if ViNS name is empty")
 	}
 	urlValues.Add("name", vinsName.(string))
+	urlValues.Add("show_all", "false")
 	log.Debugf("utilityVinsCheckPresence: locating ViNS %s", vinsName.(string))
 
 	rgId, rgSet := d.GetOk("rg_id")
@@ -124,11 +125,11 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 			// manage ViNS, so we have to get detailed info by calling API vins/get
 			rqValues := &url.Values{}
 			rqValues.Add("vinsId", fmt.Sprintf("%d",item.ID))
-			apiResp, err = controller.decortAPICall("POST", VinsGetAPI, rqValues)
+			vinsGetResp, err := controller.decortAPICall("POST", VinsGetAPI, rqValues)
 			if err != nil {
 				return "", err
 			}
-			return apiResp, nil 
+			return vinsGetResp, nil 
 		}
 	}
 

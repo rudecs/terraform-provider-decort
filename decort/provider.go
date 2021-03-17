@@ -112,7 +112,7 @@ func Provider() *schema.Provider {
 			"decort_kvmvm":    dataSourceCompute(),
 			"decort_image":    dataSourceImage(),
 			"decort_disk":     dataSourceDisk(),
-			// "decort_vins":     dataSourceVins(),
+			"decort_vins":     dataSourceVins(),
 			// "decort_pfw": dataSourcePfw(),
 		},
 
