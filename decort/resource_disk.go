@@ -277,6 +277,10 @@ func resourceDisk() *schema.Resource {
 		Delete: resourceDiskDelete,
 		Exists: resourceDiskExists,
 
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
+
 		Timeouts: &schema.ResourceTimeout{
 			Create:  &Timeout180s,
 			Read:    &Timeout30s,

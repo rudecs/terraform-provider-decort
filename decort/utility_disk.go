@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -56,11 +57,24 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	diskId, argSet := d.GetOk("disk_id")
-	if argSet {
-		// go straight for the disk by its ID
-		log.Debugf("utilityDiskCheckPresence: locating disk by its ID %d", diskId.(int))
-		urlValues.Add("diskId", fmt.Sprintf("%d", diskId.(int)))
+	// make it possible to use "read" & "check presence" functions with disk ID set so
+	// that Import of preexisting Disk resource is possible
+	idSet := false
+	theId, err := strconv.Atoi(d.Id())
+	if err != nil || theId <= 0 {
+		diskId, argSet := d.GetOk("disk_id")
+		if argSet {
+			theId =diskId.(int)
+			idSet = true
+		}
+	} else {
+		idSet = true
+	}
+
+	if idSet {
+		// disk ID is specified, try to get disk instance straight by this ID
+		log.Debugf("utilityDiskCheckPresence: locating disk by its ID %d", theId)
+		urlValues.Add("diskId", fmt.Sprintf("%d", theId))
 		diskFacts, err := controller.decortAPICall("POST", DisksGetAPI, urlValues)
 		if err != nil {
 			return "", err
@@ -68,6 +82,8 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		return diskFacts, nil
 	}
 
+	// ID or disk_di was not set in the schema upon entering this function - rely on Disk name
+	// and Account ID to find the disk
 	diskName, argSet := d.GetOk("name")
 	if !argSet {
 		// no disk ID and no disk name - we cannot locate disk in this case
@@ -87,7 +103,7 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		return "", err
 	}
 
-	log.Debugf("utilityDiskCheckPresence: ready to unmarshal string %q", diskFacts) 
+	log.Debugf("utilityDiskCheckPresence: ready to unmarshal string %s", diskFacts) 
 
 	disksList := DisksListResp{}
 	err = json.Unmarshal([]byte(diskFacts), &disksList)
