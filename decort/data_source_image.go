@@ -62,7 +62,7 @@ func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 	for index, item := range model {
 		// need to match Image by name
 		if item.Name == name {
-			log.Printf("dataSourceImageRead: index %d, matched name %s", index, item.Name)
+			log.Debugf("dataSourceImageRead: index %d, matched name %s", index, item.Name)
 			d.SetId(fmt.Sprintf("%d", item.ID))
 			d.Set("account_id", item.AccountID)
 			d.Set("arch", item.Arch)

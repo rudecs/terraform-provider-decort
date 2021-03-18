@@ -30,12 +30,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	// "time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/dgrijalva/jwt-go"
 
@@ -135,7 +136,7 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 	}
 
 	if allow_unverified_ssl {
-		log.Printf("ControllerConfigure: allow_unverified_ssl is set - will not check certificates!")
+		log.Warn("ControllerConfigure: allow_unverified_ssl is set - will not check certificates!")
 		transCfg := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true},}
 		ret_config.cc_client = &http.Client{
 			Transport: transCfg,
@@ -389,7 +390,7 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 			return "", err
 		} 
 		json_resp := Jo2JSON(string(tmp_body))
-		log.Printf("decortAPICall:\n %s", json_resp)
+		log.Debugf("decortAPICall: %s %s\n %s", method, api_name, json_resp)
 		return json_resp, nil
 	} else {
 		return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %q with request Body %q", 

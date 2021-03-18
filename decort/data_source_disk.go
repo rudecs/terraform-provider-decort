@@ -40,8 +40,11 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 	//
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
 	// from resourceDiskExists(...) method. Use utilityDiskCheckPresence instead.
+
+	log.Debugf("flattenDisk: ready to unmarshal string %s", disk_facts)
+
 	model := DiskRecord{}
-	log.Debugf("flattenDisk: ready to unmarshal string %q", disk_facts)
+	
 	err := json.Unmarshal([]byte(disk_facts), &model)
 	if err != nil {
 		return err
@@ -50,7 +53,7 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 	log.Debugf("flattenDisk: disk ID %d, disk AccountID %d", model.ID, model.AccountID)
 
 	d.SetId(fmt.Sprintf("%d", model.ID))
-	d.Set("disk_id", model.ID)
+	// d.Set("disk_id", model.ID) - we should NOT update disk_id in the schema. If it was set - it is already set, if it wasn't - we shouldn't
 	d.Set("name", model.Name)
 	d.Set("account_id", model.AccountID)
 	d.Set("account_name", model.AccountName)

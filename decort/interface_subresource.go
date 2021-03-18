@@ -143,7 +143,7 @@ func flattenNetworks(nets []NicRecord) []interface{} {
 			length += 1
 		}
 	}
-	log.Printf("flattenNetworks: found %d NICs with PUBLIC type", length)
+	log.Debugf("flattenNetworks: found %d NICs with PUBLIC type", length)
 
 	result := make([]interface{}, length)
 	if length == 0 {
@@ -163,7 +163,7 @@ func flattenNetworks(nets []NicRecord) []interface{} {
 			elem["network_id"], _ = strconv.Atoi(substr[1])
 			elem["ip_range"] = value.IPAddress
 			// elem["label"] = ... - should be uncommented for the future release
-			log.Printf("flattenNetworks: parsed element %d - network_id %d, ip_range %q",
+			log.Debugf("flattenNetworks: parsed element %d - network_id %d, ip_range %s",
 				index, elem["network_id"].(int), value.IPAddress)
 			result[subindex] = elem
 			subindex += 1

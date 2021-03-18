@@ -43,17 +43,24 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 
 	// Note that this function will not abort on API errors, but will continue to configure (attach / detach) other individual 
 	// disks via atomic API calls. However, it will not retry failed manipulation on the same disk.
+	log.Debugf("utilityComputeExtraDisksConfigure: called for Compute ID %s with do_delta = %b", d.Id(), do_delta)
 
 	old_set, new_set := d.GetChange("extra_disks")
 
-	old_disks := old_set.([]interface{}) // NB: "extra_disks" is an array of ints
-	new_disks := new_set.([]interface{})
+	old_disks := make([]interface{},0,0)
+	if old_set != nil {
+		old_disks = old_set.([]interface{}) 
+	}
+	
+	new_disks := make([]interface{},0,0)
+	if new_set != nil {
+		new_disks = new_set.([]interface{})
+	}
 
 	apiErrCount := 0
 	var lastSavedError error
 
 	if !do_delta {
-		log.Debugf("utilityComputeExtraDisksConfigure: called for Compute ID %s with do_delta = false", d.Id())
 		if len(new_disks) < 1 {
 			return nil
 		}
@@ -152,15 +159,15 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 
 // TODO: implement do_delta logic
 func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceData, do_delta bool) error {
-	// "d" is filled with data according to computeResource schema, so extra networks config is retrieved via "networks" key
+	// "d" is filled with data according to computeResource schema, so extra networks config is retrieved via "network" key
 	// If do_delta is true, this function will identify changes between new and existing specs for network and try to 
 	// update compute configuration accordingly
-	argVal, argSet := d.GetOk("networks") 
+	argVal, argSet := d.GetOk("network") 
 	if !argSet || len(argVal.([]interface{})) < 1 {
 		return nil
 	}
 
-	net_list := argVal.([]interface{}) // networks" is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
+	net_list := argVal.([]interface{}) // network is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
 
 	for _, net := range net_list {
 		urlValues := &url.Values{}
@@ -241,7 +248,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 		return "", err
 	}
 
-	log.Debugf("utilityComputeCheckPresence: ready to unmarshal string %q", apiResp)
+	log.Debugf("utilityComputeCheckPresence: ready to unmarshal string %s", apiResp)
 
 	computeList := RgListComputesResp{}
 	err = json.Unmarshal([]byte(apiResp), &computeList)
@@ -254,7 +261,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	for index, item := range computeList {
 		// need to match Compute by name, skip Computes with the same name in DESTROYED satus
 		if item.Name == computeName.(string) && item.Status != "DESTROYED" {
-			log.Debugf("utilityComputeCheckPresence: index %d, matched name %q", index, item.Name)
+			log.Debugf("utilityComputeCheckPresence: index %d, matched name %s", index, item.Name)
 			// we found the Compute we need - now get detailed information via compute/get API
 			cgetValues := &url.Values{}
 			cgetValues.Add("computeId", fmt.Sprintf("%d", item.ID))

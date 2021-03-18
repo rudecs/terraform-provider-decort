@@ -45,14 +45,14 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("accountId", fmt.Sprintf("%d", d.Get("account_id").(int)))
 	urlValues.Add("gid", fmt.Sprintf("%d", DefaultGridID)) // we use default Grid ID, which was obtained along with DECORT Controller init
 	urlValues.Add("name", d.Get("name").(string))
-	urlValues.Add("size", d.Get("size").(string))
+	urlValues.Add("size", fmt.Sprintf("%d", d.Get("size").(int)))
 	urlValues.Add("type", d.Get("type").(string))
 	urlValues.Add("sep_id", fmt.Sprintf("%d", d.Get("sep_id").(int)))
 	urlValues.Add("pool", d.Get("pool").(string))
 	
 	argVal, argSet := d.GetOk("description")
 	if argSet {
-		urlValues.Add("decs", argVal.(string))
+		urlValues.Add("description", argVal.(string))
 	} 
 
 	apiResp, err := controller.decortAPICall("POST", DisksCreateAPI, urlValues)
@@ -212,6 +212,7 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 		"description": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Default:     "Disk resource managed by Terraform",
 			Description: "Optional user-defined text description of this disk.",
 		},
 

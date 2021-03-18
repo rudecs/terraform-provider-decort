@@ -31,7 +31,7 @@ import (
 func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 	quota := QuotaRecord{
 		Cpu:        -1,
-		Ram:        -1.,
+		Ram:        -1., // this is float32, but may change in the future
 		Disk:       -1,
 		ExtTraffic: -1,
 		ExtIPs:     -1,
@@ -48,7 +48,7 @@ func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 	}
 
 	if subres_data["ram"].(int) > 0 {
-		quota.Ram = subres_data["ram"].(float32) // RAM volume in MB, as float!
+		quota.Ram = subres_data["ram"].(float32) // RAM volume in MB, as float32!
 	}
 
 	if subres_data["ext_traffic"].(int) > 0 {
@@ -70,7 +70,7 @@ func parseQuota(quota QuotaRecord) []interface{} {
 	quota_map := make(map[string]interface{})
 
 	quota_map["cpu"] = quota.Cpu
-	quota_map["ram"] = quota.Ram // MB; this is float32, unlike the rest of values
+	quota_map["ram"] = quota.Ram // NB: this is float32, unlike the rest of values
 	quota_map["disk"] = quota.Disk
 	quota_map["ext_traffic"] = quota.ExtTraffic
 	quota_map["ext_ips"] = quota.ExtIPs

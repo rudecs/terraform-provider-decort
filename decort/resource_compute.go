@@ -96,7 +96,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		d.SetPartial("ssh_keys")
 	}
 
-	log.Debugf("resourceComputeCreate: new simple Compute ID %d, name %q created", compId, d.Get("name").(string))
+	log.Debugf("resourceComputeCreate: new simple Compute ID %d, name %s created", compId, d.Get("name").(string))
 
 	// Configure data disks if any
 	extraDisksOk := true
@@ -116,7 +116,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 
 	// Configure external networks if any
 	netsOk := true
-	argVal, argSet = d.GetOk("networks") 
+	argVal, argSet = d.GetOk("network") 
 	if argSet && len(argVal.([]interface{})) > 0 {
 		log.Debugf("resourceComputeCreate: calling utilityComputeNetworksConfigure to attach %d network(s)", len(argVal.([]interface{})))
 		err = controller.utilityComputeNetworksConfigure(d, false) // do_delta=false, as we are working on a new compute
@@ -127,7 +127,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	}
 	if netsOk {
 		// there were no errors reported when configuring networks
-		d.SetPartial("networks")
+		d.SetPartial("network")
 	}
 
 	if extraDisksOk && netsOk {
@@ -135,7 +135,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		d.Partial(false)
 	}
 	
-	log.Debugf("resourceComputeCreate: new Compute ID %d, name %q creation sequence complete", compId, d.Get("name").(string))
+	log.Debugf("resourceComputeCreate: new Compute ID %d, name %s creation sequence complete", compId, d.Get("name").(string))
 
 	// We may reuse dataSourceComputeRead here as we maintain similarity 
 	// between Compute resource and Compute data source schemas
@@ -145,7 +145,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceComputeRead: called for Compute name %q, RG ID %d",
+	log.Debugf("resourceComputeRead: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
 	compFacts, err := utilityComputeCheckPresence(d, m)
@@ -168,7 +168,7 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceComputeUpdate: called for Compute name %q,  RGID %d",
+	log.Debugf("resourceComputeUpdate: called for Compute name %s,  RGID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
 	log.Printf("resourceComputeUpdate: NOT IMPLEMENTED YET!")
@@ -182,7 +182,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 	// NOTE: this function destroys target Compute instance "permanently", so 
 	// there is no way to restore it. It also destroys all extra disks
 	// attached to this compute, so "User, ye be warned!"
-	log.Debugf("resourceComputeDelete: called for Compute name %q, RG ID %d",
+	log.Debugf("resourceComputeDelete: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
 	compFacts, err := utilityComputeCheckPresence(d, m)
@@ -288,7 +288,7 @@ func resourceCompute() *schema.Resource {
 			"boot_disk_size": {
 				Type:     schema.TypeInt,
 				Optional: true,
-				Description: "Size of the boot disk on this compute instance.",
+				Description: "This compute instance boot disk size in GB.",
 			},
 
 			"extra_disks": {
@@ -298,17 +298,17 @@ func resourceCompute() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeInt,
 				},
-				Description: "Optional list of IDs of the extra disks to attach to this compute.",
+				Description: "Optional list of IDs of extra disks to attach to this compute. You may specify several extra disks.",
 			},
 
-			"networks": {
+			"network": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: MaxNetworksPerCompute,
 				Elem: &schema.Resource{
 					Schema: networkSubresourceSchemaMake(),
 				},
-				Description: "Optional list of networks to attach this compute to.",
+				Description: "Optional network connection(s) for this compute. You may specify several network blocks, one for each connection.",
 			},
 
 			"ssh_keys": {

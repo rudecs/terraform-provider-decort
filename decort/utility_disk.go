@@ -116,7 +116,7 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	for index, item := range disksList {
 		// need to match disk by name, return the first match
 		if item.Name == diskName.(string) && item.Status != "DESTROYED" {
-			log.Printf("utilityDiskCheckPresence: index %d, matched disk name %q", index, item.Name)
+			log.Debugf("utilityDiskCheckPresence: index %d, matched disk name %q", index, item.Name)
 			// we found the disk we need - not get detailed information via API call to disks/get
 			/*
 			// TODO: this may not be optimal as it initiates one extra call to the DECORT controller

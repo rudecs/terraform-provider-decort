@@ -121,7 +121,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 		return "", err
 	}
 	// log.Debugf("%s", apiResp)
-	// log.Debugf("utilityResgroupCheckPresence: ready to decode response body from %q", ResgroupListAPI)
+	log.Debugf("utilityResgroupCheckPresence: ready to decode response body from %s", ResgroupListAPI)
 	model := ResgroupListResp{}
 	err = json.Unmarshal([]byte(apiResp), &model)
 	if err != nil {

@@ -31,7 +31,7 @@ import (
 )
 
 func Jo2JSON(arg_str string) string {
-	// DECS API historically returns response in the form of Python dictionary, which generally
+	// DECORT API historically returns response in the form of Python dictionary, which generally
 	// looks like JSON, but does not comply with JSON syntax.
 	// For Golang JSON Unmarshal to work properly we need to pre-process API response as follows:   
 	ret_string := strings.Replace(string(arg_str), "u'", "\"", -1)

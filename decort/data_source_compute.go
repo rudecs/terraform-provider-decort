@@ -49,7 +49,7 @@ func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 		length = 0
 	}
 	
-	result := make([]interface{}, length)
+	result := make([]interface{}, length-1)
 
 	if length == 0 {
 		return result
@@ -139,7 +139,7 @@ func parseBootDiskSize(disks []DiskRecord) int {
 // Parse the list of interfaces from compute/get response into a list of networks 
 // attached to this compute
 func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
-	// return value will be used to d.Set("networks",) item of dataSourceCompute schema
+	// return value will be used to d.Set("network",) item of dataSourceCompute schema
 	length := len(ifaces)
 	log.Debugf("parseComputeInterfacesToNetworks: called for %d ifaces", length)
 
@@ -222,7 +222,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	log.Debugf("flattenCompute: ID %d, RG ID %d", model.ID, model.RgID)
 
 	d.SetId(fmt.Sprintf("%d", model.ID))
-	d.Set("compute_id", model.ID)
+	// d.Set("compute_id", model.ID) - we should NOT set compute_id in the schema here: if it was set - it is already set, if it wasn't - we shouldn't
 	d.Set("name", model.Name)
 	d.Set("rg_id", model.RgID)
 	d.Set("rg_name", model.RgName)
@@ -247,7 +247,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 
 	if len(model.Interfaces) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeInterfacesToNetworks for %d interfaces", len(model.Interfaces))
-		if err = d.Set("networks", parseComputeInterfacesToNetworks(model.Interfaces)); err != nil {
+		if err = d.Set("network", parseComputeInterfacesToNetworks(model.Interfaces)); err != nil {
 			return err
 		}
 	}
@@ -367,7 +367,7 @@ func dataSourceCompute() *schema.Resource {
 				Elem: &schema.Schema {
 					Type:  schema.TypeInt,
 				},
-				Description: "IDs of the extra disks attached to this compute.",
+				Description: "IDs of the extra disk(s) attached to this compute.",
 			},
 			
 			/*
@@ -381,14 +381,14 @@ func dataSourceCompute() *schema.Resource {
 			},
 			*/
 
-			"networks": {
+			"network": {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: MaxNetworksPerCompute,
 				Elem: &schema.Resource{
 					Schema: networkSubresourceSchemaMake(),
 				},
-				Description: "Networks this compute is attached to.",
+				Description: "Network connection(s) for this compute.",
 			},
 
 			/*
