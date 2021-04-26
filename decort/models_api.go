@@ -56,7 +56,7 @@ type AccountAclRecord struct {
 }
 
 type ResgroupRecord struct {
-	ACLs           []UserAclRecord  `json:"ACLs"`
+	ACLs           []UserAclRecord  `json:"acl"`
 	Owner          AccountAclRecord `json:"accountAcl"`
 	AccountID      int              `json:"accountId"`
 	AccountName    string           `json:"accountName"`
@@ -301,7 +301,7 @@ type DiskRecord struct {
 	BootPartition   int    `json:"bootPartition"`
 	CreatedTime     uint64 `json:"creationTime"`
 	DeletedTime     uint64 `json:"deletionTime"`
-	Desc            string `json:"descr"`
+	Desc            string `json:"desc"`
 	DestructionTime uint64 `json:"destructionTime"`
 	DiskPath        string `json:"diskPath"`
 	GridID          int    `json:"gid"`
@@ -320,7 +320,7 @@ type DiskRecord struct {
 	PurgeTime uint64 `json:"purgeTime"`
 	// Role string            `json:"role"`
 	SepType    string           `json:"sepType"`
-	SepID      int              `json:"sepid"`    // NOTE: absent from compute/get output
+	SepID      int              `json:"sepId"`    // NOTE: absent from compute/get output
 	SizeMax    int              `json:"sizeMax"`
 	SizeUsed   int              `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
 	Snapshots  []SnapshotRecord `json:"snapshots"`
@@ -382,7 +382,7 @@ type ComputeGetResp struct {
 }
 
 //
-// structures related to /restmachine/cloudapi/images/list API
+// structures related to /restmachine/cloudapi/image/list API
 //
 type ImageRecord struct {
 	AccountID   uint   `json:"accountId"`
@@ -390,12 +390,12 @@ type ImageRecord struct {
 	BootType    string `json:"bootType"`
 	IsBootable  bool   `json:"bootable"`
 	IsCdrom     bool   `json:"cdrom"`
-	Desc        string `json:"description"`
+	Desc        string `json:"desc"`
 	IsHotResize bool   `json:"hotResize"`
 	ID          uint   `json:"id"`
 	Name        string `json:"name"`
 	Pool        string `json:"pool"`
-	SepID       int    `json:"sepid"`
+	SepID       int    `json:"sepId"`
 	Size        int    `json:"size"`
 	Status      string `json:"status"`
 	Type        string `json:"type"`
@@ -403,7 +403,7 @@ type ImageRecord struct {
 	IsVirtual   bool   `json:"virtual"`
 }
 
-const ImagesListAPI = "/restmachine/cloudapi/images/list"
+const ImagesListAPI = "/restmachine/cloudapi/image/list"
 
 type ImagesListResp []ImageRecord
 
@@ -421,7 +421,7 @@ const ExtNetListAPI = "/restmachine/cloudapi/extnet/list"
 type ExtNetListResp []ExtNetRecord
 
 //
-// structures related to /cloudapi/accounts/list API
+// structures related to /cloudapi/account/list API
 //
 type AccountRecord struct {
 	// ACLs        []UserAclRecord `json:"acl"`
@@ -433,9 +433,9 @@ type AccountRecord struct {
 	// UpdatedTime uint64          `json:"updateTime"`
 }
 
-const AccountsGetAPI = "/restmachine/cloudapi/accounts/get" // returns AccountRecord superset
+const AccountsGetAPI = "/restmachine/cloudapi/account/get" // returns AccountRecord superset
 
-const AccountsListAPI = "/restmachine/cloudapi/accounts/list" // returns list of abdridged info about accounts
+const AccountsListAPI = "/restmachine/cloudapi/account/list" // returns list of abdridged info about accounts
 type AccountsListResp []AccountRecord
 
 //
@@ -510,7 +510,7 @@ type VinsSearchRecord struct {
 	ExternalIP      string  `json:"externalIP"`
     AccountID       int     `json:"accountId"`
 	AccountName     string  `json:"accountName"`
-	RgID            int     `json:"rgid"`
+	RgID            int     `json:"rgId"`
 	RgName          string  `json:"rgName"`
 }
 
