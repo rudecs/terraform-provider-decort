@@ -282,6 +282,8 @@ const ComputeListAPI = "/restmachine/cloudapi/compute/list"
 
 type ComputeListResp []ComputeRecord
 
+const ComputeResizeAPI = "/restmachine/cloudapi/compute/resize"
+
 //
 // structures related to /cloudapi/compute/get
 //
@@ -462,6 +464,12 @@ const ComputePfwDelAPI = "/restmachine/cloudapi/compute/pfwDel"
 //
 // structures related to /cloudapi/compute/net Attach/Detach API
 //
+type ComputeNetMgmtRecord struct { // used to "cache" network specs when preparing to manage compute networks
+	ID             int
+	Type           string
+	IPAddress      string
+	MAC            string
+}
 const ComputeNetAttachAPI = "/restmachine/cloudapi/compute/netAttach"
 
 const ComputeNetDetachAPI = "/restmachine/cloudapi/compute/netDetach"

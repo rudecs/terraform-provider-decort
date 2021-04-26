@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019-2020 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -168,10 +168,77 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceComputeUpdate: called for Compute name %s,  RGID %d",
-		d.Get("name").(string), d.Get("rg_id").(int))
+	log.Debugf("resourceComputeUpdate: called for Compute ID %s / name %s, RGID %d",
+		d.Id(), d.Get("name").(string), d.Get("rg_id").(int))
 
-	log.Printf("resourceComputeUpdate: NOT IMPLEMENTED YET!")
+	controller := m.(*ControllerCfg)
+
+	/* 
+	1. Resize CPU/RAM
+	2. Resize (grow) boot disk
+	3. Update extra disks
+	4. Update networks
+	5. Update port forwards 
+	*/
+
+	// 1. Resize CPU/RAM
+	params := &url.Values{}
+	doUpdate := false
+	params.Add("computeId", d.Id())
+
+	oldCpu, newCpu := d.GetChange("cpu")
+	if oldCpu.(int) != newCpu.(int) {
+		params.Add("cpu", fmt.Sprintf("%d", newCpu.(int)))
+		doUpdate = true
+	} else {
+		params.Add("cpu", "0") // no change to CPU allocation
+	}
+	
+	oldRam, newRam := d.GetChange("ram")
+	if oldRam.(int) != newRam.(int) {
+		params.Add("ram", fmt.Sprintf("%d", newRam.(int)))
+		doUpdate = true
+	} else {
+		params.Add("ram", "0")
+	}
+
+	if doUpdate {
+		log.Debugf("resourceComputeUpdate: changing CPU %d -> %d and/or RAM %d -> %d",
+		           oldCpu.(int), newCpu.(int),
+				   oldRam.(int), newRam.(int))
+		_, err := controller.decortAPICall("POST", ComputeResizeAPI, params)
+		if err != nil {
+			return err
+		}
+	}
+
+	// 2. Resize (grow) Boot disk	
+	oldSize, newSize := d.GetChange("boot_disk_size")
+	if oldSize.(int) < newSize.(int) {
+		bdsParams := &url.Values{}
+		bdsParams.Add("diskId", fmt.Sprintf("%d", d.Get("boot_disk_id").(int)))
+		bdsParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
+		log.Debugf("resourceComputeUpdate: compute ID %s, boot disk ID %d resize %d -> %d",
+		           d.Id(), d.Get("boot_disk_id").(int), oldSize.(int), newSize.(int))
+		_, err := controller.decortAPICall("POST", DisksResizeAPI, params)
+		if err != nil {
+			return err
+		}
+	} else if oldSize.(int) > newSize.(int) {
+		log.Warnf("resourceComputeUpdate: compute ID %d - shrinking boot disk is not allowed", d.Id())
+	}
+
+	// 3. Calculate and apply changes to data disks
+	err := controller.utilityComputeExtraDisksConfigure(d, true) // pass do_delta = true to apply changes, if any
+	if err != nil {
+		return err
+	}
+
+	// 4. Calculate and apply changes to network connections
+	err = controller.utilityComputeNetworksConfigure(d, true) // pass do_delta = true to apply changes, if any
+	if err != nil {
+		return err
+	}
 
 	// we may reuse dataSourceComputeRead here as we maintain similarity 
 	// between Compute resource and Compute data source schemas
@@ -267,14 +334,14 @@ func resourceCompute() *schema.Resource {
 			"cpu": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ValidateFunc: validation.IntBetween(1, 64),
+				ValidateFunc: validation.IntBetween(1, MaxCpusPerCompute),
 				Description:  "Number of CPUs to allocate to this compute instance.",
 			},
 
 			"ram": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ValidateFunc: validation.IntAtLeast(512),
+				ValidateFunc: validation.IntAtLeast(MinRamPerCompute),
 				Description:  "Amount of RAM in MB to allocate to this compute instance.",
 			},
 
@@ -344,6 +411,12 @@ func resourceCompute() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Name of the account this compute instance belongs to.",
+			},
+
+			"boot_disk_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "This compute instance boot disk ID.",
 			},
 
 			/*

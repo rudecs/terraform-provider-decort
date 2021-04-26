@@ -51,6 +51,12 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 			Description: "Optional IP address to assign to this connection. This IP should belong to the selected network and free for use.",
 		},
 
+		"mac": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "MAC address associated with this connection. MAC address is assigned automatically.",
+		},
+
 	}
 	return rets
 }

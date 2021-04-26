@@ -136,6 +136,21 @@ func parseBootDiskSize(disks []DiskRecord) int {
 	return 0 
 }
 
+func parseBootDiskId(disks []DiskRecord) uint {
+	// this return value will be used to d.Set("boot_disk_id",) item of dataSourceCompute schema
+	if len(disks) == 0 {
+		return 0
+	}
+
+	for _, value := range disks {
+		if value.Type == "B" {
+			return value.ID
+		}
+	}
+
+	return 0 
+}
+
 // Parse the list of interfaces from compute/get response into a list of networks 
 // attached to this compute
 func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
@@ -157,6 +172,7 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 		elem["net_id"] = value.NetID
 		elem["net_type"] = value.NetType
 		elem["ip_address"] = value.IPAddress
+		elem["mac"] = value.MAC
 
 		result[i] = elem
 	}
@@ -233,6 +249,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("ram", model.Ram)
 	// d.Set("boot_disk_size", model.BootDiskSize) - bootdiskSize key in API compute/get is always zero, so we set boot_disk_size in another way
 	d.Set("boot_disk_size", parseBootDiskSize(model.Disks))
+	d.Set("boot_disk_id", parseBootDiskId(model.Disks)) // we may need boot disk ID in resize operations
 	d.Set("image_id", model.ImageID)
 	d.Set("description", model.Desc)
 	d.Set("status", model.Status)
@@ -358,6 +375,12 @@ func dataSourceCompute() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "This compute instance boot disk size in GB.",
+			},
+
+			"boot_disk_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "This compute instance boot disk ID.",
 			},
 
 			"extra_disks": {

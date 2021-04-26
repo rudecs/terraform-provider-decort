@@ -149,7 +149,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 	}
 
 	if apiErrCount > 0 {
-		log.Errorf("utilityComputeExtraDisksConfigure: there were %d error(s) when managing disks on Compute ID %s. Last error was: %s", 
+		log.Errorf("utilityComputeExtraDisksConfigure: there were %d error(s) when managing disks of Compute ID %s. Last error was: %s", 
 				   apiErrCount, d.Id(), lastSavedError)
 		return lastSavedError
 	}
@@ -162,29 +162,145 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 	// "d" is filled with data according to computeResource schema, so extra networks config is retrieved via "network" key
 	// If do_delta is true, this function will identify changes between new and existing specs for network and try to 
 	// update compute configuration accordingly
+	
+	/*
 	argVal, argSet := d.GetOk("network") 
 	if !argSet || len(argVal.([]interface{})) < 1 {
 		return nil
 	}
-
 	net_list := argVal.([]interface{}) // network is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
+	*/
 
-	for _, net := range net_list {
+	old_set, new_set := d.GetChange("network")
+
+	oldNets := make([]interface{},0,0)
+	if old_set != nil {
+		oldNets = old_set.([]interface{}) // network is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
+	}
+	
+	newNets := make([]interface{},0,0)
+	if new_set != nil {
+		newNets = new_set.([]interface{}) // network is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
+	}
+
+	apiErrCount := 0
+	var lastSavedError error
+
+	if !do_delta {
+		for _, net := range newNets {
+			urlValues := &url.Values{}
+			net_data := net.(map[string]interface{}) 
+			urlValues.Add("computeId", d.Id())
+			urlValues.Add("netType", net_data["net_type"].(string))
+			urlValues.Add("netId", fmt.Sprintf("%d", net_data["net_id"].(int)))
+			ipaddr, ipSet := net_data["ip_address"] // "ip_address" key is optional
+			if ipSet {
+				urlValues.Add("ipAddr", ipaddr.(string))
+			}
+			_, err := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
+			if err != nil {
+				// failed to attach network - partial resource update
+				apiErrCount++
+				lastSavedError = err
+			}
+		}
+
+		if apiErrCount > 0 {
+			log.Errorf("utilityComputeNetworksConfigure: there were %d error(s) when managing networks of Compute ID %s. Last error was: %s", 
+					   apiErrCount, d.Id(), lastSavedError)
+			return lastSavedError
+		}
+		return nil
+	}
+
+	attachList := make([]ComputeNetMgmtRecord, 0, MaxNetworksPerCompute)
+	detachList := make([]ComputeNetMgmtRecord, 0, MaxNetworksPerCompute)
+	attIdx := 0
+	detIdx := 0
+	match := false
+	
+	for _, oRunner := range oldNets {
+		match = false
+		oSpecs := oRunner.(map[string]interface{})
+		for _, nRunner := range newNets {
+			nSpecs := nRunner.(map[string]interface{})
+			if oSpecs["net_id"].(int) == nSpecs["net_id"].(int) && oSpecs["net_type"].(string) == nSpecs["net_type"].(string) {
+				match = true
+				break
+			}
+		}
+		if !match {
+			detachList[attIdx].ID = oSpecs["net_id"].(int)
+			detachList[detIdx].Type = oSpecs["net_type"].(string)
+			detachList[detIdx].IPAddress = oSpecs["ip_address"].(string)
+			detachList[detIdx].MAC = oSpecs["mac"].(string)
+			detIdx++
+		}
+	}
+	log.Debugf("utilityComputeNetworksConfigure: detach list has %d items for Compute ID %s", len(detachList), d.Id())
+
+	for _, nRunner := range newNets {
+		match = false
+		nSpecs := nRunner.(map[string]interface{})
+		for _, oRunner := range oldNets {
+			oSpecs := oRunner.(map[string]interface{})
+			if nSpecs["net_id"].(int) == oSpecs["net_id"].(int) && nSpecs["net_type"].(string) == oSpecs["net_type"].(string) {
+				match = true
+				break
+			}
+		}
+		if !match {
+			attachList[attIdx].ID = nSpecs["net_id"].(int)
+			attachList[detIdx].Type = nSpecs["net_type"].(string)
+			if nSpecs["ip_address"] != nil {
+				attachList[detIdx].IPAddress = nSpecs["ip_address"].(string)
+			} else {
+				attachList[detIdx].IPAddress = "" // make sure it is empty, if not coming from the schema
+			}
+			attIdx++
+		}
+	}
+	log.Debugf("utilityComputeNetworksConfigure: attach list has %d items for Compute ID %s", len(attachList), d.Id())
+
+	for _, netRec := range detachList {
 		urlValues := &url.Values{}
-		net_data := net.(map[string]interface{}) 
 		urlValues.Add("computeId", d.Id())
-		urlValues.Add("netType", net_data["net_type"].(string))
-		urlValues.Add("netId", fmt.Sprintf("%d", net_data["net_id"].(int)))
-		ipaddr, ipSet := net_data["ip_address"] // "ip_address" key is optional
-		if ipSet {
-			urlValues.Add("ipAddr", ipaddr.(string))
+		urlValues.Add("ipAddr", netRec.IPAddress)
+		urlValues.Add("mac", netRec.MAC)
+		_, err := ctrl.decortAPICall("POST", ComputeNetDetachAPI, urlValues)
+		if err != nil {
+			// failed to detach this network - there will be partial resource update
+			log.Debugf("utilityComputeNetworksConfigure: failed to detach net ID %d of type %s from Compute ID %s: %s", 
+			           netRec.ID, netRec.Type, d.Id(), err)
+			apiErrCount++
+			lastSavedError = err
+		}
+	}
+
+	for _, netRec := range attachList {
+		urlValues := &url.Values{}
+		urlValues.Add("computeId", d.Id())
+		urlValues.Add("netId", fmt.Sprintf("%d",netRec.ID))
+		urlValues.Add("netType", netRec.Type)
+		if netRec.IPAddress != "" {
+			urlValues.Add("ipAddr", netRec.IPAddress)
 		}
 		_, err := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
 		if err != nil {
-			// failed to attach network - partial resource update
-			return err
+			// failed to attach this network - there will be partial resource update
+			log.Debugf("utilityComputeNetworksConfigure: failed to attach net ID %d of type %s from Compute ID %s: %s", 
+			           netRec.ID, netRec.Type, d.Id(), err)
+			apiErrCount++
+			lastSavedError = err
 		}
 	}
+	
+	if apiErrCount > 0 {
+		log.Errorf("utilityComputeNetworksConfigure: there were %d error(s) when managing networks of Compute ID %s. Last error was: %s", 
+				   apiErrCount, d.Id(), lastSavedError)
+		return lastSavedError
+	}
+
 	return nil
 }
 

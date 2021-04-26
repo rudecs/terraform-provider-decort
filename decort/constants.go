@@ -35,3 +35,9 @@ const MaxExtraDisksPerCompute=12
 
 // MaxNetworksPerCompute sets maximum number of vNICs per compute
 const MaxNetworksPerCompute=8
+
+// MaxCpusPerCompute sets maximum number of vCPUs per compute
+const MaxCpusPerCompute=128
+
+// MinRamPerCompute sets minimum amount of RAM per compute in MB
+const MinRamPerCompute=128
