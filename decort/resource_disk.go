@@ -85,37 +85,53 @@ func resourceDiskRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
-	// update will only change Disk size and, to keep data safe, will not allow
-	// shrinking disk.
-	// Attempt to reduce disk size will throw an error
-	log.Debugf("resourceDiskUpdate: called for Disk ID / name % d / %s,  Account ID %d",
-		d.Get("disk_id").(int), d.Get("name").(string), d.Get("account_id").(int))
+	// Update will only change the following attributes of the disk:
+	//  - Size; to keep data safe, shrinking disk is not allowed.
+	//  - Name
+	//
+	// Attempt to change disk type will throw an error and mark disk
+	// resource as partially updated
+	log.Debugf("resourceDiskUpdate: called for Disk ID / name %s / %s,  Account ID %d",
+		d.Id(), d.Get("name").(string), d.Get("account_id").(int))
 
 	d.Partial(true)
 
-	oldSize, newSize := d.GetChange("size")
-	if oldSize.(int) > newSize.(int) {
-		return fmt.Errorf("resourceDiskUpdate: Disk ID %d - shrinking disk size from %d to %d not allowed",
-		                  d.Get("disk_id").(int), oldSize.(int), newSize.(int))
-	}
-	
-	if oldSize.(int) == newSize.(int) {
-		log.Debugf("resourceDiskUpdate: Disk ID %d - no size change required", d.Get("disk_id").(int))
-		// and there is no need to re-read disk specs either 
-		d.Partial(false)
-		return nil
-	}
-
-	params := &url.Values{}
-	params.Add("diskId", d.Id())
-	params.Add("size", fmt.Sprintf("%d", newSize.(int)))
-
 	controller := m.(*ControllerCfg)
-	_, err := controller.decortAPICall("POST", DisksResizeAPI, params)
-	if err != nil {
-		return err
+
+	oldSize, newSize := d.GetChange("size")
+	if oldSize.(int) < newSize.(int) {
+		log.Debugf("resourceDiskUpdate: resizing disk ID %s - %d GB -> %d GB", 
+		           d.Id(), oldSize.(int), newSize.(int))
+		sizeParams := &url.Values{}
+		sizeParams.Add("diskId", d.Id())
+		sizeParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
+		_, err := controller.decortAPICall("POST", DisksResizeAPI, sizeParams)
+		if err != nil {
+			return err
+		}
+		d.SetPartial("size")
+	} else if oldSize.(int) > newSize.(int) {
+		return fmt.Errorf("resourceDiskUpdate: Disk ID %s - reducing disk size is not allowed", d.Id())
 	}
-	d.SetPartial("size")
+
+	oldName, newName := d.GetChange("name")
+	if oldName.(string) != newName.(string) {
+		log.Debugf("resourceDiskUpdate: renaming disk ID %d - %s -> %s", 
+		           d.Get("disk_id").(int), oldName.(string), newName.(string))
+		renameParams := &url.Values{}
+		renameParams.Add("diskId", d.Id())
+		renameParams.Add("name", newName.(string))
+		_, err := controller.decortAPICall("POST", DisksRenameAPI, renameParams)
+		if err != nil {
+			return err
+		}
+		d.SetPartial("name")
+	}
+
+	oldType, newType := d.GetChange("type")
+	if oldType.(string) != newType.(string) {
+		return fmt.Errorf("resourceDiskUpdate: Disk ID %s - changing type of existing disk not allowed", d.Id())
+	}
 
 	d.Partial(false)
 

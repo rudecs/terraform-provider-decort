@@ -500,6 +500,11 @@ type DisksListResp []DiskRecord
 const DisksResizeAPI = "/restmachine/cloudapi/disks/resize2"
 
 //
+// structures related to /cloudapi/disks/resize
+//
+const DisksRenameAPI = "/restmachine/cloudapi/disks/rename"
+
+//
 // structures related to /cloudapi/disks/delete
 //
 const DisksDeleteAPI = "/restmachine/cloudapi/disks/delete"
