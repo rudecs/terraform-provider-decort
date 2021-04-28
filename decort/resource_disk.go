@@ -119,7 +119,7 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceDiskDelete(d *schema.ResourceData, m interface{}) error {
-	// NOTE: this function tries to destroy target Disk "permanently", so 
+	// NOTE: this function tries to detach and destroy target Disk "permanently", so 
 	// there is no way to restore it. 
 	// If, however, the disk is attached to a compute, the method will
 	// fail (by failing the underpinning DECORt API call, which is issued with detach=false)
@@ -135,7 +135,13 @@ func resourceDiskDelete(d *schema.ResourceData, m interface{}) error {
 
 	params := &url.Values{}
 	params.Add("diskId", d.Id())
-	params.Add("detach", "false")
+	// NOTE: we are not force-detaching disk from a compute (if attached) this protecting
+	// data that may be on that disk from destruction.
+	// However, this may change in the future, as TF state management logic may want
+	// to delete disk resource BEFORE it is detached from compute instance, and, while
+	// perfectly OK from data preservation viewpoint, this is breaking expected TF workflow
+	// in the eyes of an experienced TF user 
+	params.Add("detach", "false") 
 	params.Add("permanently", "true")
 
 	controller := m.(*ControllerCfg)

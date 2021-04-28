@@ -43,18 +43,14 @@ func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 	length := len(disks)
 	log.Debugf("parseComputeDisksToExtraDisks: called for %d disks", length)
 	
-	if length == 1 && disks[0].Type == "B" {
+	if length == 0 || ( length == 1 && disks[0].Type == "B" ) {
+		// the disk list is empty (which is kind of strange - diskless compute?), or
 		// there is only one disk in the list and it is a boot disk;
-		// as we skip boot disks, the result will be of 0 length
-		length = 0
+		// as we skip boot disks, the result will be of 0 length anyway
+		return make([]interface{}, 0)
 	}
 	
 	result := make([]interface{}, length-1)
-
-	if length == 0 {
-		return result
-	}
-
 	idx := 0
 	for _, value := range disks {
 		if value.Type == "B" {

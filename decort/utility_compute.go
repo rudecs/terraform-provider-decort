@@ -86,10 +86,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 		return nil
 	}
 
-	attach_list := make([]int, 0, MaxExtraDisksPerCompute)
-	detach_list := make([]int, 0, MaxExtraDisksPerCompute)
-	attIdx := 0
-	detIdx := 0
+	var attach_list, detach_list []int
 	match := false
 	
 	for _, oDisk := range old_disks {
@@ -101,8 +98,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 			}
 		}
 		if !match {
-			detach_list[detIdx] = oDisk.(int)
-			detIdx++
+			detach_list = append(detach_list, oDisk.(int))
 		}
 	}
 	log.Debugf("utilityComputeExtraDisksConfigure: detach list has %d items for Compute ID %s", len(detach_list), d.Id())
@@ -116,8 +112,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 			}
 		}
 		if !match {
-			attach_list[attIdx] = nDisk.(int)
-			attIdx++
+			attach_list = append(attach_list, nDisk.(int))
 		}
 	}
 	log.Debugf("utilityComputeExtraDisksConfigure: attach list has %d items for Compute ID %s", len(attach_list), d.Id())
@@ -213,10 +208,7 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		return nil
 	}
 
-	attachList := make([]ComputeNetMgmtRecord, 0, MaxNetworksPerCompute)
-	detachList := make([]ComputeNetMgmtRecord, 0, MaxNetworksPerCompute)
-	attIdx := 0
-	detIdx := 0
+	var attachList, detachList []ComputeNetMgmtRecord
 	match := false
 	
 	for _, oRunner := range oldNets {
@@ -230,11 +222,13 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 			}
 		}
 		if !match {
-			detachList[attIdx].ID = oSpecs["net_id"].(int)
-			detachList[detIdx].Type = oSpecs["net_type"].(string)
-			detachList[detIdx].IPAddress = oSpecs["ip_address"].(string)
-			detachList[detIdx].MAC = oSpecs["mac"].(string)
-			detIdx++
+			newItem := ComputeNetMgmtRecord{
+				ID:         oSpecs["net_id"].(int),
+				Type:       oSpecs["net_type"].(string),
+				IPAddress:  oSpecs["ip_address"].(string),
+				MAC:        oSpecs["mac"].(string),
+			}
+			detachList = append(detachList, newItem)
 		}
 	}
 	log.Debugf("utilityComputeNetworksConfigure: detach list has %d items for Compute ID %s", len(detachList), d.Id())
@@ -250,14 +244,16 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 			}
 		}
 		if !match {
-			attachList[attIdx].ID = nSpecs["net_id"].(int)
-			attachList[detIdx].Type = nSpecs["net_type"].(string)
-			if nSpecs["ip_address"] != nil {
-				attachList[detIdx].IPAddress = nSpecs["ip_address"].(string)
-			} else {
-				attachList[detIdx].IPAddress = "" // make sure it is empty, if not coming from the schema
+			newItem := ComputeNetMgmtRecord{
+				ID:        nSpecs["net_id"].(int),
+				Type:      nSpecs["net_type"].(string),
 			}
-			attIdx++
+			if nSpecs["ip_address"] != nil {
+				newItem.IPAddress = nSpecs["ip_address"].(string)
+			} else {
+				newItem.IPAddress = "" // make sure it is empty, if not coming from the schema
+			}
+			attachList = append(attachList, newItem)
 		}
 	}
 	log.Debugf("utilityComputeNetworksConfigure: attach list has %d items for Compute ID %s", len(attachList), d.Id())
