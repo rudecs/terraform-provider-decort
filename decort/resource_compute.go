@@ -178,13 +178,14 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 	2. Resize (grow) boot disk
 	3. Update extra disks
 	4. Update networks
-	5. Update port forwards 
 	*/
 
 	// 1. Resize CPU/RAM
 	params := &url.Values{}
 	doUpdate := false
 	params.Add("computeId", d.Id())
+
+	d.Partial(true)
 
 	oldCpu, newCpu := d.GetChange("cpu")
 	if oldCpu.(int) != newCpu.(int) {
@@ -210,6 +211,8 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+		d.SetPartial("cpu")
+		d.SetPartial("ram")
 	}
 
 	// 2. Resize (grow) Boot disk	
@@ -224,6 +227,7 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		if err != nil {
 			return err
 		}
+		d.SetPartial("boot_disk_size")
 	} else if oldSize.(int) > newSize.(int) {
 		log.Warnf("resourceComputeUpdate: compute ID %d - shrinking boot disk is not allowed", d.Id())
 	}
@@ -232,14 +236,20 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 	err := controller.utilityComputeExtraDisksConfigure(d, true) // pass do_delta = true to apply changes, if any
 	if err != nil {
 		return err
+	} else {
+		d.SetPartial("extra_disks")
 	}
 
 	// 4. Calculate and apply changes to network connections
 	err = controller.utilityComputeNetworksConfigure(d, true) // pass do_delta = true to apply changes, if any
 	if err != nil {
 		return err
+	} else {
+		d.SetPartial("network")
 	}
 
+	d.Partial(false)
+	
 	// we may reuse dataSourceComputeRead here as we maintain similarity 
 	// between Compute resource and Compute data source schemas
 	return dataSourceComputeRead(d, m) 

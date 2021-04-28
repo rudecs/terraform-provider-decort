@@ -91,6 +91,8 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceDiskUpdate: called for Disk ID / name % d / %s,  Account ID %d",
 		d.Get("disk_id").(int), d.Get("name").(string), d.Get("account_id").(int))
 
+	d.Partial(true)
+
 	oldSize, newSize := d.GetChange("size")
 	if oldSize.(int) > newSize.(int) {
 		return fmt.Errorf("resourceDiskUpdate: Disk ID %d - shrinking disk size from %d to %d not allowed",
@@ -100,6 +102,7 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 	if oldSize.(int) == newSize.(int) {
 		log.Debugf("resourceDiskUpdate: Disk ID %d - no size change required", d.Get("disk_id").(int))
 		// and there is no need to re-read disk specs either 
+		d.Partial(false)
 		return nil
 	}
 
@@ -112,6 +115,9 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
+	d.SetPartial("size")
+
+	d.Partial(false)
 
 	// we may reuse dataSourceDiskRead here as we maintain similarity 
 	// between Compute resource and Compute data source schemas
