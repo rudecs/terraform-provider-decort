@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -43,7 +44,7 @@ func (ctrl *ControllerCfg) utilityResgroupConfigGet(rgid int) (*ResgroupGetResp,
 		return nil, err
 	}
 
-	log.Debugf("utilityResgroupConfigGet: ready to unmarshal string %q", rgFacts)
+	log.Debugf("utilityResgroupConfigGet: ready to unmarshal string %s", rgFacts)
 	model := &ResgroupGetResp{}
 	err = json.Unmarshal([]byte(rgFacts), model)
 	if err != nil {
@@ -90,11 +91,24 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	rgId, argSet := d.GetOk("rg_id")
-	if argSet {
+	// make it possible to use "read" & "check presence" functions with RG ID set so
+	// that Import of RG resource is possible
+	idSet := false
+	theId, err := strconv.Atoi(d.Id())
+	if err != nil || theId <= 0 {
+		rgId, argSet := d.GetOk("rg_id")
+		if argSet {
+			theId = rgId.(int)
+			idSet = true
+		}
+	} else {
+		idSet = true
+	}
+	
+	if idSet {
 		// go straight for the RG by its ID
-		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", rgId.(int))
-		urlValues.Add("rgId", fmt.Sprintf("%d", rgId.(int)))
+		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", theId)
+		urlValues.Add("rgId", fmt.Sprintf("%d", theId))
 		rgFacts, err := controller.decortAPICall("POST", ResgroupGetAPI, urlValues)
 		if err != nil {
 			return "", err
@@ -132,7 +146,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	for index, item := range model {
 		// match by RG name & account ID
 		if item.Name == rgName.(string) && item.AccountID == validatedAccountId {
-			log.Debugf("utilityResgroupCheckPresence: match RG name %q / ID %d, account ID %d at index %d",
+			log.Debugf("utilityResgroupCheckPresence: match RG name %s / ID %d, account ID %d at index %d",
 				item.Name, item.ID, item.AccountID, index)
 
 			// not all required information is returned by rg/list API, so we need to initiate one more
@@ -149,5 +163,13 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 		}
 	}
 
-	return "", fmt.Errorf("Cannot find RG name %q owned by account ID %d", rgName, validatedAccountId)
+	return "", fmt.Errorf("Cannot find RG name %s owned by account ID %d", rgName, validatedAccountId)
 }
+
+func utilityResgroupGetDefaultGridID() (interface{}, error) {
+	if DefaultGridID > 0 {
+		return fmt.Sprintf("%d", DefaultGridID), nil
+	}
+
+	return "", fmt.Errorf("utilityResgroupGetDefaultGridID: invalid default Grid ID %d", DefaultGridID)
+  }

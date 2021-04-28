@@ -35,6 +35,7 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 		"net_type": {
 			Type:        schema.TypeString,
 			Required:    true,
+			StateFunc:   stateFuncToUpper,
 			ValidateFunc: validation.StringInSlice([]string{"EXTNET", "VINS"}, false), // observe case while validating
 			Description: "Type of the network for this connection, either EXTNET or VINS.",
 		},
@@ -48,6 +49,7 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 		"ip_address": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			//  DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {}
 			Description: "Optional IP address to assign to this connection. This IP should belong to the selected network and free for use.",
 		},
 

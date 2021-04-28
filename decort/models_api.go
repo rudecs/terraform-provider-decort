@@ -106,7 +106,7 @@ type ResgroupUpdateParam struct {
 //
 type QuotaRecord struct { // this is how quota is reported by /api/.../rg/get
 	Cpu        int   `json:"CU_C"`      // CPU count in pcs
-	Ram    float32   `json:"CU_M"`      // RAM volume in MB, it is STILL reported as FLOAT
+	Ram    float64   `json:"CU_M"`      // RAM volume in MB, it is STILL reported as FLOAT
 	Disk       int   `json:"CU_D"`      // Disk capacity in GB
 	ExtIPs     int   `json:"CU_I"`      // Ext IPs count
 	ExtTraffic int   `json:"CU_NP"`     // Ext network traffic

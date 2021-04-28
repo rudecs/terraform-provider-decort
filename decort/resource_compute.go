@@ -249,7 +249,7 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	d.Partial(false)
-	
+
 	// we may reuse dataSourceComputeRead here as we maintain similarity 
 	// between Compute resource and Compute data source schemas
 	return dataSourceComputeRead(d, m) 
@@ -323,7 +323,7 @@ func resourceCompute() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of this compute. This parameter is case sensitive and must be unique in the resource group.",
+				Description: "Name of this compute. Compute names are case sensitive and must be unique in the resource group.",
 			},
 
 			"rg_id": {
@@ -337,6 +337,7 @@ func resourceCompute() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
+				StateFunc:   stateFuncToUpper,
 				ValidateFunc: validation.StringInSlice([]string{"KVM_X86", "KVM_PPC"}, false), // observe case while validating
 				Description: "Hardware architecture of this compute instance.",
 			},

@@ -47,14 +47,19 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("Cannot create new RG: missing name.")
 	}
 
+	/* Current version of provider works with default grid id (same is true for disk resources)
 	grid_id, arg_set := d.GetOk("grid_id")
 	if !arg_set {
 		return fmt.Errorf("Cannot create new RG %q in account ID %d: missing Grid ID.",
 			rg_name.(string), validated_account_id)
 	}
+	if grid_id.(int) < 1 {
+		grid_id = DefaultGridID
+	}
+	*/
 
 	// all required parameters are set in the schema - we can continue with RG creation
-	log.Debugf("resourceResgroupCreate: called for RG name %q, account ID %d",
+	log.Debugf("resourceResgroupCreate: called for RG name %s, account ID %d",
 		rg_name.(string), validated_account_id)
 
 	// quota settings are optional
@@ -68,14 +73,14 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	controller := m.(*ControllerCfg)
-	log.Debugf("resourceResgroupCreate: called by user %q for RG name %q, account ID %d, Grid ID %d",
+	log.Debugf("resourceResgroupCreate: called by user %q for RG name %s, account ID %d",
 		controller.getDecortUsername(),
-		rg_name.(string), validated_account_id, grid_id.(int))
+		rg_name.(string), validated_account_id)
 
 	url_values := &url.Values{}
 	url_values.Add("accountId", fmt.Sprintf("%d", validated_account_id))
 	url_values.Add("name", rg_name.(string))
-	url_values.Add("gid", fmt.Sprintf("%d", grid_id.(int)))
+	url_values.Add("gid", fmt.Sprintf("%d", DefaultGridID)) // use default Grid ID, similar to disk resource mgmt convention
 	url_values.Add("owner", controller.getDecortUsername())
 
 	// pass quota values as set
@@ -122,8 +127,9 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceResgroupRead: called for RG name %q, account name %q",
-		d.Get("name").(string), d.Get("account_name").(string))
+	log.Debugf("resourceResgroupRead: called for RG name %s, account ID %s",
+		d.Get("name").(string), d.Get("account_id").(int))
+		
 	rg_facts, err := utilityResgroupCheckPresence(d, m)
 	if rg_facts == "" {
 		// if empty string is returned from utilityResgroupCheckPresence then there is no
@@ -136,8 +142,8 @@ func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceResgroupUpdate: called for RG name %q, account name %q",
-		d.Get("name").(string), d.Get("account").(string))
+	log.Debugf("resourceResgroupUpdate: called for RG name %s, account ID %d",
+		d.Get("name").(string), d.Get("account_id").(int))
 
 	do_update := false
 
@@ -219,8 +225,8 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 	// NOTE: this method forcibly destroys target resource group with flag "permanently", so there is no way to
 	// restore the destroyed resource group as well all Computes & VINSes that existed in it
-	log.Debugf("resourceResgroupDelete: called for RG name %q, account name %q",
-		d.Get("name").(string), d.Get("account_name").(string))
+	log.Debugf("resourceResgroupDelete: called for RG name %s, account ID %s",
+		d.Get("name").(string), d.Get("account_id").(int))
 
 	rg_facts, err := utilityResgroupCheckPresence(d, m)
 	if rg_facts == "" {
@@ -266,6 +272,10 @@ func resourceResgroup() *schema.Resource {
 		Delete: resourceResgroupDelete,
 		Exists: resourceResgroupExists,
 
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
+
 		Timeouts: &schema.ResourceTimeout{
 			Create:  &Timeout180s,
 			Read:    &Timeout30s,
@@ -283,14 +293,8 @@ func resourceResgroup() *schema.Resource {
 
 			"account_id": {
 				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "Unique ID of the account, which this resource group belongs to. If account ID is specified, then account name is ignored.",
-			},
-
-			"account_name": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Name of the account, which this resource group belongs to.",
+				Required:    true,
+				Description: "Unique ID of the account, which this resource group belongs to.",
 			},
 
 			"def_net_type": {
@@ -325,11 +329,16 @@ func resourceResgroup() *schema.Resource {
 				Description: "IP address on the external netowrk to request, if def_net_type=PUBLIC",
 			},
 
-			"grid_id": { // change of Grid ID will require new RG
+			/* commented out, as in this version of provider we use default Grid ID
+			"grid_id": { 
 				Type:        schema.TypeInt,
-				Required:    true,
+				Optional:    true,
+				Default:     0,     // if 0 is passed, default Grid ID will be used
+				// DefaultFunc: utilityResgroupGetDefaultGridID,
+				ForceNew:    true,  // change of Grid ID will require new RG
 				Description: "Unique ID of the grid, where this resource group is deployed.",
 			},
+			*/
 
 			"quota": {
 				Type:     schema.TypeList,
@@ -347,13 +356,19 @@ func resourceResgroup() *schema.Resource {
 				Description: "User-defined text description of this resource group.",
 			},
 
+			"account_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Name of the account, which this resource group belongs to.",
+			},
+
+			/*
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Current status of this resource group.",
 			},
 
-			/*
 			"vins": {
 				Type:     schema.TypeList, // this is a list of ints
 				Computed: true,

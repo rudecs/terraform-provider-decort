@@ -55,7 +55,7 @@ func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
 	d.Set("name", details.Name)
 	d.Set("account_name", details.AccountName)
 	d.Set("account_id", details.AccountID)
-	d.Set("grid_id", details.GridID)
+	// d.Set("grid_id", details.GridID)
 	d.Set("description", details.Desc)
 	d.Set("status", details.Status)
 	d.Set("def_net_type", details.DefaultNetType)
@@ -111,14 +111,14 @@ func dataSourceResgroup() *schema.Resource {
 
 			"account_name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 				Description: "Name of the account, which this resource group belongs to.",
 			},
 
 			"account_id": {
 				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "Unique ID of the account, which this resource group belongs to. If account ID is specified, then account name is ignored.",
+				Required:    true,
+				Description: "Unique ID of the account, which this resource group belongs to.",
 			},
 
 			"description": {
@@ -127,11 +127,13 @@ func dataSourceResgroup() *schema.Resource {
 				Description: "User-defined text description of this resource group.",
 			},
 
+			/* commented out, as in this version of provider we use default Grid ID
 			"grid_id": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Unique ID of the grid, where this resource group is deployed.",
 			},
+			*/
 
 			"quota": {
 				Type:     schema.TypeList,
@@ -141,12 +143,6 @@ func dataSourceResgroup() *schema.Resource {
 					Schema: quotaRgSubresourceSchemaMake(), // this is a dictionary
 				},
 				Description: "Quota settings for this resource group.",
-			},
-
-			"status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Current status of this resource group.",
 			},
 
 			"def_net_type": {
@@ -162,6 +158,12 @@ func dataSourceResgroup() *schema.Resource {
 			},
 
 			/*
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Current status of this resource group.",
+			},
+
 			"vins": {
 				Type:     schema.TypeList, // this is a list of ints
 				Computed: true,

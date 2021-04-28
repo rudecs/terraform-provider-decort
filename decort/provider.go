@@ -124,6 +124,10 @@ func stateFuncToLower(argval interface{}) string {
 	return strings.ToLower(argval.(string))
 }
 
+func stateFuncToUpper(argval interface{}) string {
+	return strings.ToUpper(argval.(string))
+}
+
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	decsController, err := ControllerConfigure(d)
 	if err != nil {

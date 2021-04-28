@@ -317,7 +317,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	// make it possible to use "read" & "check presence" functions with comptue ID set so
+	// make it possible to use "read" & "check presence" functions with compute ID set so
 	// that Import of Compute resource is possible
 	idSet := false
 	theId, err := strconv.Atoi(d.Id())

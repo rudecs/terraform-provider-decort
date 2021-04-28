@@ -33,7 +33,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
@@ -234,6 +234,8 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "D",
+			StateFunc:   stateFuncToUpper,
+			ValidateFunc: validation.StringInSlice([]string{"B", "D"}, false),
 			Description: "Optional type of this disk. Defaults to D, i.e. data disk. Cannot be changed for existing disks.",
 		},
 
@@ -264,14 +266,14 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 		},
 
 		/*
-			"snapshots": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem:          &schema.Resource {
-					Schema:    snapshotSubresourceSchemaMake(),
-				},
-				Description: "List of user-created snapshots for this disk."
+		"snapshots": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Elem:          &schema.Resource {
+				Schema:    snapshotSubresourceSchemaMake(),
 			},
+			Description: "List of user-created snapshots for this disk."
+		},
 
 		"status": {
 			Type:        schema.TypeString,
