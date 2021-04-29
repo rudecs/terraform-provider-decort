@@ -356,7 +356,7 @@ type ComputeGetResp struct {
 	ID                 uint              `json:"id"`
 	ImageID            int               `json:"imageId"`
 	ImageName          string            `json:"imageName"`
-	Interfaces         []InterfaceRecord `json:"interfaces`
+	Interfaces         []InterfaceRecord `json:"interfaces"`
 	LockStatus         string            `json:"lockStatus"`
 	ManagerID          int               `json:"managerId"`
 	ManagerType        string            `json:"manageType"`
@@ -388,7 +388,7 @@ type ComputeGetResp struct {
 //
 type ImageRecord struct {
 	AccountID   uint   `json:"accountId"`
-	Arch        string `json:"architecture`
+	Arch        string `json:"architecture"`
 	BootType    string `json:"bootType"`
 	IsBootable  bool   `json:"bootable"`
 	IsCdrom     bool   `json:"cdrom"`
@@ -445,7 +445,7 @@ type AccountsListResp []AccountRecord
 //
 type PfwRecord struct {
 	ID              int    `json:"id"`
-	LocalIP         string `json:"localIp`
+	LocalIP         string `json:"localIp"`
 	LocalPort       int    `json:"localPort"`
 	Protocol        string `json:"protocol"`
 	PublicPortEnd   int    `json:"publicPortEnd"`

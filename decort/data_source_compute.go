@@ -149,20 +149,15 @@ func parseBootDiskId(disks []DiskRecord) uint {
 
 // Parse the list of interfaces from compute/get response into a list of networks 
 // attached to this compute
-func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
+func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []map[string]interface{} {
 	// return value will be used to d.Set("network",) item of dataSourceCompute schema
 	length := len(ifaces)
 	log.Debugf("parseComputeInterfacesToNetworks: called for %d ifaces", length)
 
-	result := make([]interface{}, length)
-
-	if length == 0 {
-		return result
-	}
-
-	elem := make(map[string]interface{})
+	result := make([]map[string]interface{}, length, length)
 
 	for i, value := range ifaces {
+		elem := make(map[string]interface{})
 		// Keys in this map should correspond to the Schema definition
 		// as returned by networkSubresourceSchemaMake()
 		elem["net_id"] = value.NetID
@@ -170,30 +165,28 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 		elem["ip_address"] = value.IPAddress
 		elem["mac"] = value.MAC
 
+		// log.Debugf("   element %d: net_id=%d, net_type=%s", i, value.NetID, value.NetType)
+
 		result[i] = elem
 	}
 
 	return result 
 }
 
-func parseComputeInterfaces(ifaces []InterfaceRecord) []interface{} {
+func parseComputeInterfaces(ifaces []InterfaceRecord) []map[string]interface{} {
 	// return value was designed to d.Set("interfaces",) item of dataSourceCompute schema
 	// However, this item was excluded from the schema as it is not directly
 	// managed through Terraform 
 	length := len(ifaces)
 	log.Debugf("parseComputeInterfaces: called for %d ifaces", length)
 
-	result := make([]interface{}, length)
-
-	if length == 0 {
-		return result
-	}
-
-	elem := make(map[string]interface{})
+	result := make([]map[string]interface{}, length, length)
 
 	for i, value := range ifaces {
 		// Keys in this map should correspond to the Schema definition
 		// as returned by dataSourceInterfaceSchemaMake()
+		elem := make(map[string]interface{})
+
 		elem["net_id"] = value.NetID
 		elem["net_type"] = value.NetType
 		elem["ip_address"] = value.IPAddress
@@ -225,7 +218,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
 	// from resourceComputeExists(...) method
 	model := ComputeGetResp{}
-	log.Debugf("flattenCompute: ready to unmarshal string %q", compFacts)
+	log.Debugf("flattenCompute: ready to unmarshal string %s", compFacts)
 	err := json.Unmarshal([]byte(compFacts), &model)
 	if err != nil {
 		return err
@@ -248,8 +241,8 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("boot_disk_id", parseBootDiskId(model.Disks)) // we may need boot disk ID in resize operations
 	d.Set("image_id", model.ImageID)
 	d.Set("description", model.Desc)
-	d.Set("status", model.Status)
-	d.Set("tech_status", model.TechStatus)
+	// d.Set("status", model.Status)
+	// d.Set("tech_status", model.TechStatus)
 
 	if len(model.Disks) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeDisksToExtraDisks for %d disks", len(model.Disks))
@@ -401,9 +394,9 @@ func dataSourceCompute() *schema.Resource {
 			*/
 
 			"network": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
-				MaxItems: MaxNetworksPerCompute,
+				// MaxItems: MaxNetworksPerCompute,
 				Elem: &schema.Resource{
 					Schema: networkSubresourceSchemaMake(),
 				},

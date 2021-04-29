@@ -380,9 +380,9 @@ func resourceCompute() *schema.Resource {
 			},
 
 			"network": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
-				MaxItems: MaxNetworksPerCompute,
+				// MaxItems: MaxNetworksPerCompute,
 				Elem: &schema.Resource{
 					Schema: networkSubresourceSchemaMake(),
 				},
