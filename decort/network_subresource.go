@@ -21,7 +21,7 @@ import (
 
 	// "encoding/json"
 	// "fmt"
-	// "log"
+	log "github.com/sirupsen/logrus" 
 	// "net/url"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -29,6 +29,15 @@ import (
 )
 
 // This is subresource of compute resource used when creating/managing compute network connections
+
+func networkSubresIPAddreDiffSupperss(key, oldVal, newVal string, d *schema.ResourceData) bool {
+	if newVal != "" && newVal != oldVal {
+		log.Debugf("networkSubresIPAddreDiffSupperss: key=%s, oldVal=%q, newVal=%q -> suppress=FALSE", key, oldVal, newVal)
+		return false
+	}
+	log.Debugf("networkSubresIPAddreDiffSupperss: key=%s, oldVal=%q, newVal=%q -> suppress=TRUE", key, oldVal, newVal)
+	return true // suppress difference
+}
 
 func networkSubresourceSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
@@ -49,7 +58,7 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 		"ip_address": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			//  DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {}
+			DiffSuppressFunc: networkSubresIPAddreDiffSupperss,
 			Description: "Optional IP address to assign to this connection. This IP should belong to the selected network and free for use.",
 		},
 

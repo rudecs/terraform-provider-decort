@@ -394,9 +394,9 @@ func dataSourceCompute() *schema.Resource {
 			*/
 
 			"network": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
-				// MaxItems: MaxNetworksPerCompute,
+				MaxItems: MaxNetworksPerCompute,
 				Elem: &schema.Resource{
 					Schema: networkSubresourceSchemaMake(),
 				},
