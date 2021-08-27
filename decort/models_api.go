@@ -245,7 +245,7 @@ type ComputeRecord struct {
 	AccountName    string            `json:"accountName"`
 	ACLs           []UserAclRecord   `json:"acl"`
 	Arch           string            `json:"arch"`
-	BootDiskSize   int               `json:"bootdiskSize"` // NOTE: this key is always 0 in compute/get API response 
+	BootDiskSize   int               `json:"bootdiskSize"`
 	CloneReference int               `json:"cloneReference"`
 	Clones         []int             `json:"clones"`
 	Cpus           int               `json:"cpus"`
@@ -267,7 +267,7 @@ type ComputeRecord struct {
 	RgName         string            `json:"rgName"`
 	SnapSets       []SnapSetRecord   `json:"snapSets"`
 	Status         string            `json:"status"`
-	Tags           []string          `json:"tags"`
+	// Tags           []string          `json:"tags"` // Tags were reworked since DECORT 3.7.1
 	TechStatus     string            `json:"techStatus"`
 	TotalDiskSize  int               `json:"totalDiskSize"`
 	UpdatedBy      string            `json:"updatedBy"`
@@ -372,7 +372,7 @@ type ComputeGetResp struct {
 	RgName             string            `json:"rgName"`
 	SnapSets           []SnapSetRecord   `json:"snapSets"`
 	Status             string            `json:"status"`
-	Tags               []string          `json:"tags"`
+	// Tags               []string          `json:"tags"` // Tags were reworked since DECORT 3.7.1
 	TechStatus         string            `json:"techStatus"`
 	TotalDiskSize      int               `json:"totalDiskSize"`
 	UpdatedBy          string            `json:"updatedBy"`
