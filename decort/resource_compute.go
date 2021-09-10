@@ -430,6 +430,15 @@ func resourceCompute() *schema.Resource {
 				Description: "This compute instance boot disk ID.",
 			},
 
+			"os_users": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: osUsersSubresourceSchemaMake(),
+				},
+				Description: "Guest OS users provisioned on this compute instance.",
+			},
+
 			/*
 			"disks": {
 				Type:     schema.TypeList,
@@ -449,14 +458,6 @@ func resourceCompute() *schema.Resource {
 				Description: "Specification for the virtual NICs configured on this compute instance.",
 			},
 
-			"guest_logins": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: loginsSubresourceSchemaMake(),
-				},
-				Description: "Specification for guest logins on this compute instance.",
-			},
 
 			"status": {
 				Type:        schema.TypeString,

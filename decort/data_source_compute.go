@@ -258,14 +258,12 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 		}
 	}
 
-	/*
 	if len(model.OsUsers) > 0 {
-		log.Debugf("flattenCompute: calling parseGuestLogins for %d logins", len(model.OsUsers))
-		if err = d.Set("guest_logins", parseGuestLogins(model.OsUsers)); err != nil {
+		log.Debugf("flattenCompute: calling parseOsUsers for %d logins", len(model.OsUsers))
+		if err = d.Set("guest_logins", parseOsUsers(model.OsUsers)); err != nil {
 			return err
 		}
 	}
-	*/
 
 	return nil
 }
@@ -412,16 +410,16 @@ func dataSourceCompute() *schema.Resource {
 				},
 				Description: "Specification for the virtual NICs configured on this compute instance.",
 			},
+			*/
 
-			"guest_logins": {
+			"os_users": {
 				Type:     schema.TypeList,
 				Computed: true,
 				Elem: &schema.Resource{
-					Schema: loginsSubresourceSchemaMake(),
+					Schema: osUsersSubresourceSchemaMake(),
 				},
-				Description: "Details about the guest OS users provisioned together with this compute instance.",
+				Description: "Guest OS users provisioned on this compute instance.",
 			},
-			*/
 
 			"description": {
 				Type:        schema.TypeString,

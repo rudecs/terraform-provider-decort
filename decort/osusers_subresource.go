@@ -24,7 +24,7 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-func parseGuestLogins(logins []OsUserRecord) []interface{} {
+func parseOsUsers(logins []OsUserRecord) []interface{} {
 	var result = make([]interface{}, len(logins))
 
 	elem := make(map[string]interface{})
@@ -35,41 +35,37 @@ func parseGuestLogins(logins []OsUserRecord) []interface{} {
 		elem["password"] = value.Password
 		elem["public_key"] = value.PubKey
 		result[index] = elem
-		log.Debugf("parseGuestLogins: parsed element %d - login %q", index, value.Login)
+		log.Debugf("parseOsUsers: parsed element %d - login %q", index, value.Login)
 	}
 
 	return result
 }
 
-func loginsSubresourceSchemaMake() map[string]*schema.Schema {
+func osUsersSubresourceSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"guid": {
 			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "",
+			Computed:    true,
 			Description: "GUID of this guest OS user.",
 		},
 
 		"login": {
 			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "",
+			Computed:    true,
 			Description: "Login name of this guest OS user.",
 		},
 
 		"password": {
 			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "",
+			Computed:    true,
 			Sensitive:   true,
 			Description: "Password of this guest OS user.",
 		},
 
 		"public_key": {
 			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "",
-			Description: "SSH public key of this guest user.",
+			Computed:    true,
+			Description: "SSH public key of this guest OS user.",
 		},
 	}
 
