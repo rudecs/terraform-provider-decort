@@ -241,6 +241,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("boot_disk_id", parseBootDiskId(model.Disks)) // we may need boot disk ID in resize operations
 	d.Set("image_id", model.ImageID)
 	d.Set("description", model.Desc)
+	d.Set("cloud_init", "applied") // NOTE: for existing compute we hard-code this value as an indicator for DiffSuppress fucntion
 	// d.Set("status", model.Status)
 	// d.Set("tech_status", model.TechStatus)
 
@@ -425,6 +426,12 @@ func dataSourceCompute() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "User-defined text description of this compute instance.",
+			},
+
+			"cloud_init": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Placeholder for cloud_init parameters.",
 			},
 
 			/*

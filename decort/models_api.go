@@ -201,6 +201,9 @@ type KvmVmCreateParam struct { // this is unified structure for both x86 and PPC
 	Start       bool   `json:"start"`
 }
 
+// structures related to cloudapi/compute/start API
+const ComputeStartAPI = "/restmachine/cloudapi/compute/start"
+
 // structures related to cloudapi/compute/delete API
 const ComputeDeleteAPI = "/restmachine/cloudapi/compute/delete"
 

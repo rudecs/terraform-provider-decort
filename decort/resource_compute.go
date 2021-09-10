@@ -36,6 +36,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+func cloudInitDiffSupperss(key, oldVal, newVal string, d *schema.ResourceData) bool {
+	if oldVal == "" && newVal != "applied" {
+		// if old value for "cloud_init" resource is empty string, it means that we are creating new compute
+		// and there is a chance that the user will want custom cloud init parameters - so we check if
+		// cloud_init is explicitly set in TF file by making sure that its new value is different from "applied",
+		// which is a reserved key word.
+		log.Debugf("cloudInitDiffSupperss: key=%s, oldVal=%q, newVal=%q -> suppress=FALSE", key, oldVal, newVal)
+		return false // there is a difference between stored and new value
+	}
+	log.Debugf("cloudInitDiffSupperss: key=%s, oldVal=%q, newVal=%q -> suppress=TRUE", key, oldVal, newVal)
+	return true // suppress difference
+}
+
 func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	// we assume all mandatory parameters it takes to create a comptue instance are properly 
 	// specified - we rely on schema "Required" attributes to let Terraform validate them for us
@@ -55,7 +68,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("imageId", fmt.Sprintf("%d", d.Get("image_id").(int)))
 	urlValues.Add("bootDisk", fmt.Sprintf("%d", d.Get("boot_disk_size").(int)))
 	urlValues.Add("netType", "NONE") // at the 1st step create isolated compute
-	// urlValues.Add("start", "false") // at the 1st step create compute in a stopped state
+	urlValues.Add("start", "0") // at the 1st step create compute in a stopped state
 
 	argVal, argSet := d.GetOk("description") 
 	if argSet {
@@ -76,6 +89,15 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		log.Debugf("resourceComputeCreate: creating Compute of type KVM VM PowerPC")
 	} else { // note that we do not validate arch value for explicit "KVM_X86" here
 		log.Debugf("resourceComputeCreate: creating Compute of type KVM VM x86")
+	}
+
+	argVal, argSet = d.GetOk("cloud_init") 
+	if argSet {
+		// userdata must not be empty string and must not be a reserved keyword "applied"
+		userdata := argVal.(string)
+		if userdata != "" && userdata != "applied" {
+			urlValues.Add("userdata", userdata)
+		}
 	}
 	
 	apiResp, err := controller.decortAPICall("POST", computeCreateAPI, urlValues)
@@ -133,6 +155,16 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	if extraDisksOk && netsOk {
 		// if there were no errors in setting any of the subresources, we may leave Partial mode
 		d.Partial(false)
+	}
+
+	// Note bene: we created compute in a STOPPED state (this is required to properly attach 1st network interface), 
+	// now we need to start it before we report the sequence complete
+	reqValues := &url.Values{}
+	reqValues.Add("computeId", fmt.Sprintf("%d", compId))
+	log.Debugf("resourceComputeCreate: starting Compute ID %d after completing its resource configuration", compId)
+	apiResp, err = controller.decortAPICall("POST", ComputeStartAPI, reqValues)
+	if err != nil {
+		return err
 	}
 	
 	log.Debugf("resourceComputeCreate: new Compute ID %d, name %s creation sequence complete", compId, d.Get("name").(string))
@@ -403,6 +435,15 @@ func resourceCompute() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of this compute instance.",
+			},
+
+			
+			"cloud_init": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "applied",
+				DiffSuppressFunc: cloudInitDiffSupperss,
+				Description: "Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.",
 			},
 
 			// The rest are Compute properties, which are "computed" once it is created
