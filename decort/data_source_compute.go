@@ -260,7 +260,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 
 	if len(model.OsUsers) > 0 {
 		log.Debugf("flattenCompute: calling parseOsUsers for %d logins", len(model.OsUsers))
-		if err = d.Set("guest_logins", parseOsUsers(model.OsUsers)); err != nil {
+		if err = d.Set("os_users", parseOsUsers(model.OsUsers)); err != nil {
 			return err
 		}
 	}
