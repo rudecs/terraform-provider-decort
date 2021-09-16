@@ -237,8 +237,8 @@ func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 
 	url_values := &url.Values{}
 	url_values.Add("rgId", d.Id())
-	url_values.Add("force", "true")
-	url_values.Add("permanently", "true")
+	url_values.Add("force", "1")
+	url_values.Add("permanently", "1")
 	url_values.Add("reason", "Destroyed by DECORT Terraform provider")
 
 	controller := m.(*ControllerCfg)

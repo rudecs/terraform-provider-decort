@@ -299,6 +299,8 @@ func dataSourceCompute() *schema.Resource {
 				Description: "Name of this compute instance. NOTE: this parameter is case sensitive.",
 			},
 
+			// TODO: consider removing compute_id from the schema, as it not practical to call this data provider if
+			// corresponding compute ID is already known
 			"compute_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,

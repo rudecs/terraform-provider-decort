@@ -157,14 +157,14 @@ func resourceDiskDelete(d *schema.ResourceData, m interface{}) error {
 
 	params := &url.Values{}
 	params.Add("diskId", d.Id())
-	// NOTE: we are not force-detaching disk from a compute (if attached) this protecting
+	// NOTE: we are not force-detaching disk from a compute (if attached) thus protecting
 	// data that may be on that disk from destruction.
 	// However, this may change in the future, as TF state management logic may want
 	// to delete disk resource BEFORE it is detached from compute instance, and, while
 	// perfectly OK from data preservation viewpoint, this is breaking expected TF workflow
 	// in the eyes of an experienced TF user 
-	params.Add("detach", "false") 
-	params.Add("permanently", "true")
+	params.Add("detach", "0") 
+	params.Add("permanently", "1")
 
 	controller := m.(*ControllerCfg)
 	_, err = controller.decortAPICall("POST", DisksDeleteAPI, params)

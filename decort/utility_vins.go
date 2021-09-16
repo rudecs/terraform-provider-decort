@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -75,6 +76,34 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
+	// make it possible to use "read" & "check presence" functions with ViNS ID set so
+	// that Import of ViNS resource is possible
+	idSet := false
+	theId, err := strconv.Atoi(d.Id())
+	if err != nil || theId <= 0 {
+		vinsId, argSet := d.GetOk("vins_id") // NB: vins_id is NOT present in vinsResource schema!
+		if argSet {
+			theId = vinsId.(int)
+			idSet = true
+		}
+	} else {
+		idSet = true
+	}
+
+	if idSet {
+		// ViNS ID is specified, try to get compute instance straight by this ID
+		log.Debugf("utilityVinsCheckPresence: locating ViNS by its ID %d", theId)
+		urlValues.Add("vinsId", fmt.Sprintf("%d", theId))
+		vinsFacts, err := controller.decortAPICall("POST", VinsGetAPI, urlValues)
+		if err != nil {
+			return "", err
+		}
+		return vinsFacts, nil
+	}
+
+	// ID was not set in the schema upon entering this function - work through ViNS name
+	// and Account / RG ID
+
 	vinsName, argSet := d.GetOk("name")
 	if !argSet {
 		// if ViNS name is not set. then we cannot locate ViNS
@@ -82,11 +111,11 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	}
 	urlValues.Add("name", vinsName.(string))
 	urlValues.Add("show_all", "false")
-	log.Debugf("utilityVinsCheckPresence: locating ViNS %s", vinsName.(string))
+	log.Debugf("utilityVinsCheckPresence: preparing to locate ViNS name %s", vinsName.(string))
 
 	rgId, rgSet := d.GetOk("rg_id")
 	if rgSet {
-		log.Debugf("utilityVinsCheckPresence: limiting ViNS t search to RG ID %d", rgId.(int))
+		log.Debugf("utilityVinsCheckPresence: limiting ViNS search to RG ID %d", rgId.(int))
 		urlValues.Add("rgId", fmt.Sprintf("%d", rgId.(int)))
 	}
 
@@ -133,5 +162,5 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		}
 	}
 
-	return "", fmt.Errorf("Cannot find ViNS name %s. Check name and/or RG ID & Account ID", vinsName.(string))
+	return "", fmt.Errorf("Cannot find ViNS name %s. Check name and/or RG ID & Account ID and your access rights", vinsName.(string))
 }

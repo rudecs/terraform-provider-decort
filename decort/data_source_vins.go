@@ -51,12 +51,14 @@ func flattenVins(d *schema.ResourceData, vins_facts string) error {
 	vinsRecord.Name, vinsRecord.ID, vinsRecord.AccountID, vinsRecord.RgID)
 
 	d.SetId(fmt.Sprintf("%d", vinsRecord.ID))
+	d.Set("name", vinsRecord.Name)
 	d.Set("account_id", vinsRecord.AccountID)
 	d.Set("account_name", vinsRecord.AccountName)
 	err = d.Set("rg_id", vinsRecord.RgID)
 	d.Set("description", vinsRecord.Desc)
 	d.Set("ipcidr", vinsRecord.IPCidr)
 
+	noExtNetConnection := true
 	for _, value := range vinsRecord.VNFs {
 		if value.Type == "GW" {
 			log.Debugf("flattenVins: discovered GW VNF ID %d in ViNS ID %d", value.ID, vinsRecord.ID)
@@ -69,8 +71,14 @@ func flattenVins(d *schema.ResourceData, vins_facts string) error {
 			} else {
 				return fmt.Errorf("Failed to unmarshal VNF GW Config - structure is invalid.")
 			}
+			noExtNetConnection = false
 			break
 		}
+	}
+
+	if noExtNetConnection {
+		d.Set("ext_ip_addr", "")
+		d.Set("ext_net_id", -1)
 	}
 
 	log.Debugf("flattenVins: EXTRA CHECK - schema rg_id=%d, ext_net_id=%d", d.Get("rg_id").(int), d.Get("ext_net_id").(int))

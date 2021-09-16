@@ -303,7 +303,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 
 	params := &url.Values{}
 	params.Add("computeId", d.Id())
-	params.Add("permanently", "true")
+	params.Add("permanently", "1")
 
 	controller := m.(*ControllerCfg)
 	_, err = controller.decortAPICall("POST", ComputeDeleteAPI, params)
@@ -435,7 +435,7 @@ func resourceCompute() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Description of this compute instance.",
+				Description: "Optional text description of this compute instance.",
 			},
 
 			

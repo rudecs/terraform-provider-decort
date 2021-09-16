@@ -562,7 +562,12 @@ type VinsRecord struct { // represents part of the response from API vins/get
 
 const VinsGetAPI = "/restmachine/cloudapi/vins/get"
 
-const VinsCreateAPI = "/restmachine/cloudapi/vins/create"
+const VinsCreateInAccountAPI = "/restmachine/cloudapi/vins/createInAccount"
+const VinsCreateInRgAPI = "/restmachine/cloudapi/vins/createInRG"
+
+const VinsExtNetConnect = "/restmachine/cloudapi/vins/extNetConnect"
+const VinsExtNetDisconnect = "/restmachine/cloudapi/vins/extNetDisconnect"
+
 const VinsDeleteAPI = "/restmachine/cloudapi/vins/delete"
 
 //
