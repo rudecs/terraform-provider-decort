@@ -78,7 +78,7 @@ func flattenVins(d *schema.ResourceData, vins_facts string) error {
 
 	if noExtNetConnection {
 		d.Set("ext_ip_addr", "")
-		d.Set("ext_net_id", -1)
+		d.Set("ext_net_id", 0)
 	}
 
 	log.Debugf("flattenVins: EXTRA CHECK - schema rg_id=%d, ext_net_id=%d", d.Get("rg_id").(int), d.Get("ext_net_id").(int))
@@ -112,7 +112,7 @@ func dataSourceVins() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Name of the ViNS. Names are case sensitive and unique within the context of an account or resource group.",
 			},
 

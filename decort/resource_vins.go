@@ -78,11 +78,15 @@ func resourceVinsCreate(d *schema.ResourceData, m interface{}) error {
 		if argVal.(int) > 0 {
 			// connect to specific external network
 			urlValues.Add("extNetId", fmt.Sprintf("%d", argVal.(int)))
+			/* 
+			 Commented out, as we've made "ext_net_ip" parameter non-configurable via Terraform!
+
 			// in case of specific ext net connection user may also want a particular IP address
 			argVal, argSet = d.GetOk("ext_net_ip")
 			if argSet && argVal.(string) != "" {
 				urlValues.Add("extIp", argVal.(string))
 			}
+			*/
 		} else {
 			// ext_net_id is set to a negative value - connect to default external network
 			// no particular IP address selection in this case
@@ -132,37 +136,46 @@ func resourceVinsRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceVinsUpdate(d *schema.ResourceData, m interface{}) error {
 
-	return fmt.Errorf("resourceVinsUpdate: method not implemnted yet - ViNS ID %s", d.Id())
-
-	/*
-	log.Debugf("resourceVinsUpdate: called for ViNS ID / name %s / %s,  Account ID %d",
-		d.Id(), d.Get("name").(string), d.Get("account_id").(int))
-
-	d.Partial(true)
+	log.Debugf("resourceVinsUpdate: called for ViNS ID / name %s / %s,  Account ID %d, RG ID %d",
+		d.Id(), d.Get("name").(string), d.Get("account_id").(int),  d.Get("rg_id").(int))
 
 	controller := m.(*ControllerCfg)
 
+	d.Partial(true)
 	
-	oldName, newName := d.GetChange("name")
-	if oldName.(string) != newName.(string) {
-		log.Debugf("resourceVinsUpdate: renaming ViNS ID %d - %s -> %s", 
-		           d.Get("disk_id").(int), oldName.(string), newName.(string))
-		renameParams := &url.Values{}
-		renameParams.Add("vinsId", d.Id())
-		renameParams.Add("name", newName.(string))
-		_, err := controller.decortAPICall("POST", VinsRenameAPI, renameParams)
-		if err != nil {
-			return err
+	// 1. Handle external network connection change
+	oldExtNetId, newExtNedId := d.GetChange("ext_net_id")
+	if oldExtNetId.(int) != newExtNedId.(int) {
+		log.Debugf("resourceVinsUpdate: changing ViNS ID %s - ext_net_id %d -> %d", d.Id(), oldExtNetId.(int), newExtNedId.(int))
+
+		extnetParams := &url.Values{}
+		extnetParams.Add("vinsId", d.Id())
+
+		if oldExtNetId.(int) > 0 {
+			// there was preexisting external net connection - disconnect ViNS
+			_, err := controller.decortAPICall("POST", VinsExtNetDisconnectAPI, extnetParams)
+			if err != nil {
+				return err
+			}
 		}
-		d.SetPartial("name")
+
+		if newExtNedId.(int) > 0 {
+			// new external network connection requested - connect ViNS
+			extnetParams.Add("netId", fmt.Sprintf("%d", newExtNedId.(int)))
+			_, err := controller.decortAPICall("POST", VinsExtNetConnectAPI, extnetParams)
+			if err != nil {
+				return err
+			}
+		}
+		
+		d.SetPartial("ext_net_id")
 	}
 
 	d.Partial(false)
-	*/
 
 	// we may reuse dataSourceVinsRead here as we maintain similarity 
 	// between Compute resource and Compute data source schemas
-	// return dataSourceVinsRead(d, m) 
+	return dataSourceVinsRead(d, m) 
 }
 
 func resourceVinsDelete(d *schema.ResourceData, m interface{}) error {
@@ -225,13 +238,29 @@ func resourceVinsSchemaMake() map[string]*schema.Schema {
 		"rg_id": {
 			Type:        schema.TypeInt,
 			Optional:    true,
+			ForceNew:    true,
+			Default:     0,
 			Description: "ID of the resource group, where this ViNS belongs to. Non-zero for ViNS created at resource group level, 0 otherwise.",
 		},
 
 		"account_id": {
 			Type:        schema.TypeInt,
 			Required:    true,
+			ForceNew:    true,
 			Description: "ID of the account, which this ViNS belongs to. For ViNS created at account level, resource group ID is 0.",
+		},
+
+		"ext_net_id": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "ID of the external network this ViNS is connected to. Pass 0 if no external connection required.",
+		},
+
+		"ipcidr": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			DiffSuppressFunc: ipcidrDiffSupperss,
+			Description: "Network address to use by this ViNS. This parameter is only valid when creating new ViNS.",
 		},
 
 		"description": {
@@ -241,25 +270,6 @@ func resourceVinsSchemaMake() map[string]*schema.Schema {
 			Description: "Optional user-defined text description of this ViNS.",
 		},
 
-		"ext_net_id": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "ID of the external network this ViNS is connected to (set to 0 if no external connection required, -1 to connect to default external network).",
-		},
-
-		"ext_ip_addr": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Description: "IP address of the external connection (valid for ViNS connected to external network, ignored otherwise).",
-		},
-
-		"ipcidr": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			DiffSuppressFunc: ipcidrDiffSupperss,
-			Description: "Network address to use by this ViNS.",
-		},
-
 		// the rest of attributes are computed
 		"account_name": {
 			Type:        schema.TypeString,
@@ -267,6 +277,11 @@ func resourceVinsSchemaMake() map[string]*schema.Schema {
 			Description: "Name of the account, which this ViNS belongs to.",
 		},
 
+		"ext_ip_addr": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "IP address of the external connection (valid for ViNS connected to external network, ignored otherwise).",
+		},
 	}
 
 	return rets

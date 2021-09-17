@@ -565,8 +565,8 @@ const VinsGetAPI = "/restmachine/cloudapi/vins/get"
 const VinsCreateInAccountAPI = "/restmachine/cloudapi/vins/createInAccount"
 const VinsCreateInRgAPI = "/restmachine/cloudapi/vins/createInRG"
 
-const VinsExtNetConnect = "/restmachine/cloudapi/vins/extNetConnect"
-const VinsExtNetDisconnect = "/restmachine/cloudapi/vins/extNetDisconnect"
+const VinsExtNetConnectAPI = "/restmachine/cloudapi/vins/extNetConnect"
+const VinsExtNetDisconnectAPI = "/restmachine/cloudapi/vins/extNetDisconnect"
 
 const VinsDeleteAPI = "/restmachine/cloudapi/vins/delete"
 
