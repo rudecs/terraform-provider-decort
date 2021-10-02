@@ -214,6 +214,7 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Required:    true,
 			ForceNew:    true,
+			ValidateFunc: validation.IntAtLeast(1),
 			Description: "Storage end-point provider serving this disk. Cannot be changed for existing disk.",
 		},
 
@@ -221,12 +222,14 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Required:    true,
 			ForceNew:    true,
+			ValidateFunc: validation.StringIsNotEmpty,
 			Description: "Pool where this disk is located. Cannot be changed for existing disk.",
 		},
 
 		"size": {
 			Type:        schema.TypeInt,
 			Required:    true,
+			ValidateFunc: validation.IntAtLeast(1),
 			Description: "Size of the disk in GB. Note, that existing disks can only be grown in size.",
 		},
 

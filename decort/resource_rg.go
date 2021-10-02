@@ -30,6 +30,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
@@ -294,6 +295,7 @@ func resourceResgroup() *schema.Resource {
 			"account_id": {
 				Type:        schema.TypeInt,
 				Required:    true,
+				ValidateFunc: validation.IntAtLeast(1),
 				Description: "Unique ID of the account, which this resource group belongs to.",
 			},
 
@@ -301,6 +303,7 @@ func resourceResgroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "PRIVATE",
+				// ValidateFunc: validation.StringInSlice([]string{"PRIVATE", "PUBLIC", "NONE"}, false),
 				Description: "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
 			},
 
