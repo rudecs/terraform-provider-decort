@@ -45,8 +45,10 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 	// disks via atomic API calls. However, it will not retry failed manipulation on the same disk.
 	log.Debugf("utilityComputeExtraDisksConfigure: called for Compute ID %s with do_delta = %b", d.Id(), do_delta)
 
+	// NB: as of rc-1.25 "extra_disks" are TypeSet with the elem of TypeInt
 	old_set, new_set := d.GetChange("extra_disks")
 
+	/*
 	old_disks := make([]interface{},0,0)
 	if old_set != nil {
 		old_disks = old_set.([]interface{}) 
@@ -56,16 +58,17 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 	if new_set != nil {
 		new_disks = new_set.([]interface{})
 	}
+	*/
 
 	apiErrCount := 0
 	var lastSavedError error
 
 	if !do_delta {
-		if len(new_disks) < 1 {
+		if new_set.(*schema.Set).Len() < 1 {
 			return nil
 		}
 
-		for _, disk := range new_disks {
+		for _, disk := range new_set.(*schema.Set).List() {
 			urlValues := &url.Values{}
 			urlValues.Add("computeId", d.Id())
 			urlValues.Add("diskId", fmt.Sprintf("%d", disk.(int)))
@@ -86,9 +89,10 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 		return nil
 	}
 
+	detach_set := old_set.(*schema.Set).Difference(new_set.(*schema.Set))
+	/*
 	var attach_list, detach_list []int
 	match := false
-	
 	for _, oDisk := range old_disks {
 		match = false
 		for _, nDisk := range new_disks {
@@ -101,8 +105,10 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 			detach_list = append(detach_list, oDisk.(int))
 		}
 	}
-	log.Debugf("utilityComputeExtraDisksConfigure: detach list has %d items for Compute ID %s", len(detach_list), d.Id())
+	*/
+	log.Debugf("utilityComputeExtraDisksConfigure: detach set has %d items for Compute ID %s", detach_set.Len(), d.Id())
 
+	/*
 	for _, nDisk := range new_disks {
 		match = false
 		for _, oDisk := range old_disks {
@@ -115,29 +121,31 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 			attach_list = append(attach_list, nDisk.(int))
 		}
 	}
-	log.Debugf("utilityComputeExtraDisksConfigure: attach list has %d items for Compute ID %s", len(attach_list), d.Id())
+	*/
+	attach_set := new_set.(*schema.Set).Difference(old_set.(*schema.Set))
+	log.Debugf("utilityComputeExtraDisksConfigure: attach set has %d items for Compute ID %s", attach_set.Len(), d.Id())
 
-	for _, diskId := range detach_list {
+	for _, diskId := range detach_set.List() {
 		urlValues := &url.Values{}
 		urlValues.Add("computeId", d.Id())
-		urlValues.Add("diskId", fmt.Sprintf("%d", diskId))
+		urlValues.Add("diskId", fmt.Sprintf("%d", diskId.(int)))
 		_, err := ctrl.decortAPICall("POST", ComputeDiskDetachAPI, urlValues)
 		if err != nil {
 			// failed to detach disk - there will be partial resource update
-			log.Debugf("utilityComputeExtraDisksConfigure: failed to detach disk ID %d from Compute ID %s: %s", diskId, d.Id(), err)
+			log.Debugf("utilityComputeExtraDisksConfigure: failed to detach disk ID %d from Compute ID %s: %s", diskId.(int), d.Id(), err)
 			apiErrCount++
 			lastSavedError = err
 		}
 	}
 
-	for _, diskId := range attach_list {
+	for _, diskId := range attach_set.List() {
 		urlValues := &url.Values{}
 		urlValues.Add("computeId", d.Id())
-		urlValues.Add("diskId", fmt.Sprintf("%d", diskId))
+		urlValues.Add("diskId", fmt.Sprintf("%d", diskId.(int)))
 		_, err := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
 		if err != nil {
 			// failed to attach disk - there will be partial resource update
-			log.Debugf("utilityComputeExtraDisksConfigure: failed to attach disk ID %d to Compute ID %s: %s", diskId, d.Id(), err)
+			log.Debugf("utilityComputeExtraDisksConfigure: failed to attach disk ID %d to Compute ID %s: %s", diskId.(int), d.Id(), err)
 			apiErrCount++
 			lastSavedError = err
 		}
@@ -152,7 +160,6 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 	return nil
 }
 
-// TODO: implement do_delta logic
 func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceData, do_delta bool) error {
 	// "d" is filled with data according to computeResource schema, so extra networks config is retrieved via "network" key
 	// If do_delta is true, this function will identify changes between new and existing specs for network and try to 
@@ -170,12 +177,12 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 
 	oldNets := make([]interface{},0,0)
 	if old_set != nil {
-		oldNets = old_set.([]interface{}) // network is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
+		oldNets = old_set.(*schema.Set).List() // network set is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
 	}
 	
 	newNets := make([]interface{},0,0)
 	if new_set != nil {
-		newNets = new_set.([]interface{}) // network is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
+		newNets = new_set.(*schema.Set).List() // network set is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
 	}
 
 	apiErrCount := 0

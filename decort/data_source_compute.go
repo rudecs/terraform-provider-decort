@@ -65,6 +65,8 @@ func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 	return result 
 }
 
+// NOTE: this is a legacy function, which is not used as of rc-1.10
+// Use "parseComputeDisksToExtraDisks" instead
 func parseComputeDisks(disks []DiskRecord) []interface{} {
 	// Return value was designed to d.Set("disks",) item of dataSourceCompute schema
 	// However, this item was excluded from the schema as it is not directly
@@ -80,21 +82,20 @@ func parseComputeDisks(disks []DiskRecord) []interface{} {
 	}
 	*/
 	
-	result := make([]interface{}, length)
+	result := []interface{}{}
 
 	if length == 0 {
 		return result
 	}
 
-	elem := make(map[string]interface{})
-
-	for i, value := range disks {
+	for _, value := range disks {
 		/*
 		if value.Type == "B" {
 			// skip boot disk when parsing the list of disks
 			continue
 		}
 		*/
+		elem := make(map[string]interface{})
 		// keys in this map should correspond to the Schema definition
 		// as returned by dataSourceDiskSchemaMake()
 		elem["name"] = value.Name
@@ -111,7 +112,8 @@ func parseComputeDisks(disks []DiskRecord) []interface{} {
 		// elem["status"] = value.Status
 		// elem["tech_status"] = value.TechStatus
 		elem["compute_id"] = value.ComputeID
-		result[i] = elem
+		
+		result = append(result, elem)
 	}
 
 	return result 
@@ -149,8 +151,32 @@ func parseBootDiskId(disks []DiskRecord) uint {
 
 // Parse the list of interfaces from compute/get response into a list of networks 
 // attached to this compute
+func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
+	// return value will be used to d.Set("network") item of dataSourceCompute schema
+	length := len(ifaces)
+	log.Debugf("parseComputeInterfacesToNetworks: called for %d ifaces", length)
+
+	result := []interface{}{}
+
+	for _, value := range ifaces {
+		elem := make(map[string]interface{})
+		// Keys in this map should correspond to the Schema definition
+		// as returned by networkSubresourceSchemaMake()
+		elem["net_id"] = value.NetID
+		elem["net_type"] = value.NetType
+		elem["ip_address"] = value.IPAddress
+		elem["mac"] = value.MAC
+
+		// log.Debugf("   element %d: net_id=%d, net_type=%s", i, value.NetID, value.NetType)
+
+		result = append(result, elem)
+	}
+
+	return result 
+}
+/*
 func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []map[string]interface{} {
-	// return value will be used to d.Set("network",) item of dataSourceCompute schema
+	// return value will be used to d.Set("network") item of dataSourceCompute schema
 	length := len(ifaces)
 	log.Debugf("parseComputeInterfacesToNetworks: called for %d ifaces", length)
 
@@ -172,7 +198,10 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []map[string]int
 
 	return result 
 }
+*/
 
+
+// NOTE: this function is retained for historical purposes and actually not used as of rc-1.10
 func parseComputeInterfaces(ifaces []InterfaceRecord) []map[string]interface{} {
 	// return value was designed to d.Set("interfaces",) item of dataSourceCompute schema
 	// However, this item was excluded from the schema as it is not directly
@@ -374,7 +403,7 @@ func dataSourceCompute() *schema.Resource {
 			},
 
 			"extra_disks": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Computed:    true,
 				MaxItems: MaxExtraDisksPerCompute,
 				Elem: &schema.Schema {
@@ -395,7 +424,7 @@ func dataSourceCompute() *schema.Resource {
 			*/
 
 			"network": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				MaxItems: MaxNetworksPerCompute,
 				Elem: &schema.Resource{

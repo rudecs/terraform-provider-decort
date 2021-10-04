@@ -44,6 +44,7 @@ func diskSubresourceSchemaMake() map[string]*schema.Schema {
 		"account_id": {
 			Type:        schema.TypeInt,
 			Computed:    true,
+			ValidateFunc: validation.IntAtLeast(1),
 			Description: "ID of the account this disk belongs to.",
 		},
 

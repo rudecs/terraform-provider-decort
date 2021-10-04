@@ -33,6 +33,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
@@ -223,6 +224,7 @@ func resourceVinsSchemaMake() map[string]*schema.Schema {
 		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
+			ValidateFunc: validation.StringIsNotEmpty,
 			Description: "Name of the ViNS. Names are case sensitive and unique within the context of an account or resource group.",
 		},
 
@@ -247,12 +249,14 @@ func resourceVinsSchemaMake() map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Required:    true,
 			ForceNew:    true,
+			ValidateFunc: validation.IntAtLeast(1),
 			Description: "ID of the account, which this ViNS belongs to. For ViNS created at account level, resource group ID is 0.",
 		},
 
 		"ext_net_id": {
 			Type:        schema.TypeInt,
 			Required:    true,
+			ValidateFunc: validation.IntAtLeast(0),
 			Description: "ID of the external network this ViNS is connected to. Pass 0 if no external connection required.",
 		},
 

@@ -146,7 +146,28 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceResgroupUpdate: called for RG name %s, account ID %d",
 		d.Get("name").(string), d.Get("account_id").(int))
 
-	do_update := false
+	/* NOTE: we do not allow changing the following attributes of an existing RG via terraform:
+	   - def_net_type
+	   - ipcidr
+	   - ext_net_id
+	   - ext_ip
+
+	   The following code fragment checks if any of these have been changed and generates error.
+	*/
+	for _, attr := range []string{"def_net_type", "ipcidr", "ext_ip"} {
+		attr_new, attr_old := d.GetChange("def_net_type")
+		if attr_new.(string) != attr_old.(string) {
+			return fmt.Errorf("resourceResgroupUpdate: RG ID %s: changing %s for existing RG is not allowed", d.Id(), attr)
+		}
+	}
+
+	attr_new, attr_old := d.GetChange("ext_net_id")
+	if attr_new.(int) != attr_old.(int) {
+		return fmt.Errorf("resourceResgroupUpdate: RG ID %s: changing ext_net_id for existing RG is not allowed", d.Id())
+	}
+	
+
+	do_general_update := false      // will be true if general RG update is necessary (API rg/update)
 
 	controller := m.(*ControllerCfg)
 	url_values := &url.Values{}
@@ -157,7 +178,7 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 		log.Debugf("resourceResgroupUpdate: name specified - looking for deltas from the old settings.")
 		name_old, _ := d.GetChange("name")
 		if name_old.(string) != name_new.(string) {
-			do_update = true
+			do_general_update = true
 			url_values.Add("name", name_new.(string))
 		}
 	}
@@ -170,31 +191,31 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 		quotarecord_old, _ := makeQuotaRecord(quota_value_old.([]interface{}))
 
 		if quotarecord_new.Cpu != quotarecord_old.Cpu {
-			do_update = true
+			do_general_update = true
 			log.Debugf("resourceResgroupUpdate: Cpu diff %d <- %d", quotarecord_new.Cpu, quotarecord_old.Cpu)
 			url_values.Add("maxCPUCapacity", fmt.Sprintf("%d", quotarecord_new.Cpu))
 		}
 
 		if quotarecord_new.Disk != quotarecord_old.Disk {
-			do_update = true
+			do_general_update = true
 			log.Debugf("resourceResgroupUpdate: Disk diff %d <- %d", quotarecord_new.Disk, quotarecord_old.Disk)
 			url_values.Add("maxVDiskCapacity", fmt.Sprintf("%d", quotarecord_new.Disk))
 		}
 
 		if quotarecord_new.Ram != quotarecord_old.Ram { // NB: quota on RAM is stored as float32, in units of MB
-			do_update = true
+			do_general_update = true
 			log.Debugf("resourceResgroupUpdate: Ram diff %f <- %f", quotarecord_new.Ram, quotarecord_old.Ram)
 			url_values.Add("maxMemoryCapacity", fmt.Sprintf("%f", quotarecord_new.Ram))
 		}
 
 		if quotarecord_new.ExtTraffic != quotarecord_old.ExtTraffic {
-			do_update = true
+			do_general_update = true
 			log.Debugf("resourceResgroupUpdate: ExtTraffic diff %d <- %d", quotarecord_new.ExtTraffic, quotarecord_old.ExtTraffic)
 			url_values.Add("maxNetworkPeerTransfer", fmt.Sprintf("%d", quotarecord_new.ExtTraffic))
 		}
 
 		if quotarecord_new.ExtIPs != quotarecord_old.ExtIPs {
-			do_update = true
+			do_general_update = true
 			log.Debugf("resourceResgroupUpdate: ExtIPs diff %d <- %d", quotarecord_new.ExtIPs, quotarecord_old.ExtIPs)
 			url_values.Add("maxNumPublicIP", fmt.Sprintf("%d", quotarecord_new.ExtIPs))
 		}
@@ -205,12 +226,12 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 		log.Debugf("resourceResgroupUpdate: description specified - looking for deltas from the old settings.")
 		desc_old, _ := d.GetChange("description")
 		if desc_old.(string) != desc_new.(string) {
-			do_update = true
+			do_general_update = true
 			url_values.Add("desc", desc_new.(string))
 		}
 	}
 
-	if do_update {
+	if do_general_update {
 		log.Debugf("resourceResgroupUpdate: detected delta between new and old RG specs - updating the RG")
 		_, err := controller.decortAPICall("POST", ResgroupUpdateAPI, url_values)
 		if err != nil {
@@ -303,7 +324,7 @@ func resourceResgroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "PRIVATE",
-				// ValidateFunc: validation.StringInSlice([]string{"PRIVATE", "PUBLIC", "NONE"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"PRIVATE", "PUBLIC", "NONE"}, false),
 				Description: "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
 			},
 
@@ -323,13 +344,13 @@ func resourceResgroup() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
-				Description: "ID of the external network, which this resource group will use as default for its computes if def_net_type=PUBLIC",
+				Description: "ID of the external network for default ViNS. Pass 0 if def_net_type=PUBLIC or no external connection required for the defult ViNS when def_net_type=PRIVATE",
 			},
 
 			"ext_ip": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "IP address on the external netowrk to request, if def_net_type=PUBLIC",
+				Description: "IP address on the external netowrk to request when def_net_type=PRIVATE and ext_net_id is not 0",
 			},
 
 			/* commented out, as in this version of provider we use default Grid ID

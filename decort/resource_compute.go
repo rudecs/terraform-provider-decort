@@ -123,12 +123,12 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	// Configure data disks if any
 	extraDisksOk := true
 	argVal, argSet = d.GetOk("extra_disks") 
-	if argSet && len(argVal.([]interface{})) > 0 {
+	if argSet && argVal.(*schema.Set).Len() > 0 {
 		// urlValues.Add("desc", argVal.(string))
-		log.Debugf("resourceComputeCreate: calling utilityComputeExtraDisksConfigure to attach %d extra disk(s)", len(argVal.([]interface{})))
+		log.Debugf("resourceComputeCreate: calling utilityComputeExtraDisksConfigure to attach %d extra disk(s)", argVal.(*schema.Set).Len())
 		err = controller.utilityComputeExtraDisksConfigure(d, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
-			log.Errorf("resourceComputeCreate: error when attaching extra disks to a new Compute ID %s: %s", compId, err)
+			log.Errorf("resourceComputeCreate: error when attaching extra disk(s) to a new Compute ID %s: %s", compId, err)
 			extraDisksOk = false
 		}
 	}
@@ -139,8 +139,8 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	// Configure external networks if any
 	netsOk := true
 	argVal, argSet = d.GetOk("network") 
-	if argSet && len(argVal.([]interface{})) > 0 {
-		log.Debugf("resourceComputeCreate: calling utilityComputeNetworksConfigure to attach %d network(s)", len(argVal.([]interface{})))
+	if argSet && argVal.(*schema.Set).Len() > 0  {
+		log.Debugf("resourceComputeCreate: calling utilityComputeNetworksConfigure to attach %d network(s)", argVal.(*schema.Set).Len())
 		err = controller.utilityComputeNetworksConfigure(d, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
 			log.Errorf("resourceComputeCreate: error when attaching networks to a new Compute ID %d: %s", compId, err)
@@ -398,12 +398,12 @@ func resourceCompute() *schema.Resource {
 
 			"boot_disk_size": {
 				Type:     schema.TypeInt,
-				Optional: true,
-				Description: "This compute instance boot disk size in GB.",
+				Required: true,
+				Description: "This compute instance boot disk size in GB. Make sure it is large enough to accomodate selected OS image.",
 			},
 
 			"extra_disks": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				MaxItems: MaxExtraDisksPerCompute,
 				Elem: &schema.Schema{
@@ -413,7 +413,7 @@ func resourceCompute() *schema.Resource {
 			},
 
 			"network": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				MaxItems: MaxNetworksPerCompute,
 				Elem: &schema.Resource{
