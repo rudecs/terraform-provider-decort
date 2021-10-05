@@ -241,7 +241,7 @@ func parseComputeInterfaces(ifaces []InterfaceRecord) []map[string]interface{} {
 }
 
 func flattenCompute(d *schema.ResourceData, compFacts string) error {
-	// This function expects that comp_facts string contains response from API compute/get,
+	// This function expects that compFacts string contains response from API compute/get,
 	// i.e. detailed information about compute instance.
 	//
 	// NOTE: this function modifies ResourceData argument - as such it should never be called

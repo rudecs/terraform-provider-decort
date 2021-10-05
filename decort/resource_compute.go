@@ -25,7 +25,7 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
-	// "encoding/json"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -289,8 +289,9 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 
 func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 	// NOTE: this function destroys target Compute instance "permanently", so 
-	// there is no way to restore it. It also destroys all extra disks
-	// attached to this compute, so "User, ye be warned!"
+	// there is no way to restore it. 
+	// If compute being destroyed has some extra disks attached, they are 
+	// detached from the compute
 	log.Debugf("resourceComputeDelete: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
@@ -301,11 +302,39 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 
+	controller := m.(*ControllerCfg)
+
+	model := ComputeGetResp{}
+	log.Debugf("resourceComputeDelete: ready to unmarshal string %s", compFacts)
+	err = json.Unmarshal([]byte(compFacts), &model)
+	if err == nil && len(model.Disks) > 0 {
+		// prepare to detach data disks from compute - do it only if compFacts unmarshalled 
+		// properly and the resulting model contains non-empty Disks list
+		for _, diskFacts := range model.Disks {
+			if diskFacts.Type == "B" {
+				// boot disk is never detached on compute delete
+				continue
+			}
+
+			log.Debugf("resourceComputeDelete: ready to detach data disk ID %d from compute ID %s", diskFacts.ID, d.Id())
+
+			detachParams := &url.Values{}
+			detachParams.Add("computeId", d.Id())
+			detachParams.Add("diskId", fmt.Sprintf("%d", diskFacts.ID))
+
+			_, err = controller.decortAPICall("POST", ComputeDiskDetachAPI, detachParams)
+			if err != nil {
+				// We do not fail compute deletion on data disk detach errors
+				log.Errorf("resourceComputeDelete: error when detaching Disk ID %d: %s", diskFacts.ID, err)
+			}
+		}
+	}
+
 	params := &url.Values{}
 	params.Add("computeId", d.Id())
 	params.Add("permanently", "1")
-
-	controller := m.(*ControllerCfg)
+	// TODO: this is for the upcoming API update - params.Add("detachdisks", "1")
+	
 	_, err = controller.decortAPICall("POST", ComputeDeleteAPI, params)
 	if err != nil {
 		return err
@@ -316,7 +345,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 
 func resourceComputeExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
-	log.Debugf("resourceComputeExist: called for Compute name %q, RG ID %d",
+	log.Debugf("resourceComputeExist: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
 	compFacts, err := utilityComputeCheckPresence(d, m)
