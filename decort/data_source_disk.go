@@ -67,18 +67,6 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 	// d.Set("compute_id", model.ComputeID)
 
 	d.Set("description", model.Desc)
-	// d.Set("status", model.Status)
-	// d.Set("tech_status", model.TechStatus)
-
-	/* we do not manage snapshots via Terraform yet (and probably, never will), so 
-	// keep this block commented out for a while
-	if len(model.Snapshots) > 0 {
-		log.Debugf("flattenDisk: calling flattenDiskSnapshots")
-		if err = d.Set("nics", flattenDiskSnapshots(model.Snapshots)); err != nil {
-			return err
-		}
-	}
-	*/
 
 	return nil
 }
@@ -137,7 +125,7 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 		"type": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Type of this disk.",
+			Description: "Type of this disk. E.g. D for data disks, B for boot.",
 		},
 
 		"description": {

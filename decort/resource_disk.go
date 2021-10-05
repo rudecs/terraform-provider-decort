@@ -46,7 +46,7 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("gid", fmt.Sprintf("%d", DefaultGridID)) // we use default Grid ID, which was obtained along with DECORT Controller init
 	urlValues.Add("name", d.Get("name").(string))
 	urlValues.Add("size", fmt.Sprintf("%d", d.Get("size").(int)))
-	urlValues.Add("type", d.Get("type").(string))
+	urlValues.Add("type", "D") // NOTE: only disks of Data type are managed via plugin
 	urlValues.Add("sep_id", fmt.Sprintf("%d", d.Get("sep_id").(int)))
 	urlValues.Add("pool", d.Get("pool").(string))
 	
@@ -128,10 +128,14 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 		d.SetPartial("name")
 	}
 
+	/*
+	NOTE: plugin will manage disks of type "Data" only, and type cannot be changed once disk is created
+
 	oldType, newType := d.GetChange("type")
 	if oldType.(string) != newType.(string) {
 		return fmt.Errorf("resourceDiskUpdate: Disk ID %s - changing type of existing disk not allowed", d.Id())
 	}
+	*/
 
 	d.Partial(false)
 
@@ -233,6 +237,8 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Description: "Size of the disk in GB. Note, that existing disks can only be grown in size.",
 		},
 
+		/* We moved "type" attribute to computed attributes section, as plugin manages disks of only 
+		   one type - "D", e.g. data disks.
 		"type": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -241,6 +247,7 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			ValidateFunc: validation.StringInSlice([]string{"B", "D"}, false),
 			Description: "Optional type of this disk. Defaults to D, i.e. data disk. Cannot be changed for existing disks.",
 		},
+		*/
 
 		"description": {
 			Type:        schema.TypeString,
@@ -262,6 +269,12 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Description: "ID of the image, which this disk was cloned from (if ever cloned).",
 		},
 
+		"type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Type of this disk.",
+		},
+
 		"sep_type": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -276,24 +289,6 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 				Schema:    snapshotSubresourceSchemaMake(),
 			},
 			Description: "List of user-created snapshots for this disk."
-		},
-
-		"status": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "Current model status of this disk.",
-		},
-
-		"tech_status": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "Current technical status of this disk.",
-		},
-
-		"compute_id": {
-			Type:        schema.TypeInt,
-			Computed:    true,
-			Description: "ID of the compute instance where this disk is attached to, or 0 for unattached disk.",
 		},
 		*/
 	}

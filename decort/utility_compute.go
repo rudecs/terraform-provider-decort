@@ -40,6 +40,8 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 	// d is filled with data according to computeResource schema, so extra disks config is retrieved via "extra_disks" key
 	// If do_delta is true, this function will identify changes between new and existing specs for extra disks and try to 
 	// update compute configuration accordingly
+	// Otherwise it will apply whatever is found in the new set of "extra_disks" right away. 
+	// Primary use of do_delta=false is when calling this function from compute Create handler.
 
 	// Note that this function will not abort on API errors, but will continue to configure (attach / detach) other individual 
 	// disks via atomic API calls. However, it will not retry failed manipulation on the same disk.
@@ -47,18 +49,6 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 
 	// NB: as of rc-1.25 "extra_disks" are TypeSet with the elem of TypeInt
 	old_set, new_set := d.GetChange("extra_disks")
-
-	/*
-	old_disks := make([]interface{},0,0)
-	if old_set != nil {
-		old_disks = old_set.([]interface{}) 
-	}
-	
-	new_disks := make([]interface{},0,0)
-	if new_set != nil {
-		new_disks = new_set.([]interface{})
-	}
-	*/
 
 	apiErrCount := 0
 	var lastSavedError error
@@ -90,41 +80,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 	}
 
 	detach_set := old_set.(*schema.Set).Difference(new_set.(*schema.Set))
-	/*
-	var attach_list, detach_list []int
-	match := false
-	for _, oDisk := range old_disks {
-		match = false
-		for _, nDisk := range new_disks {
-			if oDisk.(int) == nDisk.(int) {
-				match = true
-				break
-			}
-		}
-		if !match {
-			detach_list = append(detach_list, oDisk.(int))
-		}
-	}
-	*/
 	log.Debugf("utilityComputeExtraDisksConfigure: detach set has %d items for Compute ID %s", detach_set.Len(), d.Id())
-
-	/*
-	for _, nDisk := range new_disks {
-		match = false
-		for _, oDisk := range old_disks {
-			if nDisk.(int) == oDisk.(int) {
-				match = true
-				break
-			}
-		}
-		if !match {
-			attach_list = append(attach_list, nDisk.(int))
-		}
-	}
-	*/
-	attach_set := new_set.(*schema.Set).Difference(old_set.(*schema.Set))
-	log.Debugf("utilityComputeExtraDisksConfigure: attach set has %d items for Compute ID %s", attach_set.Len(), d.Id())
-
 	for _, diskId := range detach_set.List() {
 		urlValues := &url.Values{}
 		urlValues.Add("computeId", d.Id())
@@ -132,12 +88,14 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 		_, err := ctrl.decortAPICall("POST", ComputeDiskDetachAPI, urlValues)
 		if err != nil {
 			// failed to detach disk - there will be partial resource update
-			log.Debugf("utilityComputeExtraDisksConfigure: failed to detach disk ID %d from Compute ID %s: %s", diskId.(int), d.Id(), err)
+			log.Errorf("utilityComputeExtraDisksConfigure: failed to detach disk ID %d from Compute ID %s: %s", diskId.(int), d.Id(), err)
 			apiErrCount++
 			lastSavedError = err
 		}
 	}
 
+	attach_set := new_set.(*schema.Set).Difference(old_set.(*schema.Set))
+	log.Debugf("utilityComputeExtraDisksConfigure: attach set has %d items for Compute ID %s", attach_set.Len(), d.Id())
 	for _, diskId := range attach_set.List() {
 		urlValues := &url.Values{}
 		urlValues.Add("computeId", d.Id())
@@ -145,7 +103,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 		_, err := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
 		if err != nil {
 			// failed to attach disk - there will be partial resource update
-			log.Debugf("utilityComputeExtraDisksConfigure: failed to attach disk ID %d to Compute ID %s: %s", diskId.(int), d.Id(), err)
+			log.Errorf("utilityComputeExtraDisksConfigure: failed to attach disk ID %d to Compute ID %s: %s", diskId.(int), d.Id(), err)
 			apiErrCount++
 			lastSavedError = err
 		}
@@ -164,34 +122,22 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 	// "d" is filled with data according to computeResource schema, so extra networks config is retrieved via "network" key
 	// If do_delta is true, this function will identify changes between new and existing specs for network and try to 
 	// update compute configuration accordingly
+	// Otherwise it will apply whatever is found in the new set of "network" right away. 
+	// Primary use of do_delta=false is when calling this function from compute Create handler.
 	
-	/*
-	argVal, argSet := d.GetOk("network") 
-	if !argSet || len(argVal.([]interface{})) < 1 {
-		return nil
-	}
-	net_list := argVal.([]interface{}) // network is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
-	*/
-
 	old_set, new_set := d.GetChange("network")
-
-	oldNets := make([]interface{},0,0)
-	if old_set != nil {
-		oldNets = old_set.(*schema.Set).List() // network set is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
-	}
-	
-	newNets := make([]interface{},0,0)
-	if new_set != nil {
-		newNets = new_set.(*schema.Set).List() // network set is ar array of maps; for keys see func networkSubresourceSchemaMake() definition 
-	}
 
 	apiErrCount := 0
 	var lastSavedError error
 
 	if !do_delta {
-		for _, net := range newNets {
+		if new_set.(*schema.Set).Len() < 1 {
+			return nil
+		}
+
+		for _, runner := range new_set.(*schema.Set).List() {
 			urlValues := &url.Values{}
-			net_data := net.(map[string]interface{}) 
+			net_data := runner.(map[string]interface{}) 
 			urlValues.Add("computeId", d.Id())
 			urlValues.Add("netType", net_data["net_type"].(string))
 			urlValues.Add("netId", fmt.Sprintf("%d", net_data["net_id"].(int)))
@@ -215,84 +161,40 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		return nil
 	}
 
-	var attachList, detachList []ComputeNetMgmtRecord
-	match := false
-	
-	for _, oRunner := range oldNets {
-		match = false
-		oSpecs := oRunner.(map[string]interface{})
-		for _, nRunner := range newNets {
-			nSpecs := nRunner.(map[string]interface{})
-			if oSpecs["net_id"].(int) == nSpecs["net_id"].(int) && oSpecs["net_type"].(string) == nSpecs["net_type"].(string) {
-				match = true
-				break
-			}
-		}
-		if !match {
-			newItem := ComputeNetMgmtRecord{
-				ID:         oSpecs["net_id"].(int),
-				Type:       oSpecs["net_type"].(string),
-				IPAddress:  oSpecs["ip_address"].(string),
-				MAC:        oSpecs["mac"].(string),
-			}
-			detachList = append(detachList, newItem)
-		}
-	}
-	log.Debugf("utilityComputeNetworksConfigure: detach list has %d items for Compute ID %s", len(detachList), d.Id())
-
-	for _, nRunner := range newNets {
-		match = false
-		nSpecs := nRunner.(map[string]interface{})
-		for _, oRunner := range oldNets {
-			oSpecs := oRunner.(map[string]interface{})
-			if nSpecs["net_id"].(int) == oSpecs["net_id"].(int) && nSpecs["net_type"].(string) == oSpecs["net_type"].(string) {
-				match = true
-				break
-			}
-		}
-		if !match {
-			newItem := ComputeNetMgmtRecord{
-				ID:        nSpecs["net_id"].(int),
-				Type:      nSpecs["net_type"].(string),
-			}
-			if nSpecs["ip_address"] != nil {
-				newItem.IPAddress = nSpecs["ip_address"].(string)
-			} else {
-				newItem.IPAddress = "" // make sure it is empty, if not coming from the schema
-			}
-			attachList = append(attachList, newItem)
-		}
-	}
-	log.Debugf("utilityComputeNetworksConfigure: attach list has %d items for Compute ID %s", len(attachList), d.Id())
-
-	for _, netRec := range detachList {
+	detach_set := old_set.(*schema.Set).Difference(new_set.(*schema.Set))
+	log.Debugf("utilityComputeNetworksConfigure: detach set has %d items for Compute ID %s", detach_set.Len(), d.Id())
+	for _, runner := range detach_set.List() {
 		urlValues := &url.Values{}
+		net_data := runner.(map[string]interface{})
 		urlValues.Add("computeId", d.Id())
-		urlValues.Add("ipAddr", netRec.IPAddress)
-		urlValues.Add("mac", netRec.MAC)
+		urlValues.Add("ipAddr", net_data["ip_address"].(string))
+		urlValues.Add("mac", net_data["mac"].(string))
 		_, err := ctrl.decortAPICall("POST", ComputeNetDetachAPI, urlValues)
 		if err != nil {
 			// failed to detach this network - there will be partial resource update
-			log.Debugf("utilityComputeNetworksConfigure: failed to detach net ID %d of type %s from Compute ID %s: %s", 
-			           netRec.ID, netRec.Type, d.Id(), err)
+			log.Errorf("utilityComputeNetworksConfigure: failed to detach net ID %d of type %s from Compute ID %s: %s", 
+			           net_data["net_id"].(int), net_data["net_type"].(string), d.Id(), err)
 			apiErrCount++
 			lastSavedError = err
 		}
 	}
 
-	for _, netRec := range attachList {
+	attach_set := new_set.(*schema.Set).Difference(old_set.(*schema.Set))
+	log.Debugf("utilityComputeNetworksConfigure: attach set has %d items for Compute ID %s", attach_set.Len(), d.Id())
+	for _, runner := range attach_set.List() {
 		urlValues := &url.Values{}
+		net_data := runner.(map[string]interface{})
 		urlValues.Add("computeId", d.Id())
-		urlValues.Add("netId", fmt.Sprintf("%d",netRec.ID))
-		urlValues.Add("netType", netRec.Type)
-		if netRec.IPAddress != "" {
-			urlValues.Add("ipAddr", netRec.IPAddress)
+		urlValues.Add("netId", fmt.Sprintf("%d",net_data["net_id"].(int)))
+		urlValues.Add("netType", net_data["net_type"].(string))
+		if net_data["ip_address"].(string) != "" {
+			urlValues.Add("ipAddr", net_data["ip_address"].(string))
 		}
 		_, err := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
 		if err != nil {
 			// failed to attach this network - there will be partial resource update
-			log.Debugf("utilityComputeNetworksConfigure: failed to attach net ID %d of type %s from Compute ID %s: %s", 
-			           netRec.ID, netRec.Type, d.Id(), err)
+			log.Errorf("utilityComputeNetworksConfigure: failed to attach net ID %d of type %s to Compute ID %s: %s", 
+			           net_data["net_id"].(int), net_data["net_type"].(string), d.Id(), err)
 			apiErrCount++
 			lastSavedError = err
 		}
