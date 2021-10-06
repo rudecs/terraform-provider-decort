@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -145,11 +146,48 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 			if ipSet {
 				urlValues.Add("ipAddr", ipaddr.(string))
 			}
+			log.Debugf("utilityComputeNetworksConfigure: ready to add network type %s ID %d for Compute ID %s",
+							net_data["net_type"].(string), net_data["net_id"].(int), d.Id())
 			_, err := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
 			if err != nil {
 				// failed to attach network - partial resource update
 				apiErrCount++
 				lastSavedError = err
+				continue
+			}
+
+			if pfw_rules, ok := net_data["pfw_rule"]; ok {
+				// fool-proof - port forwarding is applicable to VINS type networks only! And only to
+				// those ViNSes that have active GW VNF, but here we check for VINS type only, the rest
+				// will be validated by the cloud platform
+				if net_data["net_type"].(string) != "VINS" {
+					log.Errorf("utilityComputeNetworksConfigure: encountered port forward rules specs in network block of type %s for Compute ID %s",
+							   net_data["net_type"].(string), d.Id())
+					apiErrCount++
+					lastSavedError = err
+					continue
+				}
+
+				log.Debugf("utilityComputeNetworksConfigure: found port forward rules specs in network block ID %d for Compute ID %s",
+							   net_data["net_id"].(int), d.Id())
+				for _, rule_runner := range pfw_rules.(*schema.Set).List() {
+					pfwValues := &url.Values{}
+					rule := rule_runner.(map[string]interface{})
+					pfwValues.Add("computeId", d.Id())
+					pfwValues.Add("publicPortStart", fmt.Sprintf("%d", rule["pub_port_start"].(int)))
+					pfwValues.Add("publicPortEnd", fmt.Sprintf("%d", rule["pub_port_end"].(int)))
+					pfwValues.Add("localBasePort", fmt.Sprintf("%d", rule["local_port"].(int)))
+					pfwValues.Add("proto", rule["proto"].(string))
+					log.Debugf("utilityComputeNetworksConfigure: ready to add pfw rule %d:%d -> %d proto %s for Compute ID %s",
+								rule["pub_port_start"].(int), rule["pub_port_end"].(int),
+								rule["proto"].(string), d.Id())
+					_, err := ctrl.decortAPICall("POST", ComputePfwAddAPI, pfwValues)
+					if err != nil {
+						// failed to add port forward rule - partial resource update
+						apiErrCount++
+						lastSavedError = err
+					}
+				}
 			}
 		}
 
@@ -209,7 +247,11 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 	return nil
 }
 
-func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
+
+//func (ctrl *ControllerCfg) utilityComputePfwConfigure(d *schema.ResourceData, do_delta bool) error {
+//}
+
+func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (int, string, error) {
 	// This function tries to locate Compute by one of the following approaches:
 	// - if compute_id is specified - locate by compute ID
 	// - if compute_name is specified - locate by a combination of compute name and resource
@@ -246,27 +288,27 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 		urlValues.Add("computeId", fmt.Sprintf("%d", theId))
 		computeFacts, err := controller.decortAPICall("POST", ComputeGetAPI, urlValues)
 		if err != nil {
-			return "", err
+			return 0, "", err
 		}
-		return computeFacts, nil
+		return theId, computeFacts, nil
 	}
 
 	// ID was not set in the schema upon entering this function - work through Compute name
 	// and RG ID
 	computeName, argSet := d.GetOk("name")
 	if !argSet {
-		return "", fmt.Errorf("Cannot locate compute instance if name is empty and no compute ID specified")
+		return 0, "", fmt.Errorf("Cannot locate compute instance if name is empty and no compute ID specified")
 	}
 
 	rgId, argSet := d.GetOk("rg_id")
 	if !argSet {
-		return "", fmt.Errorf("Cannot locate compute by name %s if no resource group ID is set", computeName.(string))
+		return 0, "", fmt.Errorf("Cannot locate compute by name %s if no resource group ID is set", computeName.(string))
 	}
 	
 	urlValues.Add("rgId", fmt.Sprintf("%d", rgId))
 	apiResp, err := controller.decortAPICall("POST", RgListComputesAPI, urlValues)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	log.Debugf("utilityComputeCheckPresence: ready to unmarshal string %s", apiResp)
@@ -274,7 +316,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	computeList := RgListComputesResp{}
 	err = json.Unmarshal([]byte(apiResp), &computeList)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	// log.Printf("%#v", computeList)
@@ -288,11 +330,83 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 			cgetValues.Add("computeId", fmt.Sprintf("%d", item.ID))
 			apiResp, err = controller.decortAPICall("POST", ComputeGetAPI, cgetValues)
 			if err != nil {
-				return "", err
+				return 0, "", err
 			}
-			return apiResp, nil
+			// NOTE: compute ID is unsigned int in the platform. Here we convert it to int, which may have
+			// unwanted side effects when the number of compute instances grows
+			return int(item.ID), apiResp, nil
 		}
 	}
 
-	return "", nil // there should be no error if Compute does not exist
+	return 0, "", nil // there should be no error if Compute does not exist
 }
+
+// This function reads port forwards from a specified compute and returns them (if any) in a
+// form of a list of maps of interfaces suitable to be used for d.Set("pfw_rule") on the 
+// network block, corresponding to the ViNS these rules belong to. To simlify this network
+// block identification among multiple blocks of the same compute this function also
+// returns the ID of the ViNS associated with listed rules.
+func utilityComputePfwGet(compId int, m interface{}) (int, []map[string]interface{}, error) {
+	// If there is an error either reading portforward rules from the cloud or parsing them, error is 
+	// returned.
+	// In case there are no portforwarding rules for this compute, err = nil and rule record list is empty.
+	// Otherwise, both prefix record and rule record list contain meaningful data.
+	controller := m.(*ControllerCfg)
+	urlValues := &url.Values{}
+
+	pfwPrefix := PfwPrefixRecord{}
+	pfwRules := []PfwRuleRecord{}
+	pfwRulesList := []map[string]interface{}{}
+
+	urlValues.Add("computeId", fmt.Sprintf("%d", compId))
+	apiResp, err := controller.decortAPICall("POST", ComputePfwListAPI, urlValues)
+	if err != nil {
+		return 0, pfwRulesList, err
+	}
+
+	if apiResp == "" {
+		// No port forward rules defined for this compute
+		return 0, pfwRulesList, nil
+	}
+
+	log.Debugf("utilityComputePfwGet: ready to split API response string %s", apiResp)
+
+	twoParts := strings.SplitN(apiResp, "},", 2)
+	if len(twoParts) != 2 {
+		log.Errorf("utilityComputePfwGet: non-empty pfwList response for compute ID %d failed to split into 2 fragments (got %d)", compId, len(twoParts))
+		return 0, pfwRulesList, fmt.Errorf("Non-empty pfwList response failed to split into 2 fragments")
+	}
+
+	prefixResp := strings.TrimSuffix(strings.TrimPrefix(twoParts[0], "["), ",") + "}"
+	log.Debugf("utilityComputePfwGet: ready to unmarshal prefix part %s", prefixResp)
+	err = json.Unmarshal([]byte(prefixResp), &pfwPrefix)
+	if err != nil {
+		log.Errorf("utilityComputePfwGet: failed to unmarshal prefix part of API response: %s", err)
+		return 0, pfwRulesList, err
+	}
+
+	rulesResp := "[" + twoParts[1]
+	log.Debugf("utilityComputePfwGet: ready to unmarshal rules part %s", rulesResp)
+	err = json.Unmarshal([]byte(rulesResp), &pfwRules)
+	if err != nil {
+		log.Errorf("utilityComputePfwGet: failed to unmarshal rules part of API response: %s", err)
+		return 0, pfwRulesList, err
+	}
+
+	log.Debugf("utilityComputePfwGet: successfully read %d port forward rules for Compute ID %d, ViNS ID %d",
+               len(pfwRules), compId, pfwPrefix.VinsID)
+
+	for _, runner := range pfwRules {
+		rule := map[string]interface{}{
+			"pub_port_start": runner.PublicPortStart,
+			"pub_port_end":   runner.PublicPortEnd,
+			"local_port":     runner.LocalPort,
+			"proto":          runner.Protocol,
+		}
+		pfwRulesList = append(pfwRulesList, rule) 
+	}
+
+	return pfwPrefix.VinsID, pfwRulesList, nil
+}
+
+

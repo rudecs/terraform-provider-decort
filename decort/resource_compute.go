@@ -184,7 +184,7 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceComputeRead: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
-	compFacts, err := utilityComputeCheckPresence(d, m)
+	compID, compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
 		if err != nil {
 			return err
@@ -193,7 +193,14 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 
-	if err = flattenCompute(d, compFacts); err != nil {
+	vinsID, pfwRules, err := utilityComputePfwGet(compID, m)
+	if err != nil {
+		log.Errorf("resourceComputeRead: there was error calling utilityComputePfwGet for compute ID %s: %s",
+				d.Id(), err)
+		return err
+	}
+
+	if err = flattenCompute(d, compFacts, vinsID, pfwRules); err != nil {
 		return err
 	}
 
@@ -299,7 +306,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceComputeDelete: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
-	compFacts, err := utilityComputeCheckPresence(d, m)
+	_, compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
 		// the target Compute does not exist - in this case according to Terraform best practice
 		// we exit from Destroy method without error
@@ -352,7 +359,7 @@ func resourceComputeExists(d *schema.ResourceData, m interface{}) (bool, error) 
 	log.Debugf("resourceComputeExist: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
-	compFacts, err := utilityComputeCheckPresence(d, m)
+	_, compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
 		if err != nil {
 			return false, err

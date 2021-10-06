@@ -1,7 +1,7 @@
 # terraform-provider-decort
 Terraform provider for Digital Energy Cloud Orchestration Technology (DECORT) platform
 
-NOTE: provider rc-1.25 is designed for DECORT API 3.7.x. For older API versions please use:
+NOTE: provider rc-1.30 is designed for DECORT API 3.7.x. For older API versions please use:
 - DECORT API 3.6.x versions - provider version rc-1.10
 - DECORT API versions prior to 3.6.0 - Terraform DECS provider (https://github.com/rudecs/terraform-provider-decs)
 

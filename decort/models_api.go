@@ -444,9 +444,17 @@ const AccountsListAPI = "/restmachine/cloudapi/account/list" // returns list of 
 type AccountsListResp []AccountRecord
 
 //
-// structures related to /cloudapi/portforwarding/list API
+// structures related to /cloudapi/compute/pfwlLst API
 //
-type PfwRecord struct {
+
+// Note that if there are port forwarding rules for compute, then compute/pfwList response
+// will contain a list which starts with prefix (see PfwPrefixRecord) and then contains 
+// one or more rule records (see PfwRuleRecord)
+type PfwPrefixRecord struct {
+	VinsID          int    `json:"vinsId"`
+	VinsName        string `json:"vinsName"`
+}
+type PfwRuleRecord struct {
 	ID              int    `json:"id"`
 	LocalIP         string `json:"localIp"`
 	LocalPort       int    `json:"localPort"`
@@ -457,8 +465,6 @@ type PfwRecord struct {
 }
 
 const ComputePfwListAPI = "/restmachine/cloudapi/compute/pfwList"
-
-type ComputePfwListResp []PfwRecord
 
 const ComputePfwAddAPI = "/restmachine/cloudapi/compute/pfwAdd"
 
@@ -538,6 +544,8 @@ type VnfRecord struct {
 	AccountID       int     `json:"accountId"`
 	Type            string  `json:"type"`      // "DHCP", "NAT", "GW" etc
 	Config          map[string]interface{}  `json:"config"`    // NOTE: VNF specs vary by VNF type
+	Status          string  `json:"status"`
+	TechStatus      string  `json:"techStatus"`
 }
 
 type VnfGwConfigRecord struct { // describes GW VNF config structure inside ViNS, as returned by API vins/get
@@ -545,6 +553,14 @@ type VnfGwConfigRecord struct { // describes GW VNF config structure inside ViNS
 	ExtNetIP        string  `json:"ext_net_ip"`
 	ExtNetMask      int     `json:"ext_net_mask"`
 	DefaultGW       string  `json:"default_gw"`
+}
+
+type NatRuleRecord struct { // describes one NAT rule, a list of such rules is maintained inside VNF NAT Config
+}
+type VnfNatConfigRecord struct { // describes NAT VNF config structure inside ViNS, as returned by API vins/get
+	Netmask         int              `json:"netmask"`
+	Network         string           `json:"network"` // just network address, no mask, e.g. "192.168.1.0"
+	Rules           []NatRuleRecord  `json:"rules"`
 }
 type VinsRecord struct { // represents part of the response from API vins/get
 	ID              int     `json:"id"`

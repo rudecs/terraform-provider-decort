@@ -129,13 +129,22 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 			Optional:    true,
 			Computed:    true,
 			DiffSuppressFunc: networkSubresIPAddreDiffSupperss,
-			Description: "Optional IP address to assign to this connection. This IP should belong to the selected network and free for use.",
+			Description: "Optional IP address to assign to this connection. This IP should belong to the selected network and available for use.",
 		},
 
 		"mac": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "MAC address associated with this connection. MAC address is assigned automatically.",
+		},
+
+		"pfw_rule": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Elem:        &schema.Resource{
+				Schema: pfwSubresourceSchemaMake(),
+			},
+			Description: "Port forwarding rule to setup for this connection. You may specify several such blocks, one for each rule.",
 		},
 
 	}

@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"fmt"
 	// "net/url"
+	// "strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -151,7 +152,7 @@ func parseBootDiskId(disks []DiskRecord) uint {
 
 // Parse the list of interfaces from compute/get response into a list of networks 
 // attached to this compute
-func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
+func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord, pfwVinsID int, pfwRules []map[string]interface{}) []interface{} {
 	// return value will be used to d.Set("network") item of dataSourceCompute schema
 	length := len(ifaces)
 	log.Debugf("parseComputeInterfacesToNetworks: called for %d ifaces", length)
@@ -166,6 +167,14 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 		elem["net_type"] = value.NetType
 		elem["ip_address"] = value.IPAddress
 		elem["mac"] = value.MAC
+
+		if value.NetType == "VINS" && len(pfwRules) > 0 && pfwVinsID == value.NetID {
+			// we have non-empty port forward rules that seem to be relevant to the current
+			// network segment - set "pfw_rule" element accordingly
+			log.Debugf("parseComputeInterfacesToNetworks: setting pfw_rule attributes on network block for ViNS ID %d", 
+			           value.NetID)
+			elem["pfw_rule"] = pfwRules
+		}
 
 		// log.Debugf("   element %d: net_id=%d, net_type=%s", i, value.NetID, value.NetType)
 
@@ -240,7 +249,7 @@ func parseComputeInterfaces(ifaces []InterfaceRecord) []map[string]interface{} {
 	return result 
 }
 
-func flattenCompute(d *schema.ResourceData, compFacts string) error {
+func flattenCompute(d *schema.ResourceData, compFacts string, pfwVinsID int, pfwRules []map[string]interface{}) error {
 	// This function expects that compFacts string contains response from API compute/get,
 	// i.e. detailed information about compute instance.
 	//
@@ -283,7 +292,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 
 	if len(model.Interfaces) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeInterfacesToNetworks for %d interfaces", len(model.Interfaces))
-		if err = d.Set("network", parseComputeInterfacesToNetworks(model.Interfaces)); err != nil {
+		if err = d.Set("network", parseComputeInterfacesToNetworks(model.Interfaces, pfwVinsID, pfwRules)); err != nil {
 			return err
 		}
 	}
@@ -299,15 +308,23 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 }
 
 func dataSourceComputeRead(d *schema.ResourceData, m interface{}) error {
-	compFacts, err := utilityComputeCheckPresence(d, m)
+	compID, compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
-		// if empty string is returned from utilityComputeCheckPresence then there is no
-		// such Compute and err tells so - just return it to the calling party
+		// if empty compFacts is returned from utilityComputeCheckPresence and err=nil 
+		// it means that there is no such Compute;
+		// In any other case non-nil error will be reported.
 		d.SetId("") // ensure ID is empty
 		return err
 	}
 
-	return flattenCompute(d, compFacts)
+	vinsID, pfwRules, err := utilityComputePfwGet(compID, m)
+	if err != nil {
+		log.Errorf("dataSourceComputeRead: there was error calling utilityComputePfwGet for compute ID %s: %s",
+				d.Id(), err)
+		return err
+	}
+
+	return flattenCompute(d, compFacts, vinsID, pfwRules)
 }
 
 func dataSourceCompute() *schema.Resource {
