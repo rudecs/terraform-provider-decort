@@ -75,12 +75,14 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		urlValues.Add("desc", argVal.(string))
 	}
 
+	/*
 	sshKeysVal, sshKeysSet := d.GetOk("ssh_keys") 
 	if sshKeysSet {
 		// process SSH Key settings and set API values accordingly
 		log.Debugf("resourceComputeCreate: calling makeSshKeysArgString to setup SSH keys for guest login(s)")
 		urlValues.Add("userdata", makeSshKeysArgString(sshKeysVal.([]interface{})))
 	}
+	*/
 
 	computeCreateAPI := KvmX86CreateAPI
 	arch := d.Get("arch").(string)
@@ -114,9 +116,11 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	d.SetPartial("ram")
 	d.SetPartial("image_id")
 	d.SetPartial("boot_disk_size")
+	/*
 	if sshKeysSet {
 		d.SetPartial("ssh_keys")
 	}
+	*/
 
 	log.Debugf("resourceComputeCreate: new simple Compute ID %d, name %s created", compId, d.Get("name").(string))
 
@@ -451,6 +455,7 @@ func resourceCompute() *schema.Resource {
 				Description: "Optional network connection(s) for this compute. You may specify several network blocks, one for each connection.",
 			},
 
+			/*
 			"ssh_keys": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -460,6 +465,7 @@ func resourceCompute() *schema.Resource {
 				},
 				Description: "SSH keys to authorize on this compute instance.",
 			},
+			*/
 
 			"description": {
 				Type:        schema.TypeString,
