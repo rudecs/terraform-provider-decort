@@ -132,7 +132,7 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 		}
 		ret_config.auth_mode_code = MODE_LEGACY
 	default:
-		return nil, fmt.Errorf("Unknown authenticator mode %q provided.", ret_config.auth_mode_txt)
+		return nil, fmt.Errorf("Unknown authenticator mode %s provided.", ret_config.auth_mode_txt)
 	}
 
 	if allow_unverified_ssl {
@@ -205,7 +205,7 @@ func (config *ControllerCfg) getOAuth2JWT() (string, error) {
 		return "", fmt.Errorf("getOAuth2JWT method called for undefined authorization mode.")
 	}
 	if config.auth_mode_code != MODE_OAUTH2 {
-		return "", fmt.Errorf("getOAuth2JWT method called for incompatible authorization mode %q.", config.auth_mode_txt)
+		return "", fmt.Errorf("getOAuth2JWT method called for incompatible authorization mode %s.", config.auth_mode_txt)
 	}
 
 	params := url.Values{}
@@ -231,7 +231,7 @@ func (config *ControllerCfg) getOAuth2JWT() (string, error) {
 		// fmt.Println("response Status:", resp.Status)
 		// fmt.Println("response Headers:", resp.Header)
 		// fmt.Println("response Headers:", req.URL)
-		return "", fmt.Errorf("getOauth2JWT: unexpected status code %d when obtaining JWT from %q for APP_ID %q, request Body %q", 
+		return "", fmt.Errorf("getOauth2JWT: unexpected status code %d when obtaining JWT from %s for APP_ID %s, request Body %s", 
 		resp.StatusCode, req.URL, config.app_id, params_str)
 	}
 	defer resp.Body.Close()
@@ -279,7 +279,7 @@ func (config *ControllerCfg) validateJWT(jwt string) (bool, error) {
 		return false, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("validateJWT: unexpected status code %d when validating JWT against %q.", 
+		return false, fmt.Errorf("validateJWT: unexpected status code %d when validating JWT against %s.", 
 		resp.StatusCode, req.URL)
 	}
 	defer resp.Body.Close()
@@ -298,7 +298,7 @@ func (config *ControllerCfg) validateLegacyUser() (bool, error) {
 		return false, fmt.Errorf("validateLegacyUser method called for undefined authorization mode.")
 	}
 	if config.auth_mode_code != MODE_LEGACY {
-		return false, fmt.Errorf("validateLegacyUser method called for incompatible authorization mode %q.", config.auth_mode_txt)
+		return false, fmt.Errorf("validateLegacyUser method called for incompatible authorization mode %s.", config.auth_mode_txt)
 	}
 
 	params := url.Values{}
@@ -319,7 +319,7 @@ func (config *ControllerCfg) validateLegacyUser() (bool, error) {
 		return false, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("validateLegacyUser: unexpected status code %d when validating legacy user %q against %q.", 
+		return false, fmt.Errorf("validateLegacyUser: unexpected status code %d when validating legacy user %s against %s.", 
 		resp.StatusCode, config.legacy_user, config.controller_url)
 	}
 	defer resp.Body.Close()
@@ -335,13 +335,15 @@ func (config *ControllerCfg) validateLegacyUser() (bool, error) {
 	return true, nil
 }
 
-func (config *ControllerCfg) decortAPICall(method string, api_name string, url_values *url.Values) (json_resp string, err error) {
+func (config *ControllerCfg) decortAPICall(method string, api_name string, url_values *url.Values) (json_resp string, err error, hrc int) {
 	// This is a convenience wrapper around standard HTTP request methods that is aware of the 
 	// authorization mode for which the provider was initialized and compiles request accordingly.
 
+	hrc = 0 // HTTP Response Code
+
 	if config.cc_client == nil {
 		// this should never happen if ClientConfig was properly called prior to decortAPICall 
-		return "", fmt.Errorf("decortAPICall method called with unconfigured DECORT cloud controller HTTP client.")
+		return "", fmt.Errorf("decortAPICall method called with unconfigured DECORT cloud controller HTTP client."), 0
 	}
 
 	// Example: to create api_params, one would generally do the following:
@@ -359,7 +361,7 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 	//
 
 	if config.auth_mode_code == MODE_UNDEF {
-		return "", fmt.Errorf("decortAPICall method called for unknown authorization mode.")
+		return "", fmt.Errorf("decortAPICall method called for unknown authorization mode."), 0
 	}
 
 	if config.auth_mode_code == MODE_LEGACY {
@@ -369,7 +371,7 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 
 	req, err := http.NewRequest(method, config.controller_url + api_name, strings.NewReader(params_str))
 	if err != nil {
-		return "", err
+		return "", err, 0
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Content-Length", strconv.Itoa(len(params_str)))
@@ -380,29 +382,29 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 	
 	resp, err := config.cc_client.Do(req)
 	if err != nil {
-		return "", err
+		return "", err, 0
 	}
 	defer resp.Body.Close()
 
     if resp.StatusCode == http.StatusOK {
 		tmp_body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return "", err
+			return "", err, resp.StatusCode
 		} 
 		json_resp := Jo2JSON(string(tmp_body))
 		log.Debugf("decortAPICall: %s %s\n %s", method, api_name, json_resp)
-		return json_resp, nil
+		return json_resp, nil, resp.StatusCode
 	} else {
-		return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %q with request Body %q", 
-		resp.StatusCode, req.URL, params_str)
+		return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %s with request Body %s", 
+		resp.StatusCode, req.URL, params_str), resp.StatusCode
 	}
 	
 	/*
 	if resp.StatusCode == StatusServiceUnavailable {
-        return nil, fmt.Errorf("decortAPICall method called for incompatible authorization mode %q.", config.auth_mode_txt)
+        return nil, fmt.Errorf("decortAPICall method called for incompatible authorization mode %s.", config.auth_mode_txt), resp.StatusCode
 	}
 	*/
 
-	return "", err
+	return "", err, resp.StatusCode
 }
 

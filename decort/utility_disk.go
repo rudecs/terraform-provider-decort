@@ -75,7 +75,7 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		// disk ID is specified, try to get disk instance straight by this ID
 		log.Debugf("utilityDiskCheckPresence: locating disk by its ID %d", theId)
 		urlValues.Add("diskId", fmt.Sprintf("%d", theId))
-		diskFacts, err := controller.decortAPICall("POST", DisksGetAPI, urlValues)
+		diskFacts, err, _ := controller.decortAPICall("POST", DisksGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
@@ -98,7 +98,7 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	}
 
 	urlValues.Add("accountId", fmt.Sprintf("%d", validatedAccountId))
-	diskFacts, err := controller.decortAPICall("POST", DisksListAPI, urlValues)
+	diskFacts, err, _ := controller.decortAPICall("POST", DisksListAPI, urlValues)
 	if err != nil {
 		return "", err
 	}

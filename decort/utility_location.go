@@ -41,7 +41,7 @@ func (controller *ControllerCfg) utilityLocationGetDefaultGridID() (int, error) 
 	urlValues := &url.Values{}
 
 	log.Debug("utilityLocationGetDefaultGridID: retrieving locations list")
-	apiResp, err := controller.decortAPICall("POST", LocationsListAPI, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", LocationsListAPI, urlValues)
 	if err != nil {
 		return 0, err
 	}

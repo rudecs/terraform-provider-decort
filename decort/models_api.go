@@ -446,7 +446,20 @@ type AccountsListResp []AccountRecord
 //
 // structures related to /cloudapi/portforwarding/list API
 //
-type PfwRecord struct {
+// Note the specifics of compute/pfwList response in API 3.7.x (this may be changed in the future):
+// 1) if there are no PFW rules and compute is not connected to any PFW-able ViNS 
+//    the response will be empty string 
+// 2) if there are no PFW rules but compute is connected to a PFW-able ViNS 
+//    the response will contain a list with a single element - prefix (see PfwPrefixRecord) 
+// 3) if there are port forwarding rules, the response will contain a list which starts 
+//    with prefix (see PfwPrefixRecord) and then followed by one or more rule records 
+//    (see PfwRuleRecord)
+type PfwPrefixRecord struct {
+	VinsID          int    `json:"vinsId"`
+	VinsName        string `json:"vinsName"`
+	ComputeID       int    `json:"computeId"`
+}
+type PfwRuleRecord struct {
 	ID              int    `json:"id"`
 	LocalIP         string `json:"localIp"`
 	LocalPort       int    `json:"localPort"`
@@ -456,9 +469,12 @@ type PfwRecord struct {
 	ComputeID       int    `json:"vmId"`
 }
 
-const ComputePfwListAPI = "/restmachine/cloudapi/compute/pfwList"
+type ComputePfwListResp struct {
+	Header PfwPrefixRecord  `json:"header"`
+	Rules []PfwRuleRecord   `json:"rules"`
+}
 
-type ComputePfwListResp []PfwRecord
+const ComputePfwListAPI = "/restmachine/cloudapi/compute/pfwList"
 
 const ComputePfwAddAPI = "/restmachine/cloudapi/compute/pfwAdd"
 

@@ -106,7 +106,7 @@ func resourceVinsCreate(d *schema.ResourceData, m interface{}) error {
 		urlValues.Add("desc", argVal.(string))
 	}
 
-	apiResp, err := controller.decortAPICall("POST", apiToCall, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", apiToCall, urlValues)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func resourceVinsUpdate(d *schema.ResourceData, m interface{}) error {
 
 		if oldExtNetId.(int) > 0 {
 			// there was preexisting external net connection - disconnect ViNS
-			_, err := controller.decortAPICall("POST", VinsExtNetDisconnectAPI, extnetParams)
+			_, err, _ := controller.decortAPICall("POST", VinsExtNetDisconnectAPI, extnetParams)
 			if err != nil {
 				return err
 			}
@@ -163,7 +163,7 @@ func resourceVinsUpdate(d *schema.ResourceData, m interface{}) error {
 		if newExtNedId.(int) > 0 {
 			// new external network connection requested - connect ViNS
 			extnetParams.Add("netId", fmt.Sprintf("%d", newExtNedId.(int)))
-			_, err := controller.decortAPICall("POST", VinsExtNetConnectAPI, extnetParams)
+			_, err, _ := controller.decortAPICall("POST", VinsExtNetConnectAPI, extnetParams)
 			if err != nil {
 				return err
 			}
@@ -196,7 +196,7 @@ func resourceVinsDelete(d *schema.ResourceData, m interface{}) error {
 	params.Add("permanently", "1")  // delete ViNS immediately bypassing recycle bin
 
 	controller := m.(*ControllerCfg)
-	_, err = controller.decortAPICall("POST", VinsDeleteAPI, params)
+	_, err, _ = controller.decortAPICall("POST", VinsDeleteAPI, params)
 	if err != nil {
 		return err
 	}

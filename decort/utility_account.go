@@ -44,7 +44,7 @@ func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (string,
 		// get Account right away by its ID
 		log.Debugf("utilityAccountCheckPresence: locating Account by its ID %d", accId.(int))
 		urlValues.Add("accountId", fmt.Sprintf("%d", accId.(int)))
-		apiResp, err := controller.decortAPICall("POST", AccountsGetAPI, urlValues)
+		apiResp, err, _ := controller.decortAPICall("POST", AccountsGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
@@ -57,7 +57,7 @@ func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (string,
 		return "", fmt.Errorf("Cannot check account presence if name is empty and no account ID specified")
 	}
 
-	apiResp, err := controller.decortAPICall("POST", AccountsListAPI, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", AccountsListAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
@@ -131,7 +131,7 @@ func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, er
 
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
-	apiResp, err := controller.decortAPICall("POST", AccountsListAPI, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", AccountsListAPI, urlValues)
 	if err != nil {
 		return 0, err
 	}

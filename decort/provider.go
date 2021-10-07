@@ -103,7 +103,7 @@ func Provider() *schema.Provider {
 			"decort_kvmvm":    resourceCompute(),
 			"decort_disk":     resourceDisk(),
 			"decort_vins":     resourceVins(),
-			// "decort_pfw": resourcePfw(),
+			"decort_pfw":      resourcePfw(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -113,7 +113,7 @@ func Provider() *schema.Provider {
 			"decort_image":    dataSourceImage(),
 			"decort_disk":     dataSourceDisk(),
 			"decort_vins":     dataSourceVins(),
-			// "decort_pfw": dataSourcePfw(),
+			"decort_pfw":      dataSourcePfw(),
 		},
 
 		ConfigureFunc: providerConfigure,

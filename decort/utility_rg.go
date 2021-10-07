@@ -39,7 +39,7 @@ import (
 func (ctrl *ControllerCfg) utilityResgroupConfigGet(rgid int) (*ResgroupGetResp, error) {
 	urlValues := &url.Values{}
 	urlValues.Add("rgId", fmt.Sprintf("%d", rgid))
-	rgFacts, err := ctrl.decortAPICall("POST", ResgroupGetAPI, urlValues)
+	rgFacts, err, _ := ctrl.decortAPICall("POST", ResgroupGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 		// go straight for the RG by its ID
 		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", theId)
 		urlValues.Add("rgId", fmt.Sprintf("%d", theId))
-		rgFacts, err := controller.decortAPICall("POST", ResgroupGetAPI, urlValues)
+		rgFacts, err, _ := controller.decortAPICall("POST", ResgroupGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
@@ -130,7 +130,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	}
 
 	urlValues.Add("includedeleted", "false")
-	apiResp, err := controller.decortAPICall("POST", ResgroupListAPI, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", ResgroupListAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
@@ -154,7 +154,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 			// Namely, we need resource quota settings
 			reqValues := &url.Values{}
 			reqValues.Add("rgId", fmt.Sprintf("%d", item.ID))
-			apiResp, err := controller.decortAPICall("POST", ResgroupGetAPI, reqValues)
+			apiResp, err, _ := controller.decortAPICall("POST", ResgroupGetAPI, reqValues)
 			if err != nil {
 				return "", err
 			}

@@ -62,7 +62,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 			urlValues := &url.Values{}
 			urlValues.Add("computeId", d.Id())
 			urlValues.Add("diskId", fmt.Sprintf("%d", disk.(int)))
-			_, err := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
+			_, err, _ := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
 			if err != nil {
 				// failed to attach extra disk - partial resource update
 				apiErrCount++
@@ -85,7 +85,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 		urlValues := &url.Values{}
 		urlValues.Add("computeId", d.Id())
 		urlValues.Add("diskId", fmt.Sprintf("%d", diskId.(int)))
-		_, err := ctrl.decortAPICall("POST", ComputeDiskDetachAPI, urlValues)
+		_, err, _ := ctrl.decortAPICall("POST", ComputeDiskDetachAPI, urlValues)
 		if err != nil {
 			// failed to detach disk - there will be partial resource update
 			log.Errorf("utilityComputeExtraDisksConfigure: failed to detach disk ID %d from Compute ID %s: %s", diskId.(int), d.Id(), err)
@@ -100,7 +100,7 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 		urlValues := &url.Values{}
 		urlValues.Add("computeId", d.Id())
 		urlValues.Add("diskId", fmt.Sprintf("%d", diskId.(int)))
-		_, err := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
+		_, err, _ := ctrl.decortAPICall("POST", ComputeDiskAttachAPI, urlValues)
 		if err != nil {
 			// failed to attach disk - there will be partial resource update
 			log.Errorf("utilityComputeExtraDisksConfigure: failed to attach disk ID %d to Compute ID %s: %s", diskId.(int), d.Id(), err)
@@ -145,7 +145,7 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 			if ipSet {
 				urlValues.Add("ipAddr", ipaddr.(string))
 			}
-			_, err := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
+			_, err, _ := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
 			if err != nil {
 				// failed to attach network - partial resource update
 				apiErrCount++
@@ -169,7 +169,7 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		urlValues.Add("computeId", d.Id())
 		urlValues.Add("ipAddr", net_data["ip_address"].(string))
 		urlValues.Add("mac", net_data["mac"].(string))
-		_, err := ctrl.decortAPICall("POST", ComputeNetDetachAPI, urlValues)
+		_, err, _ := ctrl.decortAPICall("POST", ComputeNetDetachAPI, urlValues)
 		if err != nil {
 			// failed to detach this network - there will be partial resource update
 			log.Errorf("utilityComputeNetworksConfigure: failed to detach net ID %d of type %s from Compute ID %s: %s", 
@@ -190,7 +190,7 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		if net_data["ip_address"].(string) != "" {
 			urlValues.Add("ipAddr", net_data["ip_address"].(string))
 		}
-		_, err := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
+		_, err, _ := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
 		if err != nil {
 			// failed to attach this network - there will be partial resource update
 			log.Errorf("utilityComputeNetworksConfigure: failed to attach net ID %d of type %s to Compute ID %s: %s", 
@@ -244,7 +244,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 		// compute ID is specified, try to get compute instance straight by this ID
 		log.Debugf("utilityComputeCheckPresence: locating compute by its ID %d", theId)
 		urlValues.Add("computeId", fmt.Sprintf("%d", theId))
-		computeFacts, err := controller.decortAPICall("POST", ComputeGetAPI, urlValues)
+		computeFacts, err, _ := controller.decortAPICall("POST", ComputeGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
@@ -264,7 +264,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	}
 	
 	urlValues.Add("rgId", fmt.Sprintf("%d", rgId))
-	apiResp, err := controller.decortAPICall("POST", RgListComputesAPI, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", RgListComputesAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
@@ -286,7 +286,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 			// we found the Compute we need - now get detailed information via compute/get API
 			cgetValues := &url.Values{}
 			cgetValues.Add("computeId", fmt.Sprintf("%d", item.ID))
-			apiResp, err = controller.decortAPICall("POST", ComputeGetAPI, cgetValues)
+			apiResp, err, _ = controller.decortAPICall("POST", ComputeGetAPI, cgetValues)
 			if err != nil {
 				return "", err
 			}

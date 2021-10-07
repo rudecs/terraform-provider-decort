@@ -45,7 +45,7 @@ func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 	if accSet {
 		url_values.Add("accountId", fmt.Sprintf("%d", accId.(int)))
 	}
-	body_string, err := controller.decortAPICall("POST", ImagesListAPI, url_values)
+	body_string, err, _ := controller.decortAPICall("POST", ImagesListAPI, url_values)
 	if err != nil {
 		return err
 	}

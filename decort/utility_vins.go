@@ -38,7 +38,7 @@ import (
 func (ctrl *ControllerCfg) utilityVinsConfigGet(vinsid int) (*VinsRecord, error) {
 	urlValues := &url.Values{}
 	urlValues.Add("vinsId", fmt.Sprintf("%d", vinsid))
-	vinsFacts, err := ctrl.decortAPICall("POST", VinsGetAPI, urlValues)
+	vinsFacts, err, _ := ctrl.decortAPICall("POST", VinsGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		// ViNS ID is specified, try to get compute instance straight by this ID
 		log.Debugf("utilityVinsCheckPresence: locating ViNS by its ID %d", theId)
 		urlValues.Add("vinsId", fmt.Sprintf("%d", theId))
-		vinsFacts, err := controller.decortAPICall("POST", VinsGetAPI, urlValues)
+		vinsFacts, err, _ := controller.decortAPICall("POST", VinsGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
@@ -125,7 +125,7 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		urlValues.Add("accountId", fmt.Sprintf("%d", accountId.(int)))
 	}
 
-	apiResp, err := controller.decortAPICall("POST", VinsSearchAPI, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", VinsSearchAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
@@ -154,7 +154,7 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 			// manage ViNS, so we have to get detailed info by calling API vins/get
 			rqValues := &url.Values{}
 			rqValues.Add("vinsId", fmt.Sprintf("%d",item.ID))
-			vinsGetResp, err := controller.decortAPICall("POST", VinsGetAPI, rqValues)
+			vinsGetResp, err, _ := controller.decortAPICall("POST", VinsGetAPI, rqValues)
 			if err != nil {
 				return "", err
 			}

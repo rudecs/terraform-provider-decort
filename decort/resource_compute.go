@@ -102,7 +102,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		}
 	}
 	
-	apiResp, err := controller.decortAPICall("POST", computeCreateAPI, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", computeCreateAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	reqValues := &url.Values{}
 	reqValues.Add("computeId", fmt.Sprintf("%d", compId))
 	log.Debugf("resourceComputeCreate: starting Compute ID %d after completing its resource configuration", compId)
-	apiResp, err = controller.decortAPICall("POST", ComputeStartAPI, reqValues)
+	apiResp, err, _ = controller.decortAPICall("POST", ComputeStartAPI, reqValues)
 	if err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		log.Debugf("resourceComputeUpdate: changing CPU %d -> %d and/or RAM %d -> %d",
 		           oldCpu.(int), newCpu.(int),
 				   oldRam.(int), newRam.(int))
-		_, err := controller.decortAPICall("POST", ComputeResizeAPI, params)
+		_, err, _ := controller.decortAPICall("POST", ComputeResizeAPI, params)
 		if err != nil {
 			return err
 		}
@@ -259,7 +259,7 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		bdsParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
 		log.Debugf("resourceComputeUpdate: compute ID %s, boot disk ID %d resize %d -> %d",
 		           d.Id(), d.Get("boot_disk_id").(int), oldSize.(int), newSize.(int))
-		_, err := controller.decortAPICall("POST", DisksResizeAPI, params)
+		_, err, _ := controller.decortAPICall("POST", DisksResizeAPI, params)
 		if err != nil {
 			return err
 		}
@@ -326,7 +326,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 			detachParams.Add("computeId", d.Id())
 			detachParams.Add("diskId", fmt.Sprintf("%d", diskFacts.ID))
 
-			_, err = controller.decortAPICall("POST", ComputeDiskDetachAPI, detachParams)
+			_, err, _ = controller.decortAPICall("POST", ComputeDiskDetachAPI, detachParams)
 			if err != nil {
 				// We do not fail compute deletion on data disk detach errors
 				log.Errorf("resourceComputeDelete: error when detaching Disk ID %d: %s", diskFacts.ID, err)
@@ -339,7 +339,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 	params.Add("permanently", "1")
 	// TODO: this is for the upcoming API update - params.Add("detachdisks", "1")
 	
-	_, err = controller.decortAPICall("POST", ComputeDeleteAPI, params)
+	_, err, _ = controller.decortAPICall("POST", ComputeDeleteAPI, params)
 	if err != nil {
 		return err
 	}

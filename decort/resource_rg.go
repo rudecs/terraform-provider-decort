@@ -115,7 +115,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 		url_values.Add("extIp", ext_ip.(string))
 	}
 
-	api_resp, err := controller.decortAPICall("POST", ResgroupCreateAPI, url_values)
+	api_resp, err, _ := controller.decortAPICall("POST", ResgroupCreateAPI, url_values)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 
 	if do_general_update {
 		log.Debugf("resourceResgroupUpdate: detected delta between new and old RG specs - updating the RG")
-		_, err := controller.decortAPICall("POST", ResgroupUpdateAPI, url_values)
+		_, err, _ := controller.decortAPICall("POST", ResgroupUpdateAPI, url_values)
 		if err != nil {
 			return err
 		}
@@ -264,7 +264,7 @@ func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 	url_values.Add("reason", "Destroyed by DECORT Terraform provider")
 
 	controller := m.(*ControllerCfg)
-	_, err = controller.decortAPICall("POST", ResgroupDeleteAPI, url_values)
+	_, err, _ = controller.decortAPICall("POST", ResgroupDeleteAPI, url_values)
 	if err != nil {
 		return err
 	}

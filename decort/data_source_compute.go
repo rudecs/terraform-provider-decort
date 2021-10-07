@@ -174,32 +174,6 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 
 	return result 
 }
-/*
-func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []map[string]interface{} {
-	// return value will be used to d.Set("network") item of dataSourceCompute schema
-	length := len(ifaces)
-	log.Debugf("parseComputeInterfacesToNetworks: called for %d ifaces", length)
-
-	result := make([]map[string]interface{}, length, length)
-
-	for i, value := range ifaces {
-		elem := make(map[string]interface{})
-		// Keys in this map should correspond to the Schema definition
-		// as returned by networkSubresourceSchemaMake()
-		elem["net_id"] = value.NetID
-		elem["net_type"] = value.NetType
-		elem["ip_address"] = value.IPAddress
-		elem["mac"] = value.MAC
-
-		// log.Debugf("   element %d: net_id=%d, net_type=%s", i, value.NetID, value.NetType)
-
-		result[i] = elem
-	}
-
-	return result 
-}
-*/
-
 
 // NOTE: this function is retained for historical purposes and actually not used as of rc-1.10
 func parseComputeInterfaces(ifaces []InterfaceRecord) []map[string]interface{} {

@@ -55,7 +55,7 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 		urlValues.Add("description", argVal.(string))
 	} 
 
-	apiResp, err := controller.decortAPICall("POST", DisksCreateAPI, urlValues)
+	apiResp, err, _ := controller.decortAPICall("POST", DisksCreateAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 		sizeParams := &url.Values{}
 		sizeParams.Add("diskId", d.Id())
 		sizeParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
-		_, err := controller.decortAPICall("POST", DisksResizeAPI, sizeParams)
+		_, err, _ := controller.decortAPICall("POST", DisksResizeAPI, sizeParams)
 		if err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 		renameParams := &url.Values{}
 		renameParams.Add("diskId", d.Id())
 		renameParams.Add("name", newName.(string))
-		_, err := controller.decortAPICall("POST", DisksRenameAPI, renameParams)
+		_, err, _ := controller.decortAPICall("POST", DisksRenameAPI, renameParams)
 		if err != nil {
 			return err
 		}
@@ -171,7 +171,7 @@ func resourceDiskDelete(d *schema.ResourceData, m interface{}) error {
 	params.Add("permanently", "1")
 
 	controller := m.(*ControllerCfg)
-	_, err = controller.decortAPICall("POST", DisksDeleteAPI, params)
+	_, err, _ = controller.decortAPICall("POST", DisksDeleteAPI, params)
 	if err != nil {
 		return err
 	}
