@@ -186,6 +186,7 @@ func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
 
 	compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
+		d.SetId("")
 		if err != nil {
 			return err
 		}

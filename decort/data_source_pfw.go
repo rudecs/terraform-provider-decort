@@ -33,7 +33,6 @@ import (
 func flattenPfw(d *schema.ResourceData, pfwFacts string) error {
 	// NOTE: this function modifies ResourceData argument - as such it should never be called
 	// from resourcePfwExists(...) method
-	// log.Debugf("flattenPfw: ready to decode response body from API %s", pfwFacts)
 	pfwRecord := ComputePfwListResp{}
 	err := json.Unmarshal([]byte(pfwFacts), &pfwRecord)
 	if err != nil {
@@ -44,6 +43,25 @@ func flattenPfw(d *schema.ResourceData, pfwFacts string) error {
 	           len(pfwRecord.Rules), pfwRecord.Header.VinsID, pfwRecord.Header.VinsID)
 
 	/*
+	Here it gets a little bit interesting. 
+	Unlike compute or disk, port forwaring rules are NOT represented by any cloud 
+	platform resource, which might have had a unique ID. They are just a subset of
+	rules in the list maintained by the corresponding ViNS instance. However, 
+	Terraform needs a unique ID for each resource it manages so that it could be 
+	stored in the state file and retrieved for use.
+
+	Therefore we need to make up an ID and supply it to Terraform in a standard
+	way (i.e. by calling d.SetId(...)).
+
+	Fortunately, a combination of Compute ID and ViNS ID with GW VNF, where this
+	compute is plugged in, makes a unique string, so we use it as an ID for
+	the PFW ruleset.
+
+	The following few lines are legacy from the first attempt to make an ID
+	as a hash of concatenated Compute ID & ViNS ID, but it did not work as
+	expected for a number of reasons, which explanation is not a primary
+	intent of the comment in the source code.
+
 	combo := fmt.Sprintf("%d:%d", compId.(int), pfwRecord.ViNS.VinsID)
 	hasher := fnv.New32a()
 	hasher.Write([]byte(combo))

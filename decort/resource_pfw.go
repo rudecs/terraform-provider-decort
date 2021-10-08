@@ -31,7 +31,7 @@ import (
 func resourcePfwCreate(d *schema.ResourceData, m interface{}) error {
 	compId := d.Get("compute_id")
 
-	rules_set, ok := d.GetOk("rules")
+	rules_set, ok := d.GetOk("rule")
 	if !ok || rules_set.(*schema.Set).Len() == 0 {
 		log.Debugf("resourcePfwCreate: empty new PFW rules set requested for compute ID %d - nothing to create", compId.(int))
 		return nil
@@ -74,7 +74,7 @@ func resourcePfwCreate(d *schema.ResourceData, m interface{}) error {
 		return lastSavedError
 	}
 
-	return nil
+	return resourcePfwRead(d, m) 
 }
 
 func resourcePfwRead(d *schema.ResourceData, m interface{}) error {
@@ -94,14 +94,16 @@ func resourcePfwUpdate(d *schema.ResourceData, m interface{}) error {
 	// TODO: update not implemented yet
 	compId := d.Get("compute_id")
 	return fmt.Errorf("resourcePfwUpdate: method is not implemented yet (Compute ID %d)", compId.(int))
+	
+	// return resourcePfwRead(d, m)
 }
 
 func resourcePfwDelete(d *schema.ResourceData, m interface{}) error {
 	compId := d.Get("compute_id")
 
-	rules_set, ok := d.GetOk("rules")
+	rules_set, ok := d.GetOk("rule")
 	if !ok || rules_set.(*schema.Set).Len() == 0 {
-		log.Debugf("resourcePfwCreate: no PFW rules defined for compute ID %d - nothing to delete", compId.(int))
+		log.Debugf("resourcePfwDelete: no PFW rules defined for compute ID %d - nothing to delete", compId.(int))
 		return nil
 	}
 
@@ -116,16 +118,16 @@ func resourcePfwDelete(d *schema.ResourceData, m interface{}) error {
 		rule := runner.(map[string]interface{})
 		params := &url.Values{}
 		params.Add("computeId", fmt.Sprintf("%d", compId.(int)))
-		params.Add("ruleId", fmt.Sprintf("%d", rule["id"].(int)))
+		params.Add("ruleId", fmt.Sprintf("%d", rule["rule_id"].(int)))
 		log.Debugf("resourcePfwCreate: ready to delete rule ID%s (%d:%d -> %d %s) from Compute ID %d",
-		           rule["id"].(int),
+		           rule["rule_id"].(int),
 	               rule["pub_port_start"].(int),rule["pub_port_end"].(int),
 				   rule["local_port"].(int), rule["proto"].(string),
 				   compId.(int))
 		_, err, _ := controller.decortAPICall("POST", ComputePfwDelAPI, params)
 		if err != nil {
 			log.Errorf("resourcePfwDelete: error deleting rule ID %d (%d:%d -> %d %s) from Compute ID %d: %s",
-			       rule["id"].(int),
+			       rule["rule_id"].(int),
 	               rule["pub_port_start"].(int),rule["pub_port_end"].(int),
 				   rule["local_port"].(int), rule["proto"].(string),
 				   compId.(int),
