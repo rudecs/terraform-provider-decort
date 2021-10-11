@@ -42,24 +42,40 @@ func utilityPfwCheckPresence(d *schema.ResourceData, m interface{}) (string, err
 	// method for the Terraform resource Exists method.
 	//
 
+	// The string returned by this method mimics response of an imaginary API that will
+	// report PFW rules (if any) as following:
+	// {
+	//    "header": {
+	//	     "computeId": <int>,
+	//       "vinsId": <int>,
+	//       },
+	//    "rules": [
+	//	        {
+	//	           "id": <int>,
+	//	           "localPort": <int>,
+	//	           "protocol": <int>,
+	//	           "publicPortStart": <int>,
+	//	           "publicPortEnd": <int>,
+	//	           "vmId": <int>,
+	//          },
+	//	        {
+	//	            ...
+	//          },
+	//       ],	
+	// }
+	// This response unmarshalls into ComputePfwListResp structure.
+	// NOTE: If there are no rules for this compute, an empty string is returned along with err=nil
+	//
+
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	// NOTE on importing PFW into TF state resource:
-	//
-	// Port forward rules are NOT represented by any "individual" resource in the platform.
-	// Consequently, there is no unique ID reported by the platform that could be used to
-	// identify PFW rule set. 
-	// However, we need some ID to identify PFW resource in TF state, and compute ID is the most
-	// convenient way, as it is:
-	// 1) unique;
-	// 2) compute may have only one PFW rule set.
-	//
-
 	var compId, vinsId int
 	
+	// PFW resource ID is a combination of compute_id and vins_id separated by ":"
+	// See a note in "flattenPfw" method explaining the rationale behind this approach.
 	if d.Id() != "" {
-		log.Debugf("utilityPfwCheckPresence: setting context from d.Id() %s", d.Id())
+		log.Debugf("utilityPfwCheckPresence: setting context from PFW ID %s", d.Id())
 		idParts := strings.SplitN(d.Id(), ":", 2)
 		compId, _ = strconv.Atoi(idParts[0])
 		vinsId, _ = strconv.Atoi(idParts[1])
@@ -74,9 +90,9 @@ func utilityPfwCheckPresence(d *schema.ResourceData, m interface{}) (string, err
 			log.Debugf("utilityPfwCheckPresence: setting Compute ID from schema")
 			compId = scId.(int)
 			vinsId = svId.(int)
-			log.Debugf("utilityPfwCheckPresence: extractted Compute ID %d, ViNS %d", compId, vinsId)
+			log.Debugf("utilityPfwCheckPresence: extracted Compute ID %d, ViNS %d", compId, vinsId)
 		} else {
-			return "", fmt.Errorf("Cannot get context to check PFW rules neither from d.Id() nor from schema")
+			return "", fmt.Errorf("Cannot get context to check PFW rules neither from PFW ID nor from schema")
 		}
 	}
 	
@@ -145,18 +161,44 @@ func utilityPfwCheckPresence(d *schema.ResourceData, m interface{}) (string, err
 		return "", err
 	}
 
-	log.Debugf("utilityPfwCheckPresence: successfully read %d port forward rules for Compute ID %d, ViNS ID %d",
-               len(pfwListResp.Rules), compId, pfwListResp.Header.VinsID)
-	
-	if pfwListResp.Header.VinsID != vinsId {
-		log.Errorf("utilityPfwCheckPresence: ViNS ID mismatch for PFW rules on compute ID %d: actual %d, required %d",
-				   compId, pfwListResp.Header.VinsID, vinsId)
-		return "", fmt.Errorf("ViNS ID mismatch for PFW rules on compute ID %d: actual %d, required %d",
-							  compId, pfwListResp.Header.VinsID, vinsId)
+	log.Debugf("utilityPfwCheckPresence: successfully read %d port forward rules for Compute ID %d",
+               len(pfwListResp.Rules), compId)
+
+	if len(pfwListResp.Rules) == 0 {
+		// this compute technically can have rules, but no rules are currently defined
+		return "", nil
 	}
 
-	// reconstruct API response string for return
+	// Now we can double check that the PFWs we've got do belong to the compute & ViNS specified in the
+	// PFW definition. Do so by reading compute details and comparing NatableVinsID value with the
+	// specified ViNS ID
+	//
+	// We may reuse urlValues here, as it already contains computeId field (see initialization above)
+	apiResp, err, _ = controller.decortAPICall("POST", ComputeGetAPI, urlValues)
+	if err != nil || apiResp == "" {
+		log.Errorf("utilityPfwCheckPresence: failed to get Compute ID %d details", compId)
+		return "", err
+	}
+	compFacts := ComputeGetResp{}
+	err = json.Unmarshal([]byte(rulesResp), &apiResp)
+	if err != nil {
+		log.Errorf("utilityPfwCheckPresence: failed to unmarshal compute details for ID %d: %s", compId, err)
+		return "", err
+	}
+	if compFacts.NatableVinsID <= 0 {
+		log.Errorf("utilityPfwCheckPresence: compute ID %d is not connected to a NAT-able ViNS", compId)
+		return "", fmt.Errorf("Compute ID %d is not connected to a NAT-able ViNS", compId)
+	}
+	if compFacts.NatableVinsID != vinsId {
+		log.Errorf("utilityPfwCheckPresence: ViNS ID mismatch for PFW rules on compute ID %d: actual %d, required %d",
+				   compId, compFacts.NatableVinsID, vinsId)
+		return "", fmt.Errorf("ViNS ID mismatch for PFW rules on compute ID %d: actual %d, required %d",
+							  compId, compFacts.NatableVinsID, vinsId)
+	}
+
+	// reconstruct API response string to return
 	pfwListResp.Header.ComputeID = compId
+	pfwListResp.Header.VinsID = compFacts.NatableVinsID
 	reencodedItem, err := json.Marshal(pfwListResp)
 	if err != nil {
 		return "", err

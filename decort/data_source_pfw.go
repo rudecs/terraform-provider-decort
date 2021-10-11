@@ -130,6 +130,7 @@ func dataSourcePfw() *schema.Resource {
 				Description:  "ID of the ViNS to configure port forwarding rules on. Compute must be already plugged into this ViNS and ViNS must have external network connection.",
 			},
 
+			// TODO: consider making "rule" attribute Required with MinItems = 1
 			"rule": {
 				Type:         schema.TypeSet,
 				Optional:     true,
