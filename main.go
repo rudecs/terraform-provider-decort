@@ -38,6 +38,8 @@ import (
 	"github.com/rudecs/terraform-provider-decort/decort"
 )
 
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+
 func main() {
 	log.SetLevel(log.DebugLevel)
 	log.Debug("Debug logging enabled")
