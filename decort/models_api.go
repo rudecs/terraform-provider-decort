@@ -105,12 +105,12 @@ type ResgroupUpdateParam struct {
 // structures related to /cloudapi/rg/get API call
 //
 type QuotaRecord struct { // this is how quota is reported by /api/.../rg/get
-	Cpu        int   `json:"CU_C"`      // CPU count in pcs
-	Ram    float64   `json:"CU_M"`      // RAM volume in MB, it is STILL reported as FLOAT
-	Disk       int   `json:"CU_D"`      // Disk capacity in GB
-	ExtIPs     int   `json:"CU_I"`      // Ext IPs count
-	ExtTraffic int   `json:"CU_NP"`     // Ext network traffic
-	GpuUnits   int   `json:"gpu_units"` // GPU count
+	Cpu        int     `json:"CU_C"`      // CPU count in pcs
+	Ram        float64 `json:"CU_M"`      // RAM volume in MB, it is STILL reported as FLOAT
+	Disk       int     `json:"CU_D"`      // Disk capacity in GB
+	ExtIPs     int     `json:"CU_I"`      // Ext IPs count
+	ExtTraffic int     `json:"CU_NP"`     // Ext network traffic
+	GpuUnits   int     `json:"gpu_units"` // GPU count
 }
 
 type ResourceRecord struct { // this is how actual usage is reported by /api/.../rg/get
@@ -130,27 +130,27 @@ type UsageRecord struct {
 const ResgroupGetAPI = "/restmachine/cloudapi/rg/get"
 
 type ResgroupGetResp struct {
-	ACLs        []UserAclRecord `json:"ACLs"`
-	Usage       UsageRecord     `json:"Resources"`
-	AccountID   int             `json:"accountId"`
-	AccountName string          `json:"accountName"`
-	GridID int                  `json:"gid"`
-	CreatedBy      string      `json:"createdBy"`
-	CreatedTime    uint64      `json:"createdTime"`
-	DefaultNetID   int         `json:"def_net_id"`
-	DefaultNetType string      `json:"def_net_type"`
-	DeletedBy      string      `json:"deletedBy"`
-	DeletedTime    uint64      `json:"deletedTime"`
-	Desc           string      `json:"desc"`
-	ID             uint        `json:"id"`
-	LockStatus     string      `json:"lockStatus"`
-	Name           string      `json:"name"`
-	Quota          QuotaRecord `json:"resourceLimits"`
-	Status         string      `json:"status"`
-	UpdatedBy      string      `json:"updatedBy"`
-	UpdatedTime    uint64      `json:"updatedTime"`
-	Vins           []int       `json:"vins"`
-	Computes       []int       `json:"vms"`
+	ACLs           []UserAclRecord `json:"ACLs"`
+	Usage          UsageRecord     `json:"Resources"`
+	AccountID      int             `json:"accountId"`
+	AccountName    string          `json:"accountName"`
+	GridID         int             `json:"gid"`
+	CreatedBy      string          `json:"createdBy"`
+	CreatedTime    uint64          `json:"createdTime"`
+	DefaultNetID   int             `json:"def_net_id"`
+	DefaultNetType string          `json:"def_net_type"`
+	DeletedBy      string          `json:"deletedBy"`
+	DeletedTime    uint64          `json:"deletedTime"`
+	Desc           string          `json:"desc"`
+	ID             uint            `json:"id"`
+	LockStatus     string          `json:"lockStatus"`
+	Name           string          `json:"name"`
+	Quota          QuotaRecord     `json:"resourceLimits"`
+	Status         string          `json:"status"`
+	UpdatedBy      string          `json:"updatedBy"`
+	UpdatedTime    uint64          `json:"updatedTime"`
+	Vins           []int           `json:"vins"`
+	Computes       []int           `json:"vms"`
 
 	Ignored map[string]interface{} `json:"-"`
 }
@@ -187,22 +187,23 @@ const KvmX86CreateAPI = "/restmachine/cloudapi/kvmx86/create"
 const KvmPPCCreateAPI = "/restmachine/cloudapi/kvmppc/create"
 
 type KvmVmCreateParam struct { // this is unified structure for both x86 and PPC based KVM VMs creation
-	RgID        uint   `json:"rgId"`
-	Name        string `json:"name"`
-	Cpu         int    `json:"cpu"`
-	Ram         int    `json:"ram"`
-	ImageID     int    `json:"imageId"`
-	BootDisk    int    `json:"bootDisk"`
-	NetType     string `json:"netType"`
-	NetId       int    `json:"netId"`
-	IPAddr      string `json:"ipAddr"`
-	UserData    string `json:"userdata"`
-	Desc        string `json:"desc"`
-	Start       bool   `json:"start"`
+	RgID     uint   `json:"rgId"`
+	Name     string `json:"name"`
+	Cpu      int    `json:"cpu"`
+	Ram      int    `json:"ram"`
+	ImageID  int    `json:"imageId"`
+	BootDisk int    `json:"bootDisk"`
+	NetType  string `json:"netType"`
+	NetId    int    `json:"netId"`
+	IPAddr   string `json:"ipAddr"`
+	UserData string `json:"userdata"`
+	Desc     string `json:"desc"`
+	Start    bool   `json:"start"`
 }
 
 // structures related to cloudapi/compute/start API
 const ComputeStartAPI = "/restmachine/cloudapi/compute/start"
+const ComputeStopAPI = "/restmachine/cloudapi/compute/stop"
 
 // structures related to cloudapi/compute/delete API
 const ComputeDeleteAPI = "/restmachine/cloudapi/compute/delete"
@@ -271,14 +272,14 @@ type ComputeRecord struct {
 	SnapSets       []SnapSetRecord   `json:"snapSets"`
 	Status         string            `json:"status"`
 	// Tags           []string          `json:"tags"` // Tags were reworked since DECORT 3.7.1
-	TechStatus     string            `json:"techStatus"`
-	TotalDiskSize  int               `json:"totalDiskSize"`
-	UpdatedBy      string            `json:"updatedBy"`
-	UpdateTime     uint64            `json:"updateTime"`
-	UserManaged    bool              `json:"userManaged"`
-	Vgpus          []int             `json:"vgpus"`
-	VinsConnected  int               `json:"vinsConnected"`
-	VirtualImageID int               `json:"virtualImageId"`
+	TechStatus     string `json:"techStatus"`
+	TotalDiskSize  int    `json:"totalDiskSize"`
+	UpdatedBy      string `json:"updatedBy"`
+	UpdateTime     uint64 `json:"updateTime"`
+	UserManaged    bool   `json:"userManaged"`
+	Vgpus          []int  `json:"vgpus"`
+	VinsConnected  int    `json:"vinsConnected"`
+	VirtualImageID int    `json:"virtualImageId"`
 }
 
 const ComputeListAPI = "/restmachine/cloudapi/compute/list"
@@ -302,7 +303,7 @@ type DiskRecord struct {
 	// ACLs `json:"ACL"` - it is a dictionary, special parsing required
 	// was - Acl map[string]string  `json:"acl"`
 	AccountID       int    `json:"accountId"`
-	AccountName     string `json:"accountName"`    // NOTE: absent from compute/get output
+	AccountName     string `json:"accountName"` // NOTE: absent from compute/get output
 	BootPartition   int    `json:"bootPartition"`
 	CreatedTime     uint64 `json:"creationTime"`
 	DeletedTime     uint64 `json:"deletionTime"`
@@ -325,7 +326,7 @@ type DiskRecord struct {
 	PurgeTime uint64 `json:"purgeTime"`
 	// Role string            `json:"role"`
 	SepType    string           `json:"sepType"`
-	SepID      int              `json:"sepId"`    // NOTE: absent from compute/get output
+	SepID      int              `json:"sepId"` // NOTE: absent from compute/get output
 	SizeMax    int              `json:"sizeMax"`
 	SizeUsed   int              `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
 	Snapshots  []SnapshotRecord `json:"snapshots"`
@@ -376,14 +377,14 @@ type ComputeGetResp struct {
 	SnapSets           []SnapSetRecord   `json:"snapSets"`
 	Status             string            `json:"status"`
 	// Tags               []string          `json:"tags"` // Tags were reworked since DECORT 3.7.1
-	TechStatus         string            `json:"techStatus"`
-	TotalDiskSize      int               `json:"totalDiskSize"`
-	UpdatedBy          string            `json:"updatedBy"`
-	UpdateTime         uint64            `json:"updateTime"`
-	UserManaged        bool              `json:"userManaged"`
-	Vgpus              []int             `json:"vgpus"`
-	VinsConnected      int               `json:"vinsConnected"`
-	VirtualImageID     int               `json:"virtualImageId"`
+	TechStatus     string `json:"techStatus"`
+	TotalDiskSize  int    `json:"totalDiskSize"`
+	UpdatedBy      string `json:"updatedBy"`
+	UpdateTime     uint64 `json:"updateTime"`
+	UserManaged    bool   `json:"userManaged"`
+	Vgpus          []int  `json:"vgpus"`
+	VinsConnected  int    `json:"vinsConnected"`
+	VirtualImageID int    `json:"virtualImageId"`
 }
 
 //
@@ -468,11 +469,12 @@ const ComputePfwDelAPI = "/restmachine/cloudapi/compute/pfwDel"
 // structures related to /cloudapi/compute/net Attach/Detach API
 //
 type ComputeNetMgmtRecord struct { // used to "cache" network specs when preparing to manage compute networks
-	ID             int
-	Type           string
-	IPAddress      string
-	MAC            string
+	ID        int
+	Type      string
+	IPAddress string
+	MAC       string
 }
+
 const ComputeNetAttachAPI = "/restmachine/cloudapi/compute/netAttach"
 
 const ComputeNetDetachAPI = "/restmachine/cloudapi/compute/netDetach"
@@ -512,52 +514,52 @@ const DisksRenameAPI = "/restmachine/cloudapi/disks/rename"
 //
 const DisksDeleteAPI = "/restmachine/cloudapi/disks/delete"
 
-
 //
-// ViNS structures 
+// ViNS structures
 //
 
 // this is the structure of the element in the list returned by vins/search API
-type VinsSearchRecord struct { 
-	ID              int     `json:"id"`
-	Name            string  `json:"name"`
-	IPCidr          string  `json:"network"`
-	VxLanID         int     `json:"vxlanId"`
-	ExternalIP      string  `json:"externalIP"`
-    AccountID       int     `json:"accountId"`
-	AccountName     string  `json:"accountName"`
-	RgID            int     `json:"rgId"`
-	RgName          string  `json:"rgName"`
+type VinsSearchRecord struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	IPCidr      string `json:"network"`
+	VxLanID     int    `json:"vxlanId"`
+	ExternalIP  string `json:"externalIP"`
+	AccountID   int    `json:"accountId"`
+	AccountName string `json:"accountName"`
+	RgID        int    `json:"rgId"`
+	RgName      string `json:"rgName"`
 }
 
 const VinsSearchAPI = "/restmachine/cloudapi/vins/search"
+
 type VinsSearchResp []VinsSearchRecord
 
 type VnfRecord struct {
-	ID              int     `json:"id"`
-	AccountID       int     `json:"accountId"`
-	Type            string  `json:"type"`      // "DHCP", "NAT", "GW" etc
-	Config          map[string]interface{}  `json:"config"`    // NOTE: VNF specs vary by VNF type
+	ID        int                    `json:"id"`
+	AccountID int                    `json:"accountId"`
+	Type      string                 `json:"type"`   // "DHCP", "NAT", "GW" etc
+	Config    map[string]interface{} `json:"config"` // NOTE: VNF specs vary by VNF type
 }
 
 type VnfGwConfigRecord struct { // describes GW VNF config structure inside ViNS, as returned by API vins/get
-	ExtNetID        int     `json:"ext_net_id"`
-	ExtNetIP        string  `json:"ext_net_ip"`
-	ExtNetMask      int     `json:"ext_net_mask"`
-	DefaultGW       string  `json:"default_gw"`
+	ExtNetID   int    `json:"ext_net_id"`
+	ExtNetIP   string `json:"ext_net_ip"`
+	ExtNetMask int    `json:"ext_net_mask"`
+	DefaultGW  string `json:"default_gw"`
 }
 type VinsRecord struct { // represents part of the response from API vins/get
-	ID              int     `json:"id"`
-	Name            string  `json:"name"`
-	IPCidr          string  `json:"network"`
-	VxLanID         int     `json:"vxlanId"`
-	ExternalIP      string  `json:"externalIP"`
-    AccountID       int     `json:"accountId"`
-	AccountName     string  `json:"accountName"`
-	RgID            int     `json:"rgid"`
-	RgName          string  `json:"rgName"`
-	VNFs map[string]VnfRecord  `json:"vnfs"` 
-	Desc            string  `json:"desc"`
+	ID          int                  `json:"id"`
+	Name        string               `json:"name"`
+	IPCidr      string               `json:"network"`
+	VxLanID     int                  `json:"vxlanId"`
+	ExternalIP  string               `json:"externalIP"`
+	AccountID   int                  `json:"accountId"`
+	AccountName string               `json:"accountName"`
+	RgID        int                  `json:"rgid"`
+	RgName      string               `json:"rgName"`
+	VNFs        map[string]VnfRecord `json:"vnfs"`
+	Desc        string               `json:"desc"`
 }
 
 const VinsGetAPI = "/restmachine/cloudapi/vins/get"
@@ -572,13 +574,13 @@ const VinsDeleteAPI = "/restmachine/cloudapi/vins/delete"
 
 //
 // Grid ID structures
-// 
+//
 type LocationRecord struct {
-	GridID          int    `json:"gid"`
-	Id              int    `json:"id"`
-	LocationCode    string `json:"locationCode"`
-	Name            string `json:"name"`
-	Flag            string `json:"flag"`
+	GridID       int    `json:"gid"`
+	Id           int    `json:"id"`
+	LocationCode string `json:"locationCode"`
+	Name         string `json:"name"`
+	Flag         string `json:"flag"`
 }
 
 const LocationsListAPI = "/restmachine/cloudapi/locations/list" // Returns list of GridRecord on success

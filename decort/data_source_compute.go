@@ -27,6 +27,7 @@ package decort
 import (
 	"encoding/json"
 	"fmt"
+
 	// "net/url"
 
 	log "github.com/sirupsen/logrus"
@@ -36,20 +37,20 @@ import (
 )
 
 // Parse list of all disks from API compute/get into a list of "extra disks" attached to this compute
-// Extra disks are all compute disks but a boot disk. 
+// Extra disks are all compute disks but a boot disk.
 func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
-	// this return value will be used to d.Set("extra_disks",) item of dataSourceCompute schema, 
+	// this return value will be used to d.Set("extra_disks",) item of dataSourceCompute schema,
 	// which is a simple list of integer disk IDs excluding boot disk ID
 	length := len(disks)
 	log.Debugf("parseComputeDisksToExtraDisks: called for %d disks", length)
-	
-	if length == 0 || ( length == 1 && disks[0].Type == "B" ) {
+
+	if length == 0 || (length == 1 && disks[0].Type == "B") {
 		// the disk list is empty (which is kind of strange - diskless compute?), or
 		// there is only one disk in the list and it is a boot disk;
 		// as we skip boot disks, the result will be of 0 length anyway
 		return make([]interface{}, 0)
 	}
-	
+
 	result := make([]interface{}, length-1)
 	idx := 0
 	for _, value := range disks {
@@ -62,7 +63,7 @@ func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 		idx++
 	}
 
-	return result 
+	return result
 }
 
 // NOTE: this is a legacy function, which is not used as of rc-1.10
@@ -70,18 +71,18 @@ func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 func parseComputeDisks(disks []DiskRecord) []interface{} {
 	// Return value was designed to d.Set("disks",) item of dataSourceCompute schema
 	// However, this item was excluded from the schema as it is not directly
-	// managed through Terraform 
+	// managed through Terraform
 	length := len(disks)
 	log.Debugf("parseComputeDisks: called for %d disks", length)
-	
+
 	/*
-	if length == 1 && disks[0].Type == "B" {
-		// there is only one disk in the list and it is a boot disk
-		// as we skip boot disks, the result will be of 0 lenght
-		length = 0
-	}
+		if length == 1 && disks[0].Type == "B" {
+			// there is only one disk in the list and it is a boot disk
+			// as we skip boot disks, the result will be of 0 lenght
+			length = 0
+		}
 	*/
-	
+
 	result := []interface{}{}
 
 	if length == 0 {
@@ -90,10 +91,10 @@ func parseComputeDisks(disks []DiskRecord) []interface{} {
 
 	for _, value := range disks {
 		/*
-		if value.Type == "B" {
-			// skip boot disk when parsing the list of disks
-			continue
-		}
+			if value.Type == "B" {
+				// skip boot disk when parsing the list of disks
+				continue
+			}
 		*/
 		elem := make(map[string]interface{})
 		// keys in this map should correspond to the Schema definition
@@ -112,11 +113,11 @@ func parseComputeDisks(disks []DiskRecord) []interface{} {
 		// elem["status"] = value.Status
 		// elem["tech_status"] = value.TechStatus
 		elem["compute_id"] = value.ComputeID
-		
+
 		result = append(result, elem)
 	}
 
-	return result 
+	return result
 }
 
 func parseBootDiskSize(disks []DiskRecord) int {
@@ -131,7 +132,7 @@ func parseBootDiskSize(disks []DiskRecord) int {
 		}
 	}
 
-	return 0 
+	return 0
 }
 
 func parseBootDiskId(disks []DiskRecord) uint {
@@ -146,10 +147,10 @@ func parseBootDiskId(disks []DiskRecord) uint {
 		}
 	}
 
-	return 0 
+	return 0
 }
 
-// Parse the list of interfaces from compute/get response into a list of networks 
+// Parse the list of interfaces from compute/get response into a list of networks
 // attached to this compute
 func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 	// return value will be used to d.Set("network") item of dataSourceCompute schema
@@ -172,8 +173,9 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 		result = append(result, elem)
 	}
 
-	return result 
+	return result
 }
+
 /*
 func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []map[string]interface{} {
 	// return value will be used to d.Set("network") item of dataSourceCompute schema
@@ -196,16 +198,15 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []map[string]int
 		result[i] = elem
 	}
 
-	return result 
+	return result
 }
 */
-
 
 // NOTE: this function is retained for historical purposes and actually not used as of rc-1.10
 func parseComputeInterfaces(ifaces []InterfaceRecord) []map[string]interface{} {
 	// return value was designed to d.Set("interfaces",) item of dataSourceCompute schema
 	// However, this item was excluded from the schema as it is not directly
-	// managed through Terraform 
+	// managed through Terraform
 	length := len(ifaces)
 	log.Debugf("parseComputeInterfaces: called for %d ifaces", length)
 
@@ -237,7 +238,7 @@ func parseComputeInterfaces(ifaces []InterfaceRecord) []map[string]interface{} {
 		result[i] = elem
 	}
 
-	return result 
+	return result
 }
 
 func flattenCompute(d *schema.ResourceData, compFacts string) error {
@@ -273,6 +274,12 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("cloud_init", "applied") // NOTE: for existing compute we hard-code this value as an indicator for DiffSuppress fucntion
 	// d.Set("status", model.Status)
 	// d.Set("tech_status", model.TechStatus)
+
+	if model.TechStatus == "STARTED" {
+		d.Set("started", true)
+	} else {
+		d.Set("started", false)
+	}
 
 	if len(model.Disks) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeDisksToExtraDisks for %d disks", len(model.Disks))
@@ -403,24 +410,24 @@ func dataSourceCompute() *schema.Resource {
 			},
 
 			"extra_disks": {
-				Type:        schema.TypeSet,
-				Computed:    true,
+				Type:     schema.TypeSet,
+				Computed: true,
 				MaxItems: MaxExtraDisksPerCompute,
-				Elem: &schema.Schema {
-					Type:  schema.TypeInt,
+				Elem: &schema.Schema{
+					Type: schema.TypeInt,
 				},
 				Description: "IDs of the extra disk(s) attached to this compute.",
 			},
-			
+
 			/*
-			"disks": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: dataSourceDiskSchemaMake(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
+				"disks": {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem: &schema.Resource{
+						Schema: dataSourceDiskSchemaMake(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
+					},
+					Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
 				},
-				Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
-			},
 			*/
 
 			"network": {
@@ -434,14 +441,14 @@ func dataSourceCompute() *schema.Resource {
 			},
 
 			/*
-			"interfaces": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: interfaceSubresourceSchemaMake(),
+				"interfaces": {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem: &schema.Resource{
+						Schema: interfaceSubresourceSchemaMake(),
+					},
+					Description: "Specification for the virtual NICs configured on this compute instance.",
 				},
-				Description: "Specification for the virtual NICs configured on this compute instance.",
-			},
 			*/
 
 			"os_users": {
@@ -465,24 +472,31 @@ func dataSourceCompute() *schema.Resource {
 				Description: "Placeholder for cloud_init parameters.",
 			},
 
+			"started": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Is compute started.",
+			},
+
 			/*
-			"status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Current model status of this compute instance.",
-			},
+				"status": {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Current model status of this compute instance.",
+				},
 
-			"tech_status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Current technical status of this compute instance.",
-			},
+				"tech_status": {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Current technical status of this compute instance.",
+				},
 
-			"internal_ip": {
-				Type:          schema.TypeString,
-				Computed:      true,
-				Description:  "Internal IP address of this Compute.",
-			},
+				"internal_ip": {
+					Type:          schema.TypeString,
+					Computed:      true,
+					Description:  "Internal IP address of this Compute.",
+				},
 			*/
 		},
 	}

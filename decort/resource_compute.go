@@ -50,15 +50,15 @@ func cloudInitDiffSupperss(key, oldVal, newVal string, d *schema.ResourceData) b
 }
 
 func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
-	// we assume all mandatory parameters it takes to create a comptue instance are properly 
+	// we assume all mandatory parameters it takes to create a comptue instance are properly
 	// specified - we rely on schema "Required" attributes to let Terraform validate them for us
-	
+
 	log.Debugf("resourceComputeCreate: called for Compute name %q, RG ID %d", d.Get("name").(string), d.Get("rg_id").(int))
 
 	// create basic Compute (i.e. without extra disks and network connections - those will be attached
 	// by subsequent individual API calls).
 	// creating Compute is a multi-step workflow, which may fail at some step, so we use "partial" feature of Terraform
-	d.Partial(true) 
+	d.Partial(true)
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("rgId", fmt.Sprintf("%d", d.Get("rg_id").(int)))
@@ -68,32 +68,32 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("imageId", fmt.Sprintf("%d", d.Get("image_id").(int)))
 	urlValues.Add("bootDisk", fmt.Sprintf("%d", d.Get("boot_disk_size").(int)))
 	urlValues.Add("netType", "NONE") // at the 1st step create isolated compute
-	urlValues.Add("start", "0") // at the 1st step create compute in a stopped state
+	urlValues.Add("start", "0")      // at the 1st step create compute in a stopped state
 
-	argVal, argSet := d.GetOk("description") 
+	argVal, argSet := d.GetOk("description")
 	if argSet {
 		urlValues.Add("desc", argVal.(string))
 	}
 
 	/*
-	sshKeysVal, sshKeysSet := d.GetOk("ssh_keys") 
-	if sshKeysSet {
-		// process SSH Key settings and set API values accordingly
-		log.Debugf("resourceComputeCreate: calling makeSshKeysArgString to setup SSH keys for guest login(s)")
-		urlValues.Add("userdata", makeSshKeysArgString(sshKeysVal.([]interface{})))
-	}
+		sshKeysVal, sshKeysSet := d.GetOk("ssh_keys")
+		if sshKeysSet {
+			// process SSH Key settings and set API values accordingly
+			log.Debugf("resourceComputeCreate: calling makeSshKeysArgString to setup SSH keys for guest login(s)")
+			urlValues.Add("userdata", makeSshKeysArgString(sshKeysVal.([]interface{})))
+		}
 	*/
 
 	computeCreateAPI := KvmX86CreateAPI
-	arch := d.Get("arch").(string)
-	if arch == "KVM_PPC" {
+	driver := d.Get("driver").(string)
+	if driver == "KVM_PPC" {
 		computeCreateAPI = KvmPPCCreateAPI
 		log.Debugf("resourceComputeCreate: creating Compute of type KVM VM PowerPC")
 	} else { // note that we do not validate arch value for explicit "KVM_X86" here
 		log.Debugf("resourceComputeCreate: creating Compute of type KVM VM x86")
 	}
 
-	argVal, argSet = d.GetOk("cloud_init") 
+	argVal, argSet = d.GetOk("cloud_init")
 	if argSet {
 		// userdata must not be empty string and must not be a reserved keyword "applied"
 		userdata := argVal.(string)
@@ -101,7 +101,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 			urlValues.Add("userdata", userdata)
 		}
 	}
-	
+
 	apiResp, err := controller.decortAPICall("POST", computeCreateAPI, urlValues)
 	if err != nil {
 		return err
@@ -117,16 +117,16 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 	d.SetPartial("image_id")
 	d.SetPartial("boot_disk_size")
 	/*
-	if sshKeysSet {
-		d.SetPartial("ssh_keys")
-	}
+		if sshKeysSet {
+			d.SetPartial("ssh_keys")
+		}
 	*/
 
 	log.Debugf("resourceComputeCreate: new simple Compute ID %d, name %s created", compId, d.Get("name").(string))
 
 	// Configure data disks if any
 	extraDisksOk := true
-	argVal, argSet = d.GetOk("extra_disks") 
+	argVal, argSet = d.GetOk("extra_disks")
 	if argSet && argVal.(*schema.Set).Len() > 0 {
 		// urlValues.Add("desc", argVal.(string))
 		log.Debugf("resourceComputeCreate: calling utilityComputeExtraDisksConfigure to attach %d extra disk(s)", argVal.(*schema.Set).Len())
@@ -142,8 +142,8 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 
 	// Configure external networks if any
 	netsOk := true
-	argVal, argSet = d.GetOk("network") 
-	if argSet && argVal.(*schema.Set).Len() > 0  {
+	argVal, argSet = d.GetOk("network")
+	if argSet && argVal.(*schema.Set).Len() > 0 {
 		log.Debugf("resourceComputeCreate: calling utilityComputeNetworksConfigure to attach %d network(s)", argVal.(*schema.Set).Len())
 		err = controller.utilityComputeNetworksConfigure(d, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
@@ -161,23 +161,25 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		d.Partial(false)
 	}
 
-	// Note bene: we created compute in a STOPPED state (this is required to properly attach 1st network interface), 
+	// Note bene: we created compute in a STOPPED state (this is required to properly attach 1st network interface),
 	// now we need to start it before we report the sequence complete
-	reqValues := &url.Values{}
-	reqValues.Add("computeId", fmt.Sprintf("%d", compId))
-	log.Debugf("resourceComputeCreate: starting Compute ID %d after completing its resource configuration", compId)
-	apiResp, err = controller.decortAPICall("POST", ComputeStartAPI, reqValues)
-	if err != nil {
-		return err
+	if d.Get("started").(bool) {
+		reqValues := &url.Values{}
+		reqValues.Add("computeId", fmt.Sprintf("%d", compId))
+		log.Debugf("resourceComputeCreate: starting Compute ID %d after completing its resource configuration", compId)
+		apiResp, err = controller.decortAPICall("POST", ComputeStartAPI, reqValues)
+		if err != nil {
+			return err
+		}
 	}
-	
+
 	log.Debugf("resourceComputeCreate: new Compute ID %d, name %s creation sequence complete", compId, d.Get("name").(string))
 
-	// We may reuse dataSourceComputeRead here as we maintain similarity 
+	// We may reuse dataSourceComputeRead here as we maintain similarity
 	// between Compute resource and Compute data source schemas
-	// Compute read function will also update resource ID on success, so that Terraform 
+	// Compute read function will also update resource ID on success, so that Terraform
 	// will know the resource exists
-	return dataSourceComputeRead(d, m) 
+	return dataSourceComputeRead(d, m)
 }
 
 func resourceComputeRead(d *schema.ResourceData, m interface{}) error {
@@ -209,11 +211,12 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 
 	controller := m.(*ControllerCfg)
 
-	/* 
-	1. Resize CPU/RAM
-	2. Resize (grow) boot disk
-	3. Update extra disks
-	4. Update networks
+	/*
+		1. Resize CPU/RAM
+		2. Resize (grow) boot disk
+		3. Update extra disks
+		4. Update networks
+		5. Start/stop
 	*/
 
 	// 1. Resize CPU/RAM
@@ -230,7 +233,7 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 	} else {
 		params.Add("cpu", "0") // no change to CPU allocation
 	}
-	
+
 	oldRam, newRam := d.GetChange("ram")
 	if oldRam.(int) != newRam.(int) {
 		params.Add("ram", fmt.Sprintf("%d", newRam.(int)))
@@ -241,8 +244,8 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 
 	if doUpdate {
 		log.Debugf("resourceComputeUpdate: changing CPU %d -> %d and/or RAM %d -> %d",
-		           oldCpu.(int), newCpu.(int),
-				   oldRam.(int), newRam.(int))
+			oldCpu.(int), newCpu.(int),
+			oldRam.(int), newRam.(int))
 		_, err := controller.decortAPICall("POST", ComputeResizeAPI, params)
 		if err != nil {
 			return err
@@ -251,14 +254,14 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		d.SetPartial("ram")
 	}
 
-	// 2. Resize (grow) Boot disk	
+	// 2. Resize (grow) Boot disk
 	oldSize, newSize := d.GetChange("boot_disk_size")
 	if oldSize.(int) < newSize.(int) {
 		bdsParams := &url.Values{}
 		bdsParams.Add("diskId", fmt.Sprintf("%d", d.Get("boot_disk_id").(int)))
 		bdsParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
 		log.Debugf("resourceComputeUpdate: compute ID %s, boot disk ID %d resize %d -> %d",
-		           d.Id(), d.Get("boot_disk_id").(int), oldSize.(int), newSize.(int))
+			d.Id(), d.Get("boot_disk_id").(int), oldSize.(int), newSize.(int))
 		_, err := controller.decortAPICall("POST", DisksResizeAPI, params)
 		if err != nil {
 			return err
@@ -284,17 +287,32 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		d.SetPartial("network")
 	}
 
+	if d.HasChange("started") {
+		params := &url.Values{}
+		params.Add("computeId", d.Id())
+		if d.Get("started").(bool) {
+			if _, err := controller.decortAPICall("POST", ComputeStartAPI, params); err != nil {
+				return err
+			}
+		} else {
+			if _, err := controller.decortAPICall("POST", ComputeStopAPI, params); err != nil {
+				return err
+			}
+		}
+		d.SetPartial("started")
+	}
+
 	d.Partial(false)
 
-	// we may reuse dataSourceComputeRead here as we maintain similarity 
+	// we may reuse dataSourceComputeRead here as we maintain similarity
 	// between Compute resource and Compute data source schemas
-	return dataSourceComputeRead(d, m) 
+	return dataSourceComputeRead(d, m)
 }
 
 func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
-	// NOTE: this function destroys target Compute instance "permanently", so 
-	// there is no way to restore it. 
-	// If compute being destroyed has some extra disks attached, they are 
+	// NOTE: this function destroys target Compute instance "permanently", so
+	// there is no way to restore it.
+	// If compute being destroyed has some extra disks attached, they are
 	// detached from the compute
 	log.Debugf("resourceComputeDelete: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
@@ -312,7 +330,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceComputeDelete: ready to unmarshal string %s", compFacts)
 	err = json.Unmarshal([]byte(compFacts), &model)
 	if err == nil && len(model.Disks) > 0 {
-		// prepare to detach data disks from compute - do it only if compFacts unmarshalled 
+		// prepare to detach data disks from compute - do it only if compFacts unmarshalled
 		// properly and the resulting model contains non-empty Disks list
 		for _, diskFacts := range model.Disks {
 			if diskFacts.Type == "B" {
@@ -338,7 +356,7 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 	params.Add("computeId", d.Id())
 	params.Add("permanently", "1")
 	// TODO: this is for the upcoming API update - params.Add("detachdisks", "1")
-	
+
 	_, err = controller.decortAPICall("POST", ComputeDeleteAPI, params)
 	if err != nil {
 		return err
@@ -398,13 +416,13 @@ func resourceCompute() *schema.Resource {
 				Description:  "ID of the resource group where this compute should be deployed.",
 			},
 
-			"arch": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				StateFunc:   stateFuncToUpper,
+			"driver": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				StateFunc:    stateFuncToUpper,
 				ValidateFunc: validation.StringInSlice([]string{"KVM_X86", "KVM_PPC"}, false), // observe case while validating
-				Description: "Hardware architecture of this compute instance.",
+				Description:  "Hardware architecture of this compute instance.",
 			},
 
 			"cpu": {
@@ -422,16 +440,16 @@ func resourceCompute() *schema.Resource {
 			},
 
 			"image_id": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				ForceNew:    true,
+				Type:         schema.TypeInt,
+				Required:     true,
+				ForceNew:     true,
 				ValidateFunc: validation.IntAtLeast(1),
-				Description: "ID of the OS image to base this compute instance on.",
+				Description:  "ID of the OS image to base this compute instance on.",
 			},
 
 			"boot_disk_size": {
-				Type:     schema.TypeInt,
-				Required: true,
+				Type:        schema.TypeInt,
+				Required:    true,
 				Description: "This compute instance boot disk size in GB. Make sure it is large enough to accomodate selected OS image.",
 			},
 
@@ -456,15 +474,15 @@ func resourceCompute() *schema.Resource {
 			},
 
 			/*
-			"ssh_keys": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MaxItems: MaxSshKeysPerCompute,
-				Elem: &schema.Resource{
-					Schema: sshSubresourceSchemaMake(),
+				"ssh_keys": {
+					Type:     schema.TypeList,
+					Optional: true,
+					MaxItems: MaxSshKeysPerCompute,
+					Elem: &schema.Resource{
+						Schema: sshSubresourceSchemaMake(),
+					},
+					Description: "SSH keys to authorize on this compute instance.",
 				},
-				Description: "SSH keys to authorize on this compute instance.",
-			},
 			*/
 
 			"description": {
@@ -473,13 +491,12 @@ func resourceCompute() *schema.Resource {
 				Description: "Optional text description of this compute instance.",
 			},
 
-			
 			"cloud_init": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "applied",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "applied",
 				DiffSuppressFunc: cloudInitDiffSupperss,
-				Description: "Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.",
+				Description:      "Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.",
 			},
 
 			// The rest are Compute properties, which are "computed" once it is created
@@ -516,37 +533,44 @@ func resourceCompute() *schema.Resource {
 				Description: "Guest OS users provisioned on this compute instance.",
 			},
 
+			"started": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Is compute started.",
+			},
+
 			/*
-			"disks": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: dataSourceDiskSchemaMake(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
+				"disks": {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem: &schema.Resource{
+						Schema: dataSourceDiskSchemaMake(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
+					},
+					Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
 				},
-				Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
-			},
 
-			"interfaces": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: interfaceSubresourceSchemaMake(),
+				"interfaces": {
+					Type:     schema.TypeList,
+					Computed: true,
+					Elem: &schema.Resource{
+						Schema: interfaceSubresourceSchemaMake(),
+					},
+					Description: "Specification for the virtual NICs configured on this compute instance.",
 				},
-				Description: "Specification for the virtual NICs configured on this compute instance.",
-			},
 
 
-			"status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Current model status of this compute instance.",
-			},
+				"status": {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Current model status of this compute instance.",
+				},
 
-			"tech_status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Current technical status of this compute instance.",
-			},
+				"tech_status": {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Current technical status of this compute instance.",
+				},
 			*/
 		},
 	}
