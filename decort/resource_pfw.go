@@ -188,7 +188,13 @@ func resourcePfw() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
-		//TODO timeouts
+		Timeouts: &schema.ResourceTimeout{
+			Create:  &Timeout60s,
+			Read:    &Timeout30s,
+			Update:  &Timeout60s,
+			Delete:  &Timeout60s,
+			Default: &Timeout60s,
+		},
 
 		Schema: resourcePfwSchemaMake(),
 	}
