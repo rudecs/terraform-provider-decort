@@ -573,6 +573,54 @@ const VinsExtNetDisconnectAPI = "/restmachine/cloudapi/vins/extNetDisconnect"
 const VinsDeleteAPI = "/restmachine/cloudapi/vins/delete"
 
 //
+// K8s structures
+//
+
+//K8sNodeRecord represents a worker/master group
+type K8sNodeRecord struct {
+	ID   int `json:"id"`
+	Disk int `json:"disk"`
+	Cpu  int `json:"cpu"`
+	Num  int `json:"num"`
+	Ram  int `json:"ram"`
+}
+
+//K8sRecord represents k8s instance
+type K8sRecord struct {
+	AccountID   int    `json:"accountId"`
+	AccountName string `json:"accountName"`
+	CI          int    `json:"ciId"`
+	ID          int    `json:"id"`
+	Groups      struct {
+		Masters K8sNodeRecord   `json:"masters"`
+		Workers []K8sNodeRecord `json:"workers"`
+	} `json:"k8sGroups"`
+	Name   string `json:"name"`
+	RgID   int    `json:"rgId"`
+	RgName string `json:"rgName"`
+}
+
+const K8sCreateAPI = "/restmachine/cloudapi/k8s/create"
+const K8sGetAPI = "/restmachine/cloudapi/k8s/get"
+const K8sUpdateAPI = "/restmachine/cloudapi/k8s/update"
+const K8sDeleteAPI = "/restmachine/cloudapi/k8s/delete"
+
+//AsyncTask represents a long task completion status
+type AsyncTask struct {
+	AuditID     string   `json:"auditId"`
+	Completed   bool     `json:"completed"`
+	Error       string   `json:"error"`
+	Log         []string `json:"log"`
+	Result      string   `json:"result"`
+	Stage       string   `json:"stage"`
+	Status      string   `json:"status"`
+	UpdateTime  uint64   `json:"updateTime"`
+	UpdatedTime uint64   `json:"updatedTime"`
+}
+
+const AsyncTaskGetAPI = "/restmachine/cloudapi/tasks/get"
+
+//
 // Grid ID structures
 //
 type LocationRecord struct {

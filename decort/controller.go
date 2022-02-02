@@ -384,12 +384,13 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 	}
 	defer resp.Body.Close()
 
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	log.Debugf("decortAPICall: %s %s\n %s", method, api_name, body)
+
 	if resp.StatusCode == http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return "", err
-		}
-		log.Debugf("decortAPICall: %s %s\n %s", method, api_name, body)
 		return string(body), nil
 	} else {
 		return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %q with request Body %q",
@@ -401,6 +402,4 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 		        return nil, fmt.Errorf("decortAPICall method called for incompatible authorization mode %q.", config.auth_mode_txt)
 			}
 	*/
-
-	return "", err
 }
