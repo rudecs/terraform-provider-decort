@@ -356,6 +356,7 @@ type ComputeGetResp struct {
 	Cpu                int               `json:"cpus"`
 	Desc               string            `json:"desc"`
 	Disks              []DiskRecord      `json:"disks"`
+	Driver             string            `json:"driver"`
 	GridID             int               `json:"gid"`
 	ID                 uint              `json:"id"`
 	ImageID            int               `json:"imageId"`

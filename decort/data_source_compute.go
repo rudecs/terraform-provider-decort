@@ -263,7 +263,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("rg_name", model.RgName)
 	d.Set("account_id", model.AccountID)
 	d.Set("account_name", model.AccountName)
-	d.Set("arch", model.Arch)
+	d.Set("driver", model.Driver)
 	d.Set("cpu", model.Cpu)
 	d.Set("ram", model.Ram)
 	// d.Set("boot_disk_size", model.BootDiskSize) - bootdiskSize key in API compute/get is always zero, so we set boot_disk_size in another way
@@ -367,7 +367,7 @@ func dataSourceCompute() *schema.Resource {
 				Description: "Name of the account this compute instance belongs to.",
 			},
 
-			"arch": {
+			"driver": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Hardware architecture of this compute instance.",

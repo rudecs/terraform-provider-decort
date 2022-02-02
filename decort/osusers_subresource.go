@@ -27,9 +27,9 @@ import (
 func parseOsUsers(logins []OsUserRecord) []interface{} {
 	var result = make([]interface{}, len(logins))
 
-	elem := make(map[string]interface{})
-
 	for index, value := range logins {
+		elem := make(map[string]interface{})
+
 		elem["guid"] = value.Guid
 		elem["login"] = value.Login
 		elem["password"] = value.Password
