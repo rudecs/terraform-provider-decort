@@ -27,14 +27,15 @@ package decort
 import (
 	"encoding/json"
 	"net/url"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilityK8sCheckPresence(d *schema.ResourceData, m interface{}) (*K8sRecord, error) {
+func utilityK8sWgCheckPresence(d *schema.ResourceData, m interface{}) (*K8sNodeRecord, error) {
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
-	urlValues.Add("k8sId", d.Id())
+	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
 
 	resp, err := controller.decortAPICall("POST", K8sGetAPI, urlValues)
 	if err != nil {
@@ -50,5 +51,16 @@ func utilityK8sCheckPresence(d *schema.ResourceData, m interface{}) (*K8sRecord,
 		return nil, err
 	}
 
-	return &k8s, nil
+	id, err := strconv.Atoi(d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	for _, wg := range k8s.Groups.Workers {
+		if wg.ID == id {
+			return &wg, nil
+		}
+	}
+
+	return nil, nil
 }

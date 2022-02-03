@@ -72,10 +72,8 @@ func resourcePfwRead(d *schema.ResourceData, m interface{}) error {
 
 	pfw, err := utilityPfwCheckPresence(d, m)
 	if pfw == nil {
-		if err != nil {
-			return err
-		}
-		return nil
+		d.SetId("")
+		return err
 	}
 
 	d.Set("compute_id", pfw.ComputeID)

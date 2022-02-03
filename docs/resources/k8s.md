@@ -27,6 +27,10 @@ description: |-
 - **masters** (Block List, Max: 1) Master node(s) configuration. (see [below for nested schema](#nestedblock--masters))
 - **workers** (Block List, Max: 1) Worker node(s) configuration. (see [below for nested schema](#nestedblock--workers))
 
+### Read-Only
+
+- **default_wg_id** (Number) ID of default workers group for this instace.
+
 <a id="nestedblock--masters"></a>
 ### Nested Schema for `masters`
 

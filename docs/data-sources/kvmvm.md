@@ -29,12 +29,12 @@ description: |-
 
 - **account_id** (Number) ID of the account this compute instance belongs to.
 - **account_name** (String) Name of the account this compute instance belongs to.
-- **arch** (String) Hardware architecture of this compute instance.
 - **boot_disk_id** (Number) This compute instance boot disk ID.
 - **boot_disk_size** (Number) This compute instance boot disk size in GB.
 - **cloud_init** (String) Placeholder for cloud_init parameters.
 - **cpu** (Number) Number of CPUs allocated for this compute instance.
 - **description** (String) User-defined text description of this compute instance.
+- **driver** (String) Hardware architecture of this compute instance.
 - **extra_disks** (Set of Number) IDs of the extra disk(s) attached to this compute.
 - **image_id** (Number) ID of the OS image this compute instance is based on.
 - **image_name** (String) Name of the OS image this compute instance is based on.

@@ -25,6 +25,8 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"bytes"
+	"strconv"
 	"time"
 )
 
@@ -606,17 +608,39 @@ const K8sGetAPI = "/restmachine/cloudapi/k8s/get"
 const K8sUpdateAPI = "/restmachine/cloudapi/k8s/update"
 const K8sDeleteAPI = "/restmachine/cloudapi/k8s/delete"
 
+const K8sWgCreateAPI = "/restmachine/cloudapi/k8s/workersGroupAdd"
+const K8sWgDeleteAPI = "/restmachine/cloudapi/k8s/workersGroupDelete"
+
+//Blasphemous workaround for parsing Result value
+type TaskResult int
+
+func (r *TaskResult) UnmarshalJSON(b []byte) error {
+	b = bytes.Trim(b, `"`)
+	if len(b) == 0 {
+		*r = 0
+		return nil
+	}
+
+	n, err := strconv.Atoi(string(b))
+	if err != nil {
+		return err
+	}
+
+	*r = TaskResult(n)
+	return nil
+}
+
 //AsyncTask represents a long task completion status
 type AsyncTask struct {
-	AuditID     string   `json:"auditId"`
-	Completed   bool     `json:"completed"`
-	Error       string   `json:"error"`
-	Log         []string `json:"log"`
-	Result      string   `json:"result"`
-	Stage       string   `json:"stage"`
-	Status      string   `json:"status"`
-	UpdateTime  uint64   `json:"updateTime"`
-	UpdatedTime uint64   `json:"updatedTime"`
+	AuditID     string     `json:"auditId"`
+	Completed   bool       `json:"completed"`
+	Error       string     `json:"error"`
+	Log         []string   `json:"log"`
+	Result      TaskResult `json:"result"`
+	Stage       string     `json:"stage"`
+	Status      string     `json:"status"`
+	UpdateTime  uint64     `json:"updateTime"`
+	UpdatedTime uint64     `json:"updatedTime"`
 }
 
 const AsyncTaskGetAPI = "/restmachine/cloudapi/tasks/get"

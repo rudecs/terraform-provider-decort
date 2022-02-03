@@ -107,12 +107,19 @@ func resourceK8sCreate(d *schema.ResourceData, m interface{}) error {
 				return fmt.Errorf("cannot create k8s instance: %v", task.Error)
 			}
 
-			d.SetId(task.Result)
+			d.SetId(strconv.Itoa(int(task.Result)))
 			break
 		}
 
 		time.Sleep(time.Second * 10)
 	}
+
+	k8s, err := utilityK8sCheckPresence(d, m)
+	if err != nil {
+		return err
+	}
+
+	d.Set("default_wg_id", k8s.Groups.Workers[0].ID)
 
 	return nil
 }
@@ -122,10 +129,8 @@ func resourceK8sRead(d *schema.ResourceData, m interface{}) error {
 
 	k8s, err := utilityK8sCheckPresence(d, m)
 	if k8s == nil {
-		if err != nil {
-			return err
-		}
-		return nil
+		d.SetId("")
+		return err
 	}
 
 	d.Set("name", k8s.Name)
@@ -133,6 +138,7 @@ func resourceK8sRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("k8sci_id", k8s.CI)
 	d.Set("masters", nodeToResource(k8s.Groups.Masters))
 	d.Set("workers", nodeToResource(k8s.Groups.Workers[0]))
+	d.Set("default_wg_id", k8s.Groups.Workers[0].ID)
 
 	return nil
 }
@@ -253,6 +259,12 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 		//Optional:    true,
 		//Description: "Text description of this instance.",
 		//},
+
+		"default_wg_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of default workers group for this instace.",
+		},
 	}
 }
 

@@ -105,6 +105,7 @@ func Provider() *schema.Provider {
 			"decort_vins":     resourceVins(),
 			"decort_pfw":      resourcePfw(),
 			"decort_k8s":      resourceK8s(),
+			"decort_k8s_wg":   resourceK8sWg(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

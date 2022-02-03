@@ -393,8 +393,8 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 	if resp.StatusCode == http.StatusOK {
 		return string(body), nil
 	} else {
-		return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %q with request Body %q",
-			resp.StatusCode, req.URL, params_str)
+		return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %q with request Body %q. Respone:\n%s",
+			resp.StatusCode, req.URL, params_str, body)
 	}
 
 	/*

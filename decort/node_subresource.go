@@ -58,6 +58,7 @@ func parseNode(nodeList []interface{}) K8sNodeRecord {
 func nodeToResource(node K8sNodeRecord) []interface{} {
 	mp := make(map[string]interface{})
 
+	mp["id"] = node.ID
 	mp["num"] = node.Num
 	mp["cpu"] = node.Cpu
 	mp["ram"] = node.Ram
@@ -71,24 +72,28 @@ func nodeK8sSubresourceSchemaMake() map[string]*schema.Schema {
 		"num": {
 			Type:        schema.TypeInt,
 			Required:    true,
+			ForceNew:    true,
 			Description: "Number of nodes to create.",
 		},
 
 		"cpu": {
 			Type:        schema.TypeInt,
 			Required:    true,
+			ForceNew:    true,
 			Description: "Node CPU count.",
 		},
 
 		"ram": {
 			Type:        schema.TypeInt,
 			Required:    true,
+			ForceNew:    true,
 			Description: "Node RAM in MB.",
 		},
 
 		"disk": {
 			Type:        schema.TypeInt,
 			Required:    true,
+			ForceNew:    true,
 			Description: "Node boot disk size in GB.",
 		},
 	}
