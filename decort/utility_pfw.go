@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -22,7 +23,7 @@ func utilityPfwCheckPresence(d *schema.ResourceData, m interface{}) (*PfwRecord,
 		return nil, nil
 	}
 
-	idS := d.Id()
+	idS := strings.Split(d.Id(), "-")[1]
 	id, err := strconv.Atoi(idS)
 	if err != nil {
 		return nil, err

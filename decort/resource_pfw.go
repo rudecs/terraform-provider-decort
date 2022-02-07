@@ -25,6 +25,7 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -52,7 +53,7 @@ func resourcePfwCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	d.SetId(pfwId)
+	d.SetId(fmt.Sprintf("%d-%s", d.Get("compute_id").(int), pfwId))
 
 	pfw, err := utilityPfwCheckPresence(d, m)
 	if err != nil {
