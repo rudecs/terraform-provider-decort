@@ -101,7 +101,7 @@ func resourcePfwDelete(d *schema.ResourceData, m interface{}) error {
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("computeId", strconv.Itoa(d.Get("compute_id").(int)))
-	urlValues.Add("ruleId", d.Id())
+	urlValues.Add("ruleId", strconv.Itoa(pfw.ID))
 
 	_, err = controller.decortAPICall("POST", ComputePfwDelAPI, urlValues)
 	if err != nil {
