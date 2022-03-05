@@ -667,3 +667,31 @@ type SshKeyConfig struct {
 	SshKey    string
 	UserShell string
 }
+
+//
+// images api
+//
+const imageCreateAPI = "/restmachine/cloudapi/image/create"
+const imageGetAPI = "/restmachine/cloudapi/image/get"
+const imageDeleteAPI = "/restmachine/cloudapi/image/delete"
+const imageEditNameAPI = "/restmachine/cloudapi/image/rename"
+const imageLinkAPI = "/restmachine/cloudapi/image/link"
+
+type Image struct {
+	ImageId      int      `json:"imageId"`
+	Name         string   `json:"name"`
+	Url          string   `json:"url"`
+	Gid          int      `json:"gid"`
+	Boottype     string   `json:"boottype"`
+	Imagetype    string   `json:"imagetype"`
+	Drivers      []string `json:"drivers"`
+	Hotresize    bool     `json:"hotresize"`
+	Username     string   `json:"username"`
+	Password     string   `json:"password"`
+	AccountId    int      `json:"accountId"`
+	UsernameDL   string   `json:"usernameDL"`
+	PasswordDL   string   `json:"passwordDL"`
+	SepId        int      `json:"sepId"`
+	PoolName     string   `json:"poolName"`
+	Architecture string   `json:"architecture"`
+}
