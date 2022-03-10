@@ -1,6 +1,6 @@
 /*
 Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
-Author: Stanislav Solovev, <spsolovev@digitalenergy.online>
+Author: Stanislav Solovev, <spsolovev@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,32 +31,32 @@ import (
 	"net/url"
 	"strconv"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilityImageCheckPresence(d *schema.ResourceData, m interface{}) (*Image, error) {
+func utilityGridCheckPresence(d *schema.ResourceData, m interface{}) (*Grid, error) {
+	grid := &Grid{}
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	if (strconv.Itoa(d.Get("image_id").(int))) != "0" {
-		urlValues.Add("imageId", strconv.Itoa(d.Get("image_id").(int)))
+	if gridId, ok := d.GetOk("grid_id"); ok {
+		urlValues.Add("gridId", strconv.Itoa(gridId.(int)))
 	} else {
-		urlValues.Add("imageId", d.Id())
+		return nil, errors.New(fmt.Sprintf("grid_id is required"))
 	}
 
-	resp, err := controller.decortAPICall("POST", imageGetAPI, urlValues)
+	log.Debugf("utilityGridCheckPresence: load grid")
+	gridRaw, err := controller.decortAPICall("POST", GridGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp == "" {
-		return nil, nil
+	err = json.Unmarshal([]byte(gridRaw), grid)
+	if err != nil {
+		return nil, err
 	}
 
-	image := &Image{}
-	if err := json.Unmarshal([]byte(resp), image); err != nil {
-		return nil, errors.New(fmt.Sprintf(resp, " ", image))
-	}
-
-	return image, nil
+	return grid, nil
 }

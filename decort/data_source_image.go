@@ -1,6 +1,6 @@
 /*
-Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
-Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
+Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Author: Stanislav Solovev, <spsolovev@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,57 +25,151 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/url"
-
-	log "github.com/sirupsen/logrus"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+func flattenImage(d *schema.ResourceData, image *Image) {
+	d.Set("name", image.Name)
+	d.Set("url", image.Url)
+	d.Set("gid", image.Gid)
+	d.Set("image_id", image.ImageId)
+	d.Set("boot_type", image.Boottype)
+	d.Set("image_type", image.Imagetype)
+	d.Set("sep_id", image.SepId)
+	return
+}
+
 func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
-	name := d.Get("name").(string)
-	// rg_id, rgid_set := d.GetOk("rg_id")
-	accId, accSet := d.GetOk("account_id")
-
-	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
-	if accSet {
-		url_values.Add("accountId", fmt.Sprintf("%d", accId.(int)))
-	}
-	body_string, err := controller.decortAPICall("POST", ImagesListAPI, url_values)
+	image, err := utilityImageCheckPresence(d, m)
 	if err != nil {
 		return err
 	}
+	d.SetId("1234")
+	flattenImage(d, image)
 
-	log.Debugf("dataSourceImageRead: ready to decode response body from %s", ImagesListAPI)
-	model := ImagesListResp{}
-	err = json.Unmarshal([]byte(body_string), &model)
-	if err != nil {
-		return err
+	return nil
+}
+
+func dataSourceImageSchemaMake() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the rescue disk",
+		},
+		"url": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "URL where to download media from",
+		},
+		"gid": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "grid (platform) ID where this template should be create in",
+		},
+		"boot_type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Boot type of image bios or uefi",
+		},
+		"image_type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Image type linux, windows or other",
+		},
+		"drivers": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+			Description: "List of types of compute suitable for image. Example: [ \"KVM_X86\" ]",
+		},
+		"hot_resize": {
+			Type:        schema.TypeBool,
+			Computed:    true,
+			Description: "Does this machine supports hot resize",
+		},
+		"username": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Optional username for the image",
+		},
+		"password": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Optional password for the image",
+		},
+		"account_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "AccountId to make the image exclusive",
+		},
+		"username_dl": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "username for upload binary media",
+		},
+		"password_dl": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "password for upload binary media",
+		},
+		"sep_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "storage endpoint provider ID",
+		},
+		"pool_name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "pool for image create",
+		},
+		"architecture": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "binary architecture of this image, one of X86_64 of PPC64_LE",
+		},
+		"image_id": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "image id",
+		},
+		"permanently": {
+			Type:        schema.TypeBool,
+			Computed:    true,
+			Description: "Whether to completely delete the image",
+		},
+		"bootable": {
+			Type:        schema.TypeBool,
+			Computed:    true,
+			Description: "Does this image boot OS",
+		},
+		"virtual": {
+			Type:        schema.TypeMap,
+			Computed:    true,
+			Description: "Create virtual image",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "name of the virtual image to create",
+					},
+					"v_image_id": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "",
+					},
+				},
+			},
+		},
+		"link_to": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "",
+		},
 	}
-
-	// log.Printf("%#v", model)
-	log.Debugf("dataSourceImageRead: traversing decoded JSON of length %d", len(model))
-	for index, item := range model {
-		// need to match Image by name
-		if item.Name == name {
-			log.Debugf("dataSourceImageRead: index %d, matched name %s", index, item.Name)
-			d.SetId(fmt.Sprintf("%d", item.ID))
-			d.Set("account_id", item.AccountID)
-			d.Set("arch", item.Arch)
-			d.Set("sep_id", item.SepID)
-			d.Set("pool", item.Pool)
-			d.Set("status", item.Status)
-			d.Set("size", item.Size)
-			// d.Set("field_name", value)
-			return nil
-		}
-	}
-
-	return fmt.Errorf("Cannot find Image name %s", name)
 }
 
 func dataSourceImage() *schema.Resource {
@@ -89,57 +183,6 @@ func dataSourceImage() *schema.Resource {
 			Default: &Timeout60s,
 		},
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the image to locate. This parameter is case sensitive.",
-			},
-
-			"account_id": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				ValidateFunc: validation.IntAtLeast(1),
-				Description:  "Optional ID of the account to limit image search to.",
-			},
-
-			"arch": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Binary architecture of this image.",
-			},
-
-			"sep_id": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Storage end-point provider serving this image.",
-			},
-
-			/*
-				"sep_type": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Type of the storage end-point provider serving this image.",
-				},
-			*/
-
-			"pool": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Pool where this image is located.",
-			},
-
-			"size": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Size of the image in GB.",
-			},
-
-			"status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Current model status of this image.",
-			},
-		},
+		Schema: dataSourceImageSchemaMake(),
 	}
 }

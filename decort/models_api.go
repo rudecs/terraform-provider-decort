@@ -668,24 +668,27 @@ type SshKeyConfig struct {
 	UserShell string
 }
 
-//
+/////////////////
 // images api
-//
-const imageCreateAPI = "/restmachine/cloudapi/image/create"
-const imageGetAPI = "/restmachine/cloudapi/image/get"
-const imageDeleteAPI = "/restmachine/cloudapi/image/delete"
+////////////////////
+const imageCreateAPI = "/restmachine/cloudbroker/image/createImage"
+const imageGetAPI = "/restmachine/cloudbroker/image/get"
+const imageListGetAPI = "/restmachine/cloudbroker/image/list"
+const imageEditAPI = "/restmachine/cloudbroker/image/edit"
+const imageDeleteAPI = "/restmachine/cloudbroker/image/delete"
 const imageEditNameAPI = "/restmachine/cloudapi/image/rename"
 const imageLinkAPI = "/restmachine/cloudapi/image/link"
 
 type Image struct {
-	ImageId      int      `json:"imageId"`
+	ImageId      int      `json:"id"`
 	Name         string   `json:"name"`
 	Url          string   `json:"url"`
 	Gid          int      `json:"gid"`
-	Boottype     string   `json:"boottype"`
+	Boottype     string   `json:"bootType"`
 	Imagetype    string   `json:"imagetype"`
 	Drivers      []string `json:"drivers"`
 	Hotresize    bool     `json:"hotresize"`
+	Bootable     bool     `json:"bootable"`
 	Username     string   `json:"username"`
 	Password     string   `json:"password"`
 	AccountId    int      `json:"accountId"`
@@ -695,3 +698,22 @@ type Image struct {
 	PoolName     string   `json:"poolName"`
 	Architecture string   `json:"architecture"`
 }
+
+type ImageList []Image
+
+/////////////
+////GRID
+////////////////
+const GridListGetAPI = "/restmachine/cloudbroker/grid/list"
+const GridGetAPI = "/restmachine/cloudbroker/grid/get"
+
+type Grid struct {
+	Flag         string `json:"flag"`
+	Gid          int    `json:"gid"`
+	Guid         int    `json:"guid"`
+	Id           int    `json:"id"`
+	LocationCode string `json:"locationCode"`
+	Name         string `json:"name"`
+}
+
+type GridList []Grid

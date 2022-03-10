@@ -27,9 +27,7 @@ package decort
 import (
 	"net/url"
 	"strconv"
-	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	log "github.com/sirupsen/logrus"
@@ -46,9 +44,14 @@ func resourceImageCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("boottype", d.Get("boot_type").(string))
 	urlValues.Add("imagetype", d.Get("image_type").(string))
 
-	tstr := strings.Join(d.Get("drivers").([]string), ",")
-	tstr = "[" + tstr + "]"
-	urlValues.Add("drivers", tstr)
+	tstr := d.Get("drivers").([]interface{})
+	temp := ""
+	for _, str := range tstr {
+		s := "\"" + str.(string) + "\""
+		temp = temp + s
+	}
+	temp = "[" + temp + "]"
+	urlValues.Add("drivers", temp)
 
 	if hotresize, ok := d.GetOk("hot_resize"); ok {
 		urlValues.Add("hotresize", strconv.FormatBool(hotresize.(bool)))
@@ -65,10 +68,10 @@ func resourceImageCreate(d *schema.ResourceData, m interface{}) error {
 	if accountId, ok := d.GetOk("account_id"); ok {
 		urlValues.Add("accountId", strconv.Itoa(accountId.(int)))
 	}
-	if usernameDL, ok := d.GetOk("username_DL"); ok {
+	if usernameDL, ok := d.GetOk("username_dl"); ok {
 		urlValues.Add("usernameDL", usernameDL.(string))
 	}
-	if passwordDL, ok := d.GetOk("password_DL"); ok {
+	if passwordDL, ok := d.GetOk("password_dl"); ok {
 		urlValues.Add("passwordDL", passwordDL.(string))
 	}
 	if sepId, ok := d.GetOk("sep_id"); ok {
@@ -95,7 +98,8 @@ func resourceImageCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	d.SetId(strconv.Itoa(image.ImageId))
-	d.Set("image_id", image.ImageId)
+	d.Set("bootable", image.Bootable)
+	//d.Set("image_id", image.ImageId)
 
 	return nil
 }
@@ -120,11 +124,12 @@ func resourceImageRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("username", image.Username)
 	d.Set("password", image.Password)
 	d.Set("account_id", image.AccountId)
-	d.Set("username_DL", image.UsernameDL)
-	d.Set("password_DL", image.PasswordDL)
+	d.Set("username_dl", image.UsernameDL)
+	d.Set("password_dl", image.PasswordDL)
 	d.Set("sep_id", image.SepId)
 	d.Set("pool_name", image.PoolName)
 	d.Set("architecture", image.Architecture)
+	d.Set("bootable", image.Bootable)
 
 	return nil
 }
@@ -143,6 +148,7 @@ func resourceImageDelete(d *schema.ResourceData, m interface{}) error {
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("imageId", strconv.Itoa(d.Get("image_id").(int)))
+	urlValues.Add("reason", "")
 	if permanently, ok := d.GetOk("permanently"); ok {
 		urlValues.Add("permanently", strconv.FormatBool(permanently.(bool)))
 	}
@@ -198,6 +204,34 @@ func resourceImageLink(d *schema.ResourceDiff, m interface{}) error {
 	return nil
 }
 
+func resourceImageEdit(d *schema.ResourceData, m interface{}) error {
+	log.Debugf("resourceImageEdit: called for %s, id: %s", d.Get("name").(string), d.Id())
+	c := m.(*ControllerCfg)
+	urlValues := &url.Values{}
+	urlValues.Add("imageId", strconv.Itoa(d.Get("image_id").(int)))
+	urlValues.Add("name", d.Get("name").(string))
+	if username, ok := d.GetOk("username"); ok {
+		urlValues.Add("username", username.(string))
+	}
+	if password, ok := d.GetOk("password"); ok {
+		urlValues.Add("password", password.(string))
+	}
+	if accountId, ok := d.GetOk("account_id"); ok {
+		urlValues.Add("accountId", strconv.Itoa(accountId.(int)))
+	}
+	if bootable, ok := d.GetOk("bootable"); ok {
+		urlValues.Add("bootable", strconv.FormatBool(bootable.(bool)))
+	}
+	if hotresize, ok := d.GetOk("hot_resize"); ok {
+		urlValues.Add("hotresize", strconv.FormatBool(hotresize.(bool)))
+	}
+	_, err := c.decortAPICall("POST", imageEditAPI, urlValues)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func resourceImageSchemaMake() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"name": {
@@ -235,12 +269,9 @@ func resourceImageSchemaMake() map[string]*schema.Schema {
 		"drivers": {
 			Type:     schema.TypeList,
 			Required: true,
-			ForceNew: true,
 			MinItems: 1,
 			Elem: &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type: schema.TypeString,
 			},
 			Description: "List of types of compute suitable for image. Example: [ \"KVM_X86\" ]",
 		},
@@ -264,12 +295,12 @@ func resourceImageSchemaMake() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "AccountId to make the image exclusive",
 		},
-		"username_DL": {
+		"username_dl": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "username for upload binary media",
 		},
-		"password_DL": {
+		"password_dl": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "password for upload binary media",
@@ -300,6 +331,11 @@ func resourceImageSchemaMake() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Whether to completely delete the image",
 		},
+		"bootable": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Description: "Does this image boot OS",
+		},
 		"virtual": {
 			Type:        schema.TypeMap,
 			Optional:    true,
@@ -319,24 +355,10 @@ func resourceImageSchemaMake() map[string]*schema.Schema {
 				},
 			},
 		},
-		"link": {
-			Type:        schema.TypeMap,
+		"link_to": {
+			Type:        schema.TypeInt,
 			Optional:    true,
-			Description: "Link virtual image to another image in the platform",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"image_id": {
-						Type:        schema.TypeInt,
-						Required:    true,
-						Description: "ID of the virtual image",
-					},
-					"target_id": {
-						Type:        schema.TypeInt,
-						Required:    true,
-						Description: "ID of real image to link this virtual image to",
-					},
-				},
-			},
+			Description: "",
 		},
 	}
 }
@@ -347,6 +369,7 @@ func resourceImage() *schema.Resource {
 
 		Create: resourceImageCreate,
 		Read:   resourceImageRead,
+		Update: resourceImageEdit,
 		Delete: resourceImageDelete,
 		Exists: resourceImageExists,
 
@@ -361,7 +384,7 @@ func resourceImage() *schema.Resource {
 			Delete:  &Timeout60s,
 			Default: &Timeout60s,
 		},
-		CustomizeDiff: customdiff.All(
+		/*CustomizeDiff: customdiff.All(
 			customdiff.IfValueChange("name", func(old, new, meta interface{}) bool {
 				return !(old.(string) == new.(string))
 			}, resourceImageEditName),
@@ -373,7 +396,7 @@ func resourceImage() *schema.Resource {
 				}
 				return false
 			}, resourceImageLink),
-		),
+		),*/
 
 		Schema: resourceImageSchemaMake(),
 	}

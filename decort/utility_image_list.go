@@ -1,6 +1,6 @@
 /*
 Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
-Author: Stanislav Solovev, <spsolovev@digitalenergy.online>
+Author: Stanislav Solovev, <spsolovev@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,37 +26,43 @@ package decort
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/url"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilityImageCheckPresence(d *schema.ResourceData, m interface{}) (*Image, error) {
+func utilityImageListCheckPresence(d *schema.ResourceData, m interface{}) (ImageList, error) {
+	imageList := ImageList{}
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	if (strconv.Itoa(d.Get("image_id").(int))) != "0" {
-		urlValues.Add("imageId", strconv.Itoa(d.Get("image_id").(int)))
-	} else {
-		urlValues.Add("imageId", d.Id())
+	if sepId, ok := d.GetOk("sep_id"); ok {
+		urlValues.Add("sepId", strconv.Itoa(sepId.(int)))
+	}
+	if sharedWith, ok := d.GetOk("shared_with"); ok {
+		urlValues.Add("sharedWith", strconv.Itoa(sharedWith.(int)))
 	}
 
-	resp, err := controller.decortAPICall("POST", imageGetAPI, urlValues)
+	if page, ok := d.GetOk("page"); ok {
+		urlValues.Add("page", strconv.Itoa(page.(int)))
+	}
+	if size, ok := d.GetOk("size"); ok {
+		urlValues.Add("size", strconv.Itoa(size.(int)))
+	}
+
+	log.Debugf("utilityGridListCheckPresence: load image list")
+	imageListRaw, err := controller.decortAPICall("POST", imageListGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp == "" {
-		return nil, nil
+	err = json.Unmarshal([]byte(imageListRaw), &imageList)
+	if err != nil {
+		return nil, err
 	}
 
-	image := &Image{}
-	if err := json.Unmarshal([]byte(resp), image); err != nil {
-		return nil, errors.New(fmt.Sprintf(resp, " ", image))
-	}
-
-	return image, nil
+	return imageList, nil
 }

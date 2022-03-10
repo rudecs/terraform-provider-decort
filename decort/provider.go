@@ -110,12 +110,15 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"decort_account":  dataSourceAccount(),
-			"decort_resgroup": dataSourceResgroup(),
-			"decort_kvmvm":    dataSourceCompute(),
-			"decort_image":    dataSourceImage(),
-			"decort_disk":     dataSourceDisk(),
-			"decort_vins":     dataSourceVins(),
+			"decort_account":    dataSourceAccount(),
+			"decort_resgroup":   dataSourceResgroup(),
+			"decort_kvmvm":      dataSourceCompute(),
+			"decort_image":      dataSourceImage(),
+			"decort_disk":       dataSourceDisk(),
+			"decort_vins":       dataSourceVins(),
+			"decort_grid":       dataSourceGrid(),
+			"decort_grid_list":  dataSourceGridList(),
+			"decort_image_list": dataSourceImageList(),
 			// "decort_pfw": dataSourcePfw(),
 		},
 
