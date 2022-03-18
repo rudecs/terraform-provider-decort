@@ -25,19 +25,22 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func flattenGridList(gl GridList) []map[string]interface{} {
-	res := make([]map[string]interface{}, len(gl), len(gl))
+	res := make([]map[string]interface{}, 0)
 	for _, item := range gl {
-		temp := map[string]interface{}{}
-		temp["name"] = item.Name
-		temp["flag"] = item.Flag
-		temp["gid"] = item.Gid
-		temp["guid"] = item.Guid
-		temp["location_code"] = item.LocationCode
-		temp["id"] = item.Id
+		temp := map[string]interface{}{
+			"name":          item.Name,
+			"flag":          item.Flag,
+			"gid":           item.Gid,
+			"guid":          item.Guid,
+			"location_code": item.LocationCode,
+			"id":            item.Id,
+		}
+
 		res = append(res, temp)
 	}
 	return res
@@ -48,7 +51,8 @@ func dataSourceGridListRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId("1234")
+	id := uuid.New()
+	d.SetId(id.String())
 	d.Set("items", flattenGridList(gridList))
 
 	return nil

@@ -25,26 +25,60 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"strconv"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func flattenImage(d *schema.ResourceData, image *Image) {
 	d.Set("name", image.Name)
+	d.Set("drivers", image.Drivers)
 	d.Set("url", image.Url)
 	d.Set("gid", image.Gid)
 	d.Set("image_id", image.ImageId)
 	d.Set("boot_type", image.Boottype)
 	d.Set("image_type", image.Imagetype)
+	d.Set("bootable", image.Bootable)
 	d.Set("sep_id", image.SepId)
+	d.Set("unc_path", image.UNCPath)
+	d.Set("link_to", image.LinkTo)
+	d.Set("status", image.Status)
+	d.Set("tech_status", image.TechStatus)
+	d.Set("version", image.Version)
+	d.Set("size", image.Size)
+	d.Set("enabled", image.Enabled)
+	d.Set("computeci_id", image.ComputeciId)
+	d.Set("pool_name", image.PoolName)
+	d.Set("username", image.Username)
+	d.Set("username_dl", image.UsernameDL)
+	d.Set("password", image.Password)
+	d.Set("password_dl", image.PasswordDL)
+	d.Set("account_id", image.AccountId)
+	d.Set("guid", image.Guid)
+	d.Set("milestones", image.Milestones)
+	d.Set("provider_name", image.ProviderName)
+	d.Set("purge_attempts", image.PurgeAttempts)
+	d.Set("reference_id", image.ReferenceId)
+	d.Set("res_id", image.ResId)
+	d.Set("res_name", image.ResName)
+	d.Set("rescuecd", image.Rescuecd)
+	d.Set("architecture", image.Architecture)
+	d.Set("hot_resize", image.Hotresize)
+	d.Set("history", flattenHistory(image.History))
+	d.Set("last_modified", image.LastModified)
+	d.Set("meta", flattenMeta(image.Meta))
+	d.Set("desc", image.Desc)
+	d.Set("shared_with", image.SharedWith)
 	return
 }
 
 func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
 	image, err := utilityImageCheckPresence(d, m)
 	if err != nil {
+
 		return err
 	}
-	d.SetId("1234")
+	d.SetId(strconv.Itoa(image.Guid))
 	flattenImage(d, image)
 
 	return nil
@@ -77,6 +111,34 @@ func dataSourceImageSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Image type linux, windows or other",
 		},
+		"shared_with": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+		},
+		"history": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"guid": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
+					"id": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+					"timestamp": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+				},
+			},
+		},
 		"drivers": {
 			Type:     schema.TypeList,
 			Computed: true,
@@ -84,6 +146,14 @@ func dataSourceImageSchemaMake() map[string]*schema.Schema {
 				Type: schema.TypeString,
 			},
 			Description: "List of types of compute suitable for image. Example: [ \"KVM_X86\" ]",
+		},
+		"meta": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+			Description: "meta",
 		},
 		"hot_resize": {
 			Type:        schema.TypeBool,
@@ -145,29 +215,83 @@ func dataSourceImageSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Does this image boot OS",
 		},
-		"virtual": {
-			Type:        schema.TypeMap,
+		"unc_path": {
+			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Create virtual image",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"name": {
-						Type:        schema.TypeString,
-						Required:    true,
-						Description: "name of the virtual image to create",
-					},
-					"v_image_id": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: "",
-					},
-				},
-			},
+			Description: "unc path",
 		},
 		"link_to": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "",
+		},
+		"status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "status",
+		},
+		"tech_status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "tech atatus",
+		},
+		"version": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "version",
+		},
+		"size": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "image size",
+		},
+		"enabled": {
+			Type:     schema.TypeBool,
+			Computed: true,
+		},
+		"computeci_id": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"guid": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"milestones": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"provider_name": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"purge_attempts": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"reference_id": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"res_id": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"res_name": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"rescuecd": {
+			Type:     schema.TypeBool,
+			Computed: true,
+		},
+		"last_modified": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"desc": {
+			Type:     schema.TypeString,
+			Computed: true,
 		},
 	}
 }

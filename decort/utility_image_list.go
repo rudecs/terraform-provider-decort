@@ -53,7 +53,7 @@ func utilityImageListCheckPresence(d *schema.ResourceData, m interface{}) (Image
 		urlValues.Add("size", strconv.Itoa(size.(int)))
 	}
 
-	log.Debugf("utilityGridListCheckPresence: load image list")
+	log.Debugf("utilityImageListCheckPresence: load image list")
 	imageListRaw, err := controller.decortAPICall("POST", imageListGetAPI, urlValues)
 	if err != nil {
 		return nil, err

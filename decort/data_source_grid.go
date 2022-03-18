@@ -25,6 +25,8 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"strconv"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
@@ -43,7 +45,7 @@ func dataSourceGridRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId("1234")
+	d.SetId(strconv.Itoa(grid.Id))
 	flattenGrid(d, grid)
 
 	return nil

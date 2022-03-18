@@ -25,20 +25,53 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func flattenImageList(il ImageList) []map[string]interface{} {
-	res := make([]map[string]interface{}, len(il), len(il))
+	res := make([]map[string]interface{}, 0)
 	for _, item := range il {
-		temp := map[string]interface{}{}
-		temp["name"] = item.Name
-		temp["url"] = item.Url
-		temp["gid"] = item.Gid
-		temp["drivers"] = item.Drivers
-		temp["image_id"] = item.ImageId
-		temp["boot_type"] = item.Boottype
-		temp["image_type"] = item.Imagetype
+		temp := map[string]interface{}{
+			"name":           item.Name,
+			"url":            item.Url,
+			"gid":            item.Gid,
+			"guid":           item.Guid,
+			"drivers":        item.Drivers,
+			"image_id":       item.ImageId,
+			"boot_type":      item.Boottype,
+			"bootable":       item.Bootable,
+			"image_type":     item.Imagetype,
+			"status":         item.Status,
+			"tech_status":    item.TechStatus,
+			"version":        item.Version,
+			"username":       item.Username,
+			"username_dl":    item.UsernameDL,
+			"password":       item.Password,
+			"password_dl":    item.PasswordDL,
+			"purge_attempts": item.PurgeAttempts,
+			"architecture":   item.Architecture,
+			"account_id":     item.AccountId,
+			"computeci_id":   item.ComputeciId,
+			"enabled":        item.Enabled,
+			"reference_id":   item.ReferenceId,
+			"res_id":         item.ResId,
+			"res_name":       item.ResName,
+			"rescuecd":       item.Rescuecd,
+			"provider_name":  item.ProviderName,
+			"milestones":     item.Milestones,
+			"size":           item.Size,
+			"sep_id":         item.SepId,
+			"link_to":        item.LinkTo,
+			"unc_path":       item.UNCPath,
+			"pool_name":      item.PoolName,
+			"hot_resize":     item.Hotresize,
+			"history":        flattenHistory(item.History),
+			"last_modified":  item.LastModified,
+			"meta":           flattenMeta(item.Meta),
+			"desc":           item.Desc,
+			"shared_with":    item.SharedWith,
+		}
 		res = append(res, temp)
 	}
 	return res
@@ -49,7 +82,8 @@ func dataSourceImageListRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.SetId("1234")
+	id := uuid.New()
+	d.SetId(id.String())
 	d.Set("items", flattenImageList(imageList))
 
 	return nil
@@ -82,7 +116,7 @@ func dataSourceImageListSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "image list",
 			Elem: &schema.Resource{
-				Schema: resourceImageSchemaMake(),
+				Schema: dataSourceImageSchemaMake(),
 			},
 		},
 	}
