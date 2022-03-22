@@ -1,55 +1,114 @@
 # terraform-provider-decort
-Terraform provider for Digital Energy Cloud Orchestration Technology (DECORT) platform
+Terraform provider для платформы Digital Energy Cloud Orchestration Technology (DECORT)
 
-NOTE: provider rc-1.25 is designed for DECORT API 3.7.x. For older API versions please use:
-- DECORT API 3.6.x versions - provider version rc-1.10
-- DECORT API versions prior to 3.6.0 - Terraform DECS provider (https://github.com/rudecs/terraform-provider-decs)
+Внимание: провайдер версии rc-1.25 разработан для DECORT API 3.7.x.  
+Для более старых версий можно использовать:
+- DECORT API 3.6.x - версия провайдера rc-1.10
+- DECORT API до 3.6.0 - terraform DECS provider (https://github.com/rudecs/terraform-provider-decs)
 
-With this provider you can manage Compute instances, disks, virtual network segments and resource 
-groups in DECORT platform, as well as query the platform for information about existing resources. 
-This provider supports Import operations on pre-existing resources.
+## Возможности провайдера
+- Работа с Compute instances, 
+- Работа с disks, 
+- Работа с k8s,
+- Работа с virtual network segments,
+- Работа с image,
+- Работа с reource groups,
+- Работа с VINS,
+- Работа с pfw,
+- Работа с accounts.
 
-See user guide at https://github.com/rudecs/terraform-provider-decort/wiki
+Вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
 
-For a quick start follow these steps (assuming that your build host is running Linux; this provider builds on Windows as well, however, some paths may differ from what is mentioned below).
+## Начало
+Старт возможен по двум путям:  
+1. Установка через собранные пакеты.
+2. Ручная установка.
 
-1. Obtain the latest GO compiler. As of beginning 2021 it is recommended to use v.1.16.3 but as new Terraform versions are released newer Go compiler may be required, so check official Terraform repository regularly for more information.
+### Установка через собранные пакеты.
+1. Скачайте и установите terraform по ссылке: https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/aws-get-started
+2. Создайте файл `main.tf` и добавьте в него следующий блок.
+```terraform
+provider "decort" {
+  authenticator = "oauth2"
+  #controller_url = <DECORT_CONTROLLER_URL>
+  controller_url = "https://ds1.digitalenergy.online"
+  #oauth2_url = <DECORT_SSO_URL>
+  oauth2_url           = "https://sso.digitalenergy.online"
+  allow_unverified_ssl = true
+}
 ```
-    cd /tmp
-    wget https://golang.org/dl/go1.16.3.linux-amd64.tar.gz
-    tar xvf ./go1.16.3.linux-amd64.tar.gz
-    sudo mv go /usr/local
+3. Выполните команду
+```
+terraform init
+```
+Провайдер автоматически будет установлен на ваш компьютер из terraform registry.
+
+### Ручная установка
+1. Скачайте и установите Go по ссылке: https://go.dev/dl/
+2. Скачайте и установите terraform по ссылке: https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/aws-get-started
+3. Склонируйте репозиторий с провайдером, выполнив команду:
+```bash
+git clone https://github.com/rudecs/terraform-provider-decort.git
+```
+4. Перейдите в скачанную папку с провайдером и выполните команду
+```bash
+go build -o terraform-provider-decort
+```
+Если вы знаете как устроен _makefile_, то можно изменить в файле `Makefile` параметры под вашу ОС и выполнить команду
+```bash
+make build
+```
+5. Полученный файл необходимо поместить:  
+Linux:
+```bash
+~/.terraform.d/plugins/${host_name}/${namespace}/${type}/${version}/${target}
+```
+Windows:
+```powershell
+%APPDATA%\terraform.d\plugins\${host_name}/${namespace}/${type}/${version}/${target}
+```
+ВНИМАНИЕ: для ОС Windows `%APP_DATA%` является каталогом, в котором будут помещены будущие файлы terraform.
+Где:
+- host_name - имя хоста, держателя провайдера, например, digitalenergy.online
+- namespace - пространство имен хоста, например decort 
+- type - тип провайдера, может совпадать с пространством имен, например, decort
+- version - версия провайдера, например 1.2
+- target - версия ОС, например windows_amd64
+6. После этого, создайте файл `main.tf`.
+7. Добавьте в него следующий блок
+```terraform
+terraform {
+  required_providers {
+    decort = {
+      version = "1.2"
+      source  = "digitalenergy.online/decort/decort"
+    }
+  }
+}
+```
+В поле `version` указывается версия провайдера.  
+Обязательный параметр  
+Тип поля - строка  
+ВНИМАНИЕ: Версии в блоке и в репозитории, в который был помещен провайдер должны совпадать!
+
+В поле `source` помещается путь до репозитория с версией вида:
+```bash
+${host_name}/${namespace}/${type}
+```
+ВНИМАНИЕ: все параметры должны совпадать с путем репозитория, в котором помещен провайдер. 
+
+8. В консоле выполнить команду 
+```bash
+terraform init
 ```
 
-2. Add the following environment variables' declarations to shell startup script:
-```
-    export GOPATH=/opt/gopkg:~/
-    export GOROOT=/usr/local/go
-    export PATH=$PATH:$GOROOT/bin
-```
+9. Если все прошло хорошо - ошибок не будет.  
 
-3. Clone Terraform Plugin SDK framework repository to $GOPKG/src/github.com/hashicorp
-```
-    mkdir -p $GOPKG/src/github.com/hashicorp
-    cd $GOPKG/src/github.com/hashicorp
-    git clone https://github.com/hashicorp/terraform-plugin-sdk.git
-```
+Более подробно о сборке провайдера можно найти по ссылке: https://learn.hashicorp.com/tutorials/terraform/provider-use?in=terraform/providers
 
-4. Clone jwt-go package repository to $GOPKG/src/github.com/dgrijalva/jwt-go:
-```
-    mkdir -p $GOPKG/src/github.com/dgrijalva
-    cd $GOPKG/src/github.com/dgrijalva
-    git clone https://github.com/dgrijalva/jwt-go.git
-```
+## Примеры работы
+Примеры работы можно найти на:
+- Вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
+- В папке `samples`
 
-5. Clone Terraform DECORT provider repository to $GOPKG/src/github.com/terraform-provider-decort
-```
-    cd $GOPKG/src/github.com
-    git clone https://github.com/rudecs/terraform-provider-decort.git
-```
-
-6. Build Terraform DECORT provider:
-```
-    cd $GOPKG/src/github.com/terraform-provider-decort
-    go build -o terraform-provider-decort
-```
+Хорошей работы!
