@@ -1,6 +1,6 @@
 /*
-Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
-Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
+Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Author: Stanislav Solovev, <spsolovev@digitalenergy.online>, <svs1370@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,57 +25,275 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/url"
-
-	log "github.com/sirupsen/logrus"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
+func flattenImage(d *schema.ResourceData, image *Image) {
+	d.Set("name", image.Name)
+	d.Set("drivers", image.Drivers)
+	d.Set("url", image.Url)
+	d.Set("gid", image.Gid)
+	d.Set("image_id", image.ImageId)
+	d.Set("boot_type", image.Boottype)
+	d.Set("image_type", image.Imagetype)
+	d.Set("bootable", image.Bootable)
+	d.Set("sep_id", image.SepId)
+	d.Set("unc_path", image.UNCPath)
+	d.Set("link_to", image.LinkTo)
+	d.Set("status", image.Status)
+	d.Set("tech_status", image.TechStatus)
+	d.Set("version", image.Version)
+	d.Set("size", image.Size)
+	d.Set("enabled", image.Enabled)
+	d.Set("computeci_id", image.ComputeciId)
+	d.Set("pool_name", image.PoolName)
+	d.Set("username", image.Username)
+	d.Set("username_dl", image.UsernameDL)
+	d.Set("password", image.Password)
+	d.Set("password_dl", image.PasswordDL)
+	d.Set("account_id", image.AccountId)
+	d.Set("guid", image.Guid)
+	d.Set("milestones", image.Milestones)
+	d.Set("provider_name", image.ProviderName)
+	d.Set("purge_attempts", image.PurgeAttempts)
+	d.Set("reference_id", image.ReferenceId)
+	d.Set("res_id", image.ResId)
+	d.Set("res_name", image.ResName)
+	d.Set("rescuecd", image.Rescuecd)
+	d.Set("architecture", image.Architecture)
+	d.Set("hot_resize", image.Hotresize)
+	d.Set("history", flattenHistory(image.History))
+	d.Set("last_modified", image.LastModified)
+	d.Set("meta", flattenMeta(image.Meta))
+	d.Set("desc", image.Desc)
+	d.Set("shared_with", image.SharedWith)
+	return
+}
+
 func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {
-	name := d.Get("name").(string)
-	// rg_id, rgid_set := d.GetOk("rg_id")
-	accId, accSet := d.GetOk("account_id")
-
-	controller := m.(*ControllerCfg)
-	url_values := &url.Values{}
-	if accSet {
-		url_values.Add("accountId", fmt.Sprintf("%d", accId.(int)))
-	}
-	body_string, err := controller.decortAPICall("POST", ImagesListAPI, url_values)
+	image, err := utilityImageCheckPresence(d, m)
 	if err != nil {
+
 		return err
 	}
+	d.SetId(strconv.Itoa(image.Guid))
+	flattenImage(d, image)
 
-	log.Debugf("dataSourceImageRead: ready to decode response body from %s", ImagesListAPI)
-	model := ImagesListResp{}
-	err = json.Unmarshal([]byte(body_string), &model)
-	if err != nil {
-		return err
+	return nil
+}
+
+func dataSourceImageSchemaMake() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the rescue disk",
+		},
+		"url": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "URL where to download media from",
+		},
+		"gid": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "grid (platform) ID where this template should be create in",
+		},
+		"boot_type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Boot type of image bios or uefi",
+		},
+		"image_type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Image type linux, windows or other",
+		},
+		"shared_with": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+		},
+		"history": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"guid": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
+					"id": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+					"timestamp": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+				},
+			},
+		},
+		"drivers": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+			Description: "List of types of compute suitable for image. Example: [ \"KVM_X86\" ]",
+		},
+		"meta": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+			Description: "meta",
+		},
+		"hot_resize": {
+			Type:        schema.TypeBool,
+			Computed:    true,
+			Description: "Does this machine supports hot resize",
+		},
+		"username": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Optional username for the image",
+		},
+		"password": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Optional password for the image",
+		},
+		"account_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "AccountId to make the image exclusive",
+		},
+		"username_dl": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "username for upload binary media",
+		},
+		"password_dl": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "password for upload binary media",
+		},
+		"sep_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "storage endpoint provider ID",
+		},
+		"pool_name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "pool for image create",
+		},
+		"architecture": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "binary architecture of this image, one of X86_64 of PPC64_LE",
+		},
+		"image_id": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "image id",
+		},
+		"permanently": {
+			Type:        schema.TypeBool,
+			Computed:    true,
+			Description: "Whether to completely delete the image",
+		},
+		"bootable": {
+			Type:        schema.TypeBool,
+			Computed:    true,
+			Description: "Does this image boot OS",
+		},
+		"unc_path": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "unc path",
+		},
+		"link_to": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "",
+		},
+		"status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "status",
+		},
+		"tech_status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "tech atatus",
+		},
+		"version": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "version",
+		},
+		"size": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "image size",
+		},
+		"enabled": {
+			Type:     schema.TypeBool,
+			Computed: true,
+		},
+		"computeci_id": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"guid": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"milestones": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"provider_name": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"purge_attempts": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"reference_id": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"res_id": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"res_name": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"rescuecd": {
+			Type:     schema.TypeBool,
+			Computed: true,
+		},
+		"last_modified": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"desc": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
 	}
-
-	// log.Printf("%#v", model)
-	log.Debugf("dataSourceImageRead: traversing decoded JSON of length %d", len(model))
-	for index, item := range model {
-		// need to match Image by name
-		if item.Name == name {
-			log.Debugf("dataSourceImageRead: index %d, matched name %s", index, item.Name)
-			d.SetId(fmt.Sprintf("%d", item.ID))
-			d.Set("account_id", item.AccountID)
-			d.Set("arch", item.Arch)
-			d.Set("sep_id", item.SepID)
-			d.Set("pool", item.Pool)
-			d.Set("status", item.Status)
-			d.Set("size", item.Size)
-			// d.Set("field_name", value)
-			return nil
-		}
-	}
-
-	return fmt.Errorf("Cannot find Image name %s", name)
 }
 
 func dataSourceImage() *schema.Resource {
@@ -89,57 +307,6 @@ func dataSourceImage() *schema.Resource {
 			Default: &Timeout60s,
 		},
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the image to locate. This parameter is case sensitive.",
-			},
-
-			"account_id": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				ValidateFunc: validation.IntAtLeast(1),
-				Description:  "Optional ID of the account to limit image search to.",
-			},
-
-			"arch": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Binary architecture of this image.",
-			},
-
-			"sep_id": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Storage end-point provider serving this image.",
-			},
-
-			/*
-				"sep_type": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Type of the storage end-point provider serving this image.",
-				},
-			*/
-
-			"pool": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Pool where this image is located.",
-			},
-
-			"size": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Size of the image in GB.",
-			},
-
-			"status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Current model status of this image.",
-			},
-		},
+		Schema: dataSourceImageSchemaMake(),
 	}
 }

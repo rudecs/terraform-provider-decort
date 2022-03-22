@@ -667,3 +667,112 @@ type SshKeyConfig struct {
 	SshKey    string
 	UserShell string
 }
+
+////////////////////
+// 	 IMAGE API	  //
+////////////////////
+const imageCreateAPI = "/restmachine/cloudbroker/image/createImage"
+const imageSyncCreateAPI = "/restmachine/cloudbroker/image/syncCreateImage"
+const imageCreateVirtualAPI = "/restmachine/cloudbroker/image/createVirtual"
+const imageCreateCDROMAPI = "/restmachine/cloudbroker/image/createCDROMImage"
+const imageListStacksApi = "/restmachine/cloudbroker/image/listStacks"
+const imageGetAPI = "/restmachine/cloudbroker/image/get"
+const imageListGetAPI = "/restmachine/cloudbroker/image/list"
+const imageEditAPI = "/restmachine/cloudbroker/image/edit"
+const imageDeleteAPI = "/restmachine/cloudbroker/image/delete"
+const imageDeleteCDROMAPI = "/restmachine/cloudbroker/image/deleteCDROMImage"
+const imageEnableAPI = "/restmachine/cloudbroker/image/enable"
+const imageDisableAPI = "/restmachine/cloudbroker/image/disable"
+const imageEditNameAPI = "/restmachine/cloudbroker/image/rename"
+const imageLinkAPI = "/restmachine/cloudbroker/image/link"
+const imageShareAPI = "/restmachine/cloudbroker/image/share"
+const imageComputeciSetAPI = "/restmachine/cloudbroker/image/computeciSet"
+const imageComputeciUnsetAPI = "/restmachine/cloudbroker/image/computeciUnset"
+const imageUpdateNodesAPI = "/restmachine/cloudbroker/image/updateNodes"
+const imageDeleteImagesAPI = "/restmachine/cloudbroker/image/deleteImages"
+
+type History struct {
+	Guid      string `json:"guid"`
+	Id        int    `json:"id"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+type Image struct {
+	ImageId       int           `json:"id"`
+	Name          string        `json:"name"`
+	Url           string        `json:"url"`
+	Gid           int           `json:"gid"`
+	Guid          int           `json:"guid"`
+	Boottype      string        `json:"bootType"`
+	Imagetype     string        `json:"type"`
+	Drivers       []string      `json:"drivers"`
+	Hotresize     bool          `json:"hotResize"`
+	Bootable      bool          `json:"bootable"`
+	Username      string        `json:"username"`
+	Password      string        `json:"password"`
+	AccountId     int           `json:"accountId"`
+	UsernameDL    string        `json:"usernameDL"`
+	PasswordDL    string        `json:"passwordDL"`
+	SepId         int           `json:"sepId"`
+	PoolName      string        `json:"pool"`
+	Architecture  string        `json:"architecture"`
+	UNCPath       string        `json:"UNCPath"`
+	LinkTo        int           `json:"linkTo"`
+	Status        string        `json:"status"`
+	TechStatus    string        `json:"techStatus"`
+	Size          int           `json:"size"`
+	Version       string        `json:"version"`
+	Enabled       bool          `json:"enabled"`
+	ComputeciId   int           `json:"computeciId"`
+	Milestones    int           `json:"milestones"`
+	ProviderName  string        `json:"provider_name"`
+	PurgeAttempts int           `json:"purgeAttempts"`
+	ReferenceId   string        `json:"referenceId"`
+	ResId         string        `json:"resId"`
+	ResName       string        `json:"resName"`
+	Rescuecd      bool          `json:"rescuecd"`
+	Meta          []interface{} `json:"_meta"`
+	History       []History     `json:"history"`
+	LastModified  int64         `json:"lastModified"`
+	Desc          string        `json:"desc"`
+	SharedWith    []int         `json:"sharedWith"`
+}
+
+type ImageList []Image
+
+type ImageStack struct {
+	ApiURL      string   `json:"apiUrl"`
+	ApiKey      string   `json:"apikey"`
+	AppId       string   `json:"appId"`
+	Desc        string   `json:"desc"`
+	Drivers     []string `json:"drivers"`
+	Error       int      `json:"error"`
+	Guid        int      `json:"guid"`
+	Id          int      `json:"id"`
+	Images      []int    `json:"images"`
+	Login       string   `json:"login"`
+	Name        string   `json:"name"`
+	Passwd      string   `json:"passwd"`
+	ReferenceId string   `json:"referenceId"`
+	Status      string   `json:"status"`
+	Type        string   `json:"type"`
+}
+
+type ImageListStacks []ImageStack
+
+/////////////////
+//  GRID API   //
+/////////////////
+const GridListGetAPI = "/restmachine/cloudbroker/grid/list"
+const GridGetAPI = "/restmachine/cloudbroker/grid/get"
+
+type Grid struct {
+	Flag         string `json:"flag"`
+	Gid          int    `json:"gid"`
+	Guid         int    `json:"guid"`
+	Id           int    `json:"id"`
+	LocationCode string `json:"locationCode"`
+	Name         string `json:"name"`
+}
+
+type GridList []Grid
