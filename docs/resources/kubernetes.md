@@ -20,16 +20,19 @@ description: |-
 - **k8sci_id** (Number) ID of the k8s catalog item to base this instance on.
 - **name** (String) Name of the cluster.
 - **rg_id** (Number) Resource group ID that this instance belongs to.
+- **wg_name** (String) Name for first worker group created with cluster.
 
 ### Optional
 
 - **id** (String) The ID of this resource.
 - **masters** (Block List, Max: 1) Master node(s) configuration. (see [below for nested schema](#nestedblock--masters))
+- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - **workers** (Block List, Max: 1) Worker node(s) configuration. (see [below for nested schema](#nestedblock--workers))
 
 ### Read-Only
 
 - **default_wg_id** (Number) ID of default workers group for this instace.
+- **kubeconfig** (String) Kubeconfig for cluster access.
 
 <a id="nestedblock--masters"></a>
 ### Nested Schema for `masters`
@@ -40,6 +43,18 @@ Required:
 - **disk** (Number) Node boot disk size in GB.
 - **num** (Number) Number of nodes to create.
 - **ram** (Number) Node RAM in MB.
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- **create** (String)
+- **default** (String)
+- **delete** (String)
+- **read** (String)
+- **update** (String)
 
 
 <a id="nestedblock--workers"></a>

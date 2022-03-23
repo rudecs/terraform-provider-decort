@@ -44,6 +44,7 @@ func resourceK8sCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("name", d.Get("name").(string))
 	urlValues.Add("rgId", strconv.Itoa(d.Get("rg_id").(int)))
 	urlValues.Add("k8ciId", strconv.Itoa(d.Get("k8sci_id").(int)))
+	urlValues.Add("workerGroupName", d.Get("wg_name").(string))
 
 	var masterNode K8sNodeRecord
 	if masters, ok := d.GetOk("masters"); ok {
@@ -67,7 +68,6 @@ func resourceK8sCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("workerRam", strconv.Itoa(workerNode.Ram))
 	urlValues.Add("workerDisk", strconv.Itoa(workerNode.Disk))
 
-	//TODO find a way to avoid hardcoding these values
 	//if withLB, ok := d.GetOk("with_lb"); ok {
 	//urlValues.Add("withLB", strconv.FormatBool(withLB.(bool)))
 	//}
@@ -121,6 +121,11 @@ func resourceK8sCreate(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("default_wg_id", k8s.Groups.Workers[0].ID)
 
+	urlValues = &url.Values{}
+	urlValues.Add("k8sId", d.Id())
+	kubeconfig, err := controller.decortAPICall("POST", K8sGetConfigAPI, urlValues)
+	d.Set("kubeconfig", kubeconfig)
+
 	return nil
 }
 
@@ -136,6 +141,7 @@ func resourceK8sRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("name", k8s.Name)
 	d.Set("rg_id", k8s.RgID)
 	d.Set("k8sci_id", k8s.CI)
+	d.Set("wg_name", k8s.Groups.Workers[0].Name)
 	d.Set("masters", nodeToResource(k8s.Groups.Masters))
 	d.Set("workers", nodeToResource(k8s.Groups.Workers[0]))
 	d.Set("default_wg_id", k8s.Groups.Workers[0].ID)
@@ -216,6 +222,13 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			Description: "ID of the k8s catalog item to base this instance on.",
 		},
 
+		"wg_name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			ForceNew:    true,
+			Description: "Name for first worker group created with cluster.",
+		},
+
 		"masters": {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -265,6 +278,12 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "ID of default workers group for this instace.",
 		},
+
+		"kubeconfig": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Kubeconfig for cluster access.",
+		},
 	}
 }
 
@@ -282,7 +301,13 @@ func resourceK8s() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
-		//TODO timeouts
+		Timeouts: &schema.ResourceTimeout{
+			Create:  &Timeout10m,
+			Read:    &Timeout30s,
+			Update:  &Timeout60s,
+			Delete:  &Timeout60s,
+			Default: &Timeout60s,
+		},
 
 		Schema: resourceK8sSchemaMake(),
 	}

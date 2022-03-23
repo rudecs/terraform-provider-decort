@@ -28,7 +28,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,7 +38,7 @@ func resourceK8sWgCreate(d *schema.ResourceData, m interface{}) error {
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
-	urlValues.Add("name", uuid.New().String())
+	urlValues.Add("name", d.Get("name").(string))
 	urlValues.Add("workerNum", strconv.Itoa(d.Get("num").(int)))
 	urlValues.Add("workerCpu", strconv.Itoa(d.Get("cpu").(int)))
 	urlValues.Add("workerRam", strconv.Itoa(d.Get("ram").(int)))
@@ -51,6 +50,9 @@ func resourceK8sWgCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	d.SetId(resp)
+
+	// This code is the supposed flow, but at the time of writing it's not yet implemented by the platfom
+
 	//urlValues = &url.Values{}
 	//urlValues.Add("auditId", strings.Trim(resp, `"`))
 
@@ -90,6 +92,7 @@ func resourceK8sWgRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
+	d.Set("name", wg.Name)
 	d.Set("num", wg.Num)
 	d.Set("cpu", wg.Cpu)
 	d.Set("ram", wg.Ram)
@@ -145,13 +148,12 @@ func resourceK8sWgSchemaMake() map[string]*schema.Schema {
 			Description: "ID of k8s instance.",
 		},
 
-		//Unused but required by creation API. Sending generated UUID each time
-		//"name": {
-		//Type:        schema.TypeString,
-		//Required:    true,
-		//ForceNew:    true,
-		//Description: "Name of the worker group.",
-		//},
+		"name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			ForceNew:    true,
+			Description: "Name of the worker group.",
+		},
 
 		"num": {
 			Type:        schema.TypeInt,
@@ -200,7 +202,12 @@ func resourceK8sWg() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 
-		//TODO timeouts
+		Timeouts: &schema.ResourceTimeout{
+			Create:  &Timeout10m,
+			Read:    &Timeout30s,
+			Delete:  &Timeout60s,
+			Default: &Timeout60s,
+		},
 
 		Schema: resourceK8sWgSchemaMake(),
 	}

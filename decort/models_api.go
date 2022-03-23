@@ -25,7 +25,8 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
-	"bytes"
+	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -35,6 +36,7 @@ import (
 var Timeout30s = time.Second * 30
 var Timeout60s = time.Second * 60
 var Timeout180s = time.Second * 180
+var Timeout10m = time.Minute * 10
 
 //
 // structures related to /cloudapi/rg/list API
@@ -581,11 +583,12 @@ const VinsDeleteAPI = "/restmachine/cloudapi/vins/delete"
 
 //K8sNodeRecord represents a worker/master group
 type K8sNodeRecord struct {
-	ID   int `json:"id"`
-	Disk int `json:"disk"`
-	Cpu  int `json:"cpu"`
-	Num  int `json:"num"`
-	Ram  int `json:"ram"`
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Disk int    `json:"disk"`
+	Cpu  int    `json:"cpu"`
+	Num  int    `json:"num"`
+	Ram  int    `json:"ram"`
 }
 
 //K8sRecord represents k8s instance
@@ -611,22 +614,35 @@ const K8sDeleteAPI = "/restmachine/cloudapi/k8s/delete"
 const K8sWgCreateAPI = "/restmachine/cloudapi/k8s/workersGroupAdd"
 const K8sWgDeleteAPI = "/restmachine/cloudapi/k8s/workersGroupDelete"
 
+const K8sGetConfigAPI = "/restmachine/cloudapi/k8s/getConfig"
+
 //Blasphemous workaround for parsing Result value
 type TaskResult int
 
 func (r *TaskResult) UnmarshalJSON(b []byte) error {
-	b = bytes.Trim(b, `"`)
-	if len(b) == 0 {
-		*r = 0
-		return nil
+	if b[0] == '"' {
+		b := b[1 : len(b)-1]
+		if len(b) == 0 {
+			*r = 0
+			return nil
+		}
+		n, err := strconv.Atoi(string(b))
+		if err != nil {
+			return err
+		}
+		*r = TaskResult(n)
+	} else if b[0] == '[' {
+		res := []interface{}{}
+		if err := json.Unmarshal(b, &res); err != nil {
+			return err
+		}
+		if n, ok := res[0].(float64); ok {
+			*r = TaskResult(n)
+		} else {
+			return fmt.Errorf("could not unmarshal %v into int", res[0])
+		}
 	}
 
-	n, err := strconv.Atoi(string(b))
-	if err != nil {
-		return err
-	}
-
-	*r = TaskResult(n)
 	return nil
 }
 

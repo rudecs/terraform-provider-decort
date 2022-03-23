@@ -18,6 +18,7 @@ description: |-
 ### Required
 
 - **k8s_id** (Number) ID of k8s instance.
+- **name** (String) Name of the worker group.
 
 ### Optional
 
@@ -26,5 +27,16 @@ description: |-
 - **id** (String) The ID of this resource.
 - **num** (Number) Number of worker nodes to create.
 - **ram** (Number) Worker node RAM in MB.
+- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- **create** (String)
+- **default** (String)
+- **delete** (String)
+- **read** (String)
 
 
