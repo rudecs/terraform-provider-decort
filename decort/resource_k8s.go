@@ -124,6 +124,9 @@ func resourceK8sCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues = &url.Values{}
 	urlValues.Add("k8sId", d.Id())
 	kubeconfig, err := controller.decortAPICall("POST", K8sGetConfigAPI, urlValues)
+	if err != nil {
+		log.Warnf("could not get kubeconfig: %v", err)
+	}
 	d.Set("kubeconfig", kubeconfig)
 
 	return nil
@@ -145,6 +148,15 @@ func resourceK8sRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("masters", nodeToResource(k8s.Groups.Masters))
 	d.Set("workers", nodeToResource(k8s.Groups.Workers[0]))
 	d.Set("default_wg_id", k8s.Groups.Workers[0].ID)
+
+	controller := m.(*ControllerCfg)
+	urlValues := &url.Values{}
+	urlValues.Add("k8sId", d.Id())
+	kubeconfig, err := controller.decortAPICall("POST", K8sGetConfigAPI, urlValues)
+	if err != nil {
+		log.Warnf("could not get kubeconfig: %v", err)
+	}
+	d.Set("kubeconfig", kubeconfig)
 
 	return nil
 }
