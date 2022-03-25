@@ -13,6 +13,8 @@
   - virtual_image
   - cdrom_image
   - delete_images
+  - k8s
+  - k8s_wg
 
 ## Как пользоваться примерами
 1. Установить terraform

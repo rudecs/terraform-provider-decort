@@ -107,8 +107,10 @@ terraform init
 Более подробно о сборке провайдера можно найти по ссылке: https://learn.hashicorp.com/tutorials/terraform/provider-use?in=terraform/providers
 
 ## Примеры работы
-Примеры работы можно найти на:
-- Вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
-- В папке `samples`
+Примеры работы можно найти:
+- На вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
+- В папке `samples`  
 
+Схемы к terraform'у доступны:
+- В папке `docs`
 Хорошей работы!

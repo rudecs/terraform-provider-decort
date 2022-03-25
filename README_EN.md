@@ -110,6 +110,8 @@ More details about the provider's building process: https://learn.hashicorp.com/
 
 ## Examples and Samples
 - Examples: https://github.com/rudecs/terraform-provider-decort/wiki
-- Samples: in repository `samples`
+- Samples: see in repository `samples`  
 
+Terraform schemas in:
+- See in repository `docs`
 Good work!
