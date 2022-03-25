@@ -112,5 +112,6 @@ terraform init
 - В папке `samples`  
 
 Схемы к terraform'у доступны:
-- В папке `docs`
+- В папке `docs`  
+
 Хорошей работы!

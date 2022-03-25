@@ -113,5 +113,6 @@ More details about the provider's building process: https://learn.hashicorp.com/
 - Samples: see in repository `samples`  
 
 Terraform schemas in:
-- See in repository `docs`
+- See in repository `docs`  
+
 Good work!
