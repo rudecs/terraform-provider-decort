@@ -101,6 +101,41 @@ func resourceK8sWgRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
+func resourceK8sWgUpdate(d *schema.ResourceData, m interface{}) error {
+	log.Debugf("resourceK8sWgUpdate: called with k8s id %d", d.Get("k8s_id").(int))
+
+	controller := m.(*ControllerCfg)
+
+	wg, err := utilityK8sWgCheckPresence(d, m)
+	if err != nil {
+		return nil
+	}
+
+	urlValues := &url.Values{}
+	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
+	urlValues.Add("workersGroupId", d.Id())
+
+	newNum := d.Get("num").(int)
+
+	if newNum > wg.Num {
+		urlValues.Add("num", strconv.Itoa(newNum-wg.Num))
+		_, err := controller.decortAPICall("POST", K8sWorkerAddAPI, urlValues)
+		if err != nil {
+			return err
+		}
+	} else {
+		for i := wg.Num - 1; i >= newNum; i-- {
+			urlValues.Set("workerId", strconv.Itoa(wg.DetailedInfo[i].ID))
+			_, err := controller.decortAPICall("POST", K8sWorkerDeleteAPI, urlValues)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func resourceK8sWgDelete(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceK8sWgDelete: called with k8s id %d", d.Get("k8s_id").(int))
 
@@ -158,7 +193,6 @@ func resourceK8sWgSchemaMake() map[string]*schema.Schema {
 		"num": {
 			Type:        schema.TypeInt,
 			Optional:    true,
-			ForceNew:    true,
 			Default:     1,
 			Description: "Number of worker nodes to create.",
 		},
@@ -195,6 +229,7 @@ func resourceK8sWg() *schema.Resource {
 
 		Create: resourceK8sWgCreate,
 		Read:   resourceK8sWgRead,
+		Update: resourceK8sWgUpdate,
 		Delete: resourceK8sWgDelete,
 		Exists: resourceK8sWgExists,
 
@@ -205,6 +240,7 @@ func resourceK8sWg() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Create:  &Timeout10m,
 			Read:    &Timeout30s,
+			Update:  &Timeout10m,
 			Delete:  &Timeout60s,
 			Default: &Timeout60s,
 		},

@@ -72,7 +72,6 @@ func nodeK8sSubresourceSchemaMake() map[string]*schema.Schema {
 		"num": {
 			Type:        schema.TypeInt,
 			Required:    true,
-			ForceNew:    true,
 			Description: "Number of nodes to create.",
 		},
 

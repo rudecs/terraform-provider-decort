@@ -165,13 +165,46 @@ func resourceK8sUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceK8sUpdate: called with id %s, rg %d", d.Id(), d.Get("rg_id").(int))
 
 	controller := m.(*ControllerCfg)
-	urlValues := &url.Values{}
-	urlValues.Add("k8sId", d.Id())
-	urlValues.Add("name", d.Get("name").(string))
 
-	_, err := controller.decortAPICall("POST", K8sUpdateAPI, urlValues)
-	if err != nil {
-		return err
+	if d.HasChange("name") {
+		urlValues := &url.Values{}
+		urlValues.Add("k8sId", d.Id())
+		urlValues.Add("name", d.Get("name").(string))
+
+		_, err := controller.decortAPICall("POST", K8sUpdateAPI, urlValues)
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("workers") {
+		k8s, err := utilityK8sCheckPresence(d, m)
+		if err != nil {
+			return err
+		}
+
+		wg := k8s.Groups.Workers[0]
+		urlValues := &url.Values{}
+		urlValues.Add("k8sId", d.Id())
+		urlValues.Add("workersGroupId", strconv.Itoa(wg.ID))
+
+		newWorkers := parseNode(d.Get("workers").([]interface{}))
+
+		if newWorkers.Num > wg.Num {
+			urlValues.Add("num", strconv.Itoa(newWorkers.Num-wg.Num))
+			_, err := controller.decortAPICall("POST", K8sWorkerAddAPI, urlValues)
+			if err != nil {
+				return err
+			}
+		} else {
+			for i := wg.Num - 1; i >= newWorkers.Num; i-- {
+				urlValues.Set("workerId", strconv.Itoa(wg.DetailedInfo[i].ID))
+				_, err := controller.decortAPICall("POST", K8sWorkerDeleteAPI, urlValues)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	return nil
@@ -255,7 +288,6 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 		"workers": {
 			Type:     schema.TypeList,
 			Optional: true,
-			ForceNew: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: nodeK8sSubresourceSchemaMake(),
@@ -316,7 +348,7 @@ func resourceK8s() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Create:  &Timeout10m,
 			Read:    &Timeout30s,
-			Update:  &Timeout60s,
+			Update:  &Timeout10m,
 			Delete:  &Timeout60s,
 			Default: &Timeout60s,
 		},

@@ -583,12 +583,16 @@ const VinsDeleteAPI = "/restmachine/cloudapi/vins/delete"
 
 //K8sNodeRecord represents a worker/master group
 type K8sNodeRecord struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Disk int    `json:"disk"`
-	Cpu  int    `json:"cpu"`
-	Num  int    `json:"num"`
-	Ram  int    `json:"ram"`
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	Disk         int    `json:"disk"`
+	Cpu          int    `json:"cpu"`
+	Num          int    `json:"num"`
+	Ram          int    `json:"ram"`
+	DetailedInfo []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"detailedInfo"`
 }
 
 //K8sRecord represents k8s instance
@@ -613,6 +617,9 @@ const K8sDeleteAPI = "/restmachine/cloudapi/k8s/delete"
 
 const K8sWgCreateAPI = "/restmachine/cloudapi/k8s/workersGroupAdd"
 const K8sWgDeleteAPI = "/restmachine/cloudapi/k8s/workersGroupDelete"
+
+const K8sWorkerAddAPI = "/restmachine/cloudapi/k8s/workerAdd"
+const K8sWorkerDeleteAPI = "/restmachine/cloudapi/k8s/deleteWorkerFromGroup"
 
 const K8sGetConfigAPI = "/restmachine/cloudapi/k8s/getConfig"
 

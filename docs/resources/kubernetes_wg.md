@@ -38,5 +38,6 @@ Optional:
 - **default** (String)
 - **delete** (String)
 - **read** (String)
+- **update** (String)
 
 
