@@ -24,6 +24,7 @@ description: |-
 
 ### Optional
 
+- **extnet_id** (Number) ID of the external network to connect workers to. If omitted network will be chosen by the platfom.
 - **id** (String) The ID of this resource.
 - **masters** (Block List, Max: 1) Master node(s) configuration. (see [below for nested schema](#nestedblock--masters))
 - **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
@@ -33,6 +34,7 @@ description: |-
 
 - **default_wg_id** (Number) ID of default workers group for this instace.
 - **kubeconfig** (String) Kubeconfig for cluster access.
+- **lb_ip** (String) IP address of default load balancer.
 
 <a id="nestedblock--masters"></a>
 ### Nested Schema for `masters`

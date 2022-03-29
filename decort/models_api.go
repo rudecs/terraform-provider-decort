@@ -605,9 +605,25 @@ type K8sRecord struct {
 		Masters K8sNodeRecord   `json:"masters"`
 		Workers []K8sNodeRecord `json:"workers"`
 	} `json:"k8sGroups"`
+	LbID   int    `json:"lbId"`
 	Name   string `json:"name"`
 	RgID   int    `json:"rgId"`
 	RgName string `json:"rgName"`
+}
+
+//LbRecord represents load balancer instance
+type LbRecord struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	RgID        int    `json:"rgId"`
+	VinsID      int    `json:"vinsId"`
+	ExtNetID    int    `json:"extnetId"`
+	PrimaryNode struct {
+		BackendIP  string `json:"backendIp"`
+		ComputeID  int    `json:"computeId"`
+		FrontendIP string `json:"frontendIp"`
+		NetworkID  int    `json:"networkId"`
+	} `json:"primaryNode"`
 }
 
 const K8sCreateAPI = "/restmachine/cloudapi/k8s/create"
@@ -622,6 +638,8 @@ const K8sWorkerAddAPI = "/restmachine/cloudapi/k8s/workerAdd"
 const K8sWorkerDeleteAPI = "/restmachine/cloudapi/k8s/deleteWorkerFromGroup"
 
 const K8sGetConfigAPI = "/restmachine/cloudapi/k8s/getConfig"
+
+const LbGetAPI = "/restmachine/cloudapi/lb/get"
 
 //Blasphemous workaround for parsing Result value
 type TaskResult int
