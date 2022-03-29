@@ -58,7 +58,6 @@ func parseNode(nodeList []interface{}) K8sNodeRecord {
 func nodeToResource(node K8sNodeRecord) []interface{} {
 	mp := make(map[string]interface{})
 
-	mp["id"] = node.ID
 	mp["num"] = node.Num
 	mp["cpu"] = node.Cpu
 	mp["ram"] = node.Ram

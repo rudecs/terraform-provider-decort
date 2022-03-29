@@ -36,7 +36,7 @@ import (
 var Timeout30s = time.Second * 30
 var Timeout60s = time.Second * 60
 var Timeout180s = time.Second * 180
-var Timeout10m = time.Minute * 10
+var Timeout20m = time.Minute * 20
 
 //
 // structures related to /cloudapi/rg/list API

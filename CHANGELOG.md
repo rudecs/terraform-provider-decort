@@ -1,16 +1,5 @@
-## 2.0
+### Bug fixes
+- k8s state import
 
-### New data sources
-- image
-- image\_list
-- grid
-- grid\_list
-- image\_list\_stacks
-
-### New resources
-- image
-- virtual\_image
-- cdrom\_image
-- delete\_images
-- k8s
-- k8s\_wg
+### Minor changes
+- increased k8s and k8s\_wg create/update timeouts

@@ -346,9 +346,9 @@ func resourceK8s() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create:  &Timeout10m,
+			Create:  &Timeout20m,
 			Read:    &Timeout30s,
-			Update:  &Timeout10m,
+			Update:  &Timeout20m,
 			Delete:  &Timeout60s,
 			Default: &Timeout60s,
 		},
