@@ -73,10 +73,11 @@ func resourceK8sCreate(d *schema.ResourceData, m interface{}) error {
 	//}
 	urlValues.Add("withLB", strconv.FormatBool(true))
 
-	//if extNet, ok := d.GetOk("extnet_id"); ok {
-	//urlValues.Add("extnetId", strconv.Itoa(extNet.(int)))
-	//}
-	urlValues.Add("extnetId", strconv.Itoa(0))
+	if extNet, ok := d.GetOk("extnet_id"); ok {
+		urlValues.Add("extnetId", strconv.Itoa(extNet.(int)))
+	} else {
+		urlValues.Add("extnetId", "0")
+	}
 
 	//if desc, ok := d.GetOk("desc"); ok {
 	//urlValues.Add("desc", desc.(string))
@@ -122,6 +123,21 @@ func resourceK8sCreate(d *schema.ResourceData, m interface{}) error {
 	d.Set("default_wg_id", k8s.Groups.Workers[0].ID)
 
 	urlValues = &url.Values{}
+	urlValues.Add("lbId", strconv.Itoa(k8s.LbID))
+
+	resp, err = controller.decortAPICall("POST", LbGetAPI, urlValues)
+	if err != nil {
+		return err
+	}
+
+	var lb LbRecord
+	if err := json.Unmarshal([]byte(resp), &lb); err != nil {
+		return err
+	}
+	d.Set("extnet_id", lb.ExtNetID)
+	d.Set("lb_ip", lb.PrimaryNode.FrontendIP)
+
+	urlValues = &url.Values{}
 	urlValues.Add("k8sId", d.Id())
 	kubeconfig, err := controller.decortAPICall("POST", K8sGetConfigAPI, urlValues)
 	if err != nil {
@@ -151,6 +167,21 @@ func resourceK8sRead(d *schema.ResourceData, m interface{}) error {
 
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
+	urlValues.Add("lbId", strconv.Itoa(k8s.LbID))
+
+	resp, err := controller.decortAPICall("POST", LbGetAPI, urlValues)
+	if err != nil {
+		return err
+	}
+
+	var lb LbRecord
+	if err := json.Unmarshal([]byte(resp), &lb); err != nil {
+		return err
+	}
+	d.Set("extnet_id", lb.ExtNetID)
+	d.Set("lb_ip", lb.PrimaryNode.FrontendIP)
+
+	urlValues = &url.Values{}
 	urlValues.Add("k8sId", d.Id())
 	kubeconfig, err := controller.decortAPICall("POST", K8sGetConfigAPI, urlValues)
 	if err != nil {
@@ -303,19 +334,25 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 		//Description: "Create k8s with load balancer if true.",
 		//},
 
-		//"extnet_id": {
-		//Type:        schema.TypeInt,
-		//Optional:    true,
-		//ForceNew:    true,
-		//Default:     0,
-		//Description: "ID of the external network to connect workers to.",
-		//},
+		"extnet_id": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			ForceNew:    true,
+			Description: "ID of the external network to connect workers to. If omitted network will be chosen by the platfom.",
+		},
 
 		//"desc": {
 		//Type:        schema.TypeString,
 		//Optional:    true,
 		//Description: "Text description of this instance.",
 		//},
+
+		"lb_ip": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "IP address of default load balancer.",
+		},
 
 		"default_wg_id": {
 			Type:        schema.TypeInt,
