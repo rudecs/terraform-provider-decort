@@ -9,12 +9,12 @@ NOTE: provider rc-1.25 is designed for DECORT API 3.7.x. For older API versions 
 - Work with Compute instances, 
 - Work with disks, 
 - Work with k8s,
-- Work with virtual network segments,
 - Work with image,
 - Work with reource groups,
 - Work with VINS,
 - Work with pfw,
-- Work with accounts.
+- Work with accounts,
+- Work with snapshots.
 
 This provider supports Import operations on pre-existing resources.
 

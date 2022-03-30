@@ -10,12 +10,12 @@ Terraform provider для платформы Digital Energy Cloud Orchestration 
 - Работа с Compute instances, 
 - Работа с disks, 
 - Работа с k8s,
-- Работа с virtual network segments,
 - Работа с image,
 - Работа с reource groups,
 - Работа с VINS,
 - Работа с pfw,
-- Работа с accounts.
+- Работа с accounts,
+- Работа с snapshots.
 
 Вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
 
