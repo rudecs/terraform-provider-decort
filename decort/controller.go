@@ -27,12 +27,14 @@ package decort
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	// "time"
 
@@ -378,28 +380,31 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 		req.Header.Set("Authorization", fmt.Sprintf("bearer %s", config.jwt))
 	}
 
-	resp, err := config.cc_client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
+	for i := 0; i < 5; i++ {
+		resp, err := config.cc_client.Do(req)
+		if err != nil {
+			return "", err
+		}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	log.Debugf("decortAPICall: %s %s\n %s", method, api_name, body)
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", err
+		}
+		resp.Body.Close()
+		log.Debugf("decortAPICall: %s %s\n %s", method, api_name, body)
 
-	if resp.StatusCode == http.StatusOK {
-		return string(body), nil
-	} else {
-		return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %q with request Body %q. Respone:\n%s",
-			resp.StatusCode, req.URL, params_str, body)
-	}
-
-	/*
-			if resp.StatusCode == StatusServiceUnavailable {
-		        return nil, fmt.Errorf("decortAPICall method called for incompatible authorization mode %q.", config.auth_mode_txt)
+		if resp.StatusCode == http.StatusOK {
+			return string(body), nil
+		} else {
+			if resp.StatusCode == http.StatusInternalServerError {
+				log.Warnf("got 500, retrying %d/5", i+1)
+				time.Sleep(time.Second * 5)
+				continue
 			}
-	*/
+			return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %q with request Body %q. Respone:\n%s",
+				resp.StatusCode, req.URL, params_str, body)
+		}
+	}
+
+	return "", errors.New("number of retries exceeded")
 }
