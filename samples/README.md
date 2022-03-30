@@ -8,6 +8,7 @@
   - image
   - image_list
   - image_list_stacks
+  - snapshot_list
 - resources:
   - image
   - virtual_image
@@ -15,6 +16,7 @@
   - delete_images
   - k8s
   - k8s_wg
+  - snapshot
 
 ## Как пользоваться примерами
 1. Установить terraform
