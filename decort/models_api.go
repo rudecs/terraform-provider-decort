@@ -799,3 +799,21 @@ type Grid struct {
 }
 
 type GridList []Grid
+
+/////////////////////
+/// SNAPSHOT API  ///
+/////////////////////
+
+const snapshotCreateAPI = "/restmachine/cloudapi/compute/snapshotCreate"
+const snapshotDeleteAPI = "/restmachine/cloudapi/compute/snapshotDelete"
+const snapshotRollbackAPI = "/restmachine/cloudapi/compute/snapshotRollback"
+const snapshotListAPI = "/restmachine/cloudapi/compute/snapshotList"
+
+type Snapshot struct {
+	Disks     []int  `json:"disks"`
+	Guid      string `json:"guid"`
+	Label     string `json:"label"`
+	Timestamp uint64 `json:"timestamp"`
+}
+
+type SnapshotList []Snapshot

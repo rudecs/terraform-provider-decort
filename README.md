@@ -65,7 +65,7 @@ Linux:
 ```
 Windows:
 ```powershell
-%APPDATA%\terraform.d\plugins\${host_name}/${namespace}/${type}/${version}/${target}
+%APPDATA%\terraform.d\plugins\${host_name}\${namespace}\${type}\${version}\${target}
 ```
 ВНИМАНИЕ: для ОС Windows `%APP_DATA%` является каталогом, в котором будут помещены будущие файлы terraform.
 Где:
