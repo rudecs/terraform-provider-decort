@@ -1,5 +1,4 @@
-### Bug fixes
-- k8s state import
-
-### Minor changes
-- increased k8s and k8s\_wg create/update timeouts
+### New features
+- snapshot\_list datasource
+- snapshot resource
+- k8s: extnet\_id parameter
