@@ -9,6 +9,8 @@
   - image_list
   - image_list_stacks
   - snapshot_list
+  - pcidevice_list
+  - pcidevice
 - resources:
   - image
   - virtual_image
@@ -17,6 +19,7 @@
   - k8s
   - k8s_wg
   - snapshot
+  - pcidevice
 
 ## Как пользоваться примерами
 1. Установить terraform
