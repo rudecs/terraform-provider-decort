@@ -125,6 +125,7 @@ func Provider() *schema.Provider {
 			"decort_image_list":        dataSourceImageList(),
 			"decort_image_list_stacks": dataSourceImageListStacks(),
 			"decort_snapshot_list":     dataSourceSnapshotList(),
+			"decort_vgpu":              dataSourceVGPU(),
 			// "decort_pfw": dataSourcePfw(),
 		},
 
