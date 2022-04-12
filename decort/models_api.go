@@ -835,3 +835,220 @@ type Snapshot struct {
 }
 
 type SnapshotList []Snapshot
+
+///////////////////
+///// SEP API /////
+///////////////////
+const sepAddConsumerNodesAPI = "/restmachine/cloudbroker/sep/addConsumerNodes"
+const sepDelConsumerNodesAPI = "/restmachine/cloudbroker/sep/delConsumerNodes"
+const sepAddProviderNodesAPI = "/restmachine/cloudbroker/sep/addProviderNodes"
+
+const sepConfigFieldEditAPI = "/restmachine/cloudbroker/sep/configFieldEdit"
+const sepConfigInsertAPI = "/restmachine/cloudbroker/sep/configInsert"
+const sepConfigValidateAPI = "/restmachine/cloudbroker/sep/configValidate"
+
+const sepConsumptionAPI = "/restmachine/cloudbroker/sep/consumption"
+
+const sepDecommissionAPI = "/restmachine/cloudbroker/sep/decommission"
+
+const sepEnableAPI = "/restmachine/cloudbroker/sep/enable"
+const sepDisableAPI = "/restmachine/cloudbroker/sep/disable"
+
+const sepDislListAPI = "/restmachine/cloudbroker/sep/diskList"
+
+const sepGetAPI = "/restmachine/cloudbroker/sep/get"
+const sepGetConfigAPI = "/restmachine/cloudbroker/sep/getConfig"
+const sepGetPoolAPI = "/restmachine/cloudbroker/sep/getPool"
+
+const sepCreateAPI = "/restmachine/cloudbroker/sep/create"
+const sepDeleteAPI = "/restmachine/cloudbroker/sep/delete"
+const sepListAPI = "/restmachine/cloudbroker/sep/list"
+
+const sepUpdateCapacityLimitAPI = "/restmachine/cloudbroker/sep/updateCapacityLimit"
+
+///Sep Configs
+///////DES config
+type DesDiskDelQueue struct {
+	PurgatoryId int `json:"purgatory_id"`
+}
+
+type DesHousekeepingSettings struct {
+	DiskDelQueue DesDiskDelQueue `json:"disk_del_queue"`
+}
+
+type URI struct {
+	IP   string `json:"ip"`
+	Port int    `json:"port"`
+}
+
+type DesConfigPool struct {
+	Types          []string `json:"types"`
+	ReferenceId    string   `json:"referenceId"`
+	Name           string   `json:"name"`
+	PagecacheRatio int      `json:"pagecache_ratio"`
+	URIS           []URI    `json:"uris"`
+}
+
+type DesConfigSep struct {
+	ApiIps               []string                `json:"API_IPs"`
+	Protocol             string                  `json:"protocol"`
+	Desc3oAppSecret      string                  `json:"decs3o_app_secret"`
+	Desc3oAppId          string                  `json:"decs3o_app_id"`
+	Format               string                  `json:"format"`
+	EdgeuserName         string                  `json:"edgeuser_name"`
+	EdgeuserPassword     string                  `json:"edgeuser_password"`
+	HousekeepingSettings DesHousekeepingSettings `json:"housekeeping_settings"`
+	Pools                []DesConfigPool         `json:"pools"`
+	Transport            string                  `json:"transport"`
+}
+
+///////Hitachi config
+
+type HitachiConfigPool struct {
+	CloneTechnology string   `json:"clone_technology"`
+	Id              int      `json:"id"`
+	MaxLdevId       int      `json:"maxLdevId"`
+	MinLdevId       int      `json:"minLdevId"`
+	Name            string   `json:"name"`
+	SnapshotPoolId  int      `json:"snapshot_pool_id"`
+	Snapshotable    bool     `json:"snapshotable"`
+	Types           []string `json:"types"`
+	UsageLimit      int      `json:"usage_limit"`
+}
+
+type HitachiConfigSep struct {
+	ApiUrls              []string             `json:"API_URLs"`
+	SN                   int                  `json:"SN"`
+	DiskMaxSize          int                  `json:"disk_max_size"`
+	Format               string               `json:"format"`
+	HostGroupNumMax      int                  `json:"hostGroupNumMax"`
+	HostGroupNumMin      int                  `json:"hostGroupNumMin"`
+	HostGroupNumber      int                  `json:"hostGroupNumber"`
+	HousekeepingSettings HousekeepingSettings `json:"housekeeping_settings"`
+	MGMTPassword         string               `json:"mgmt_password"`
+	MGMTUser             string               `json:"mgmt_user"`
+	Model                string               `json:"model"`
+	NamePrefix           string               `json:"name_prefix"`
+	Pools                []HitachiConfigPool  `json:"pools"`
+	Ports                []string             `json:"ports"`
+	Protocol             string               `json:"protocol"`
+	SSLVerify            bool                 `json:"ssl_verify"`
+}
+
+///////Tatlin Config
+
+type TatlinPort struct {
+	IPS  []string `json:"ips"`
+	IQN  string   `json:"iqn"`
+	Name string   `json:"name"`
+}
+
+type Pool struct {
+	Name       string   `json:"name"`
+	Types      []string `json:"types"`
+	UsageLimit int      `json:"usage_limit"`
+}
+
+type TatlinTechDisk struct {
+	Name string `json:"name"`
+	Size int    `json:"size"`
+	Pool string `json:"pool"`
+	WWID string `json:"wwid"`
+}
+
+type DiskDelQueue struct {
+	PurgeAttemptsThreshold int `json:"purge_attempts_threshold"`
+}
+
+type HousekeepingSettings struct {
+	DiskDelQueue DiskDelQueue `json:"disk_del_queue"`
+}
+
+type TatlinConfigSep struct {
+	ApiUrls              []string             `json:"API_URLs"`
+	DiskMaxSize          int                  `json:"disk_max_size"`
+	Format               string               `json:"format"`
+	EdgeuserName         string               `json:"edgeuser_name"`
+	EdgeuserPassword     string               `json:"edgeuser_password"`
+	MGMTPassword         string               `json:"mgmt_password"`
+	MGMTUser             string               `json:"mgmt_user"`
+	HostGroupName        string               `json:"hostGroupName"`
+	Model                string               `json:"model"`
+	NamePrefix           string               `json:"name_prefix"`
+	Ports                []TatlinPort         `json:"ports"`
+	Pools                []Pool               `json:"pools"`
+	Protocol             string               `json:"protocol"`
+	TechDisk             TatlinTechDisk       `json:"techDisk"`
+	HousekeepingSettings HousekeepingSettings `json:"housekeeping_settings"`
+}
+
+//////Huawei Dorado
+
+type HuaweiDoradoPort struct {
+	IP   string `json:"ip"`
+	Name string `json:"name"`
+}
+
+type HuaweiDoradoGroup struct {
+	HostGroup []string `json:"hostgroup"`
+	LungGroup []string `json:"lungroup"`
+	PortGroup []string `json:"portgroup"`
+}
+
+type HuaweiDoradoConfigSep struct {
+	ApiUrls              []string             `json:"API_URLs"`
+	DiskMaxSize          int                  `json:"disk_max_size"`
+	Format               string               `json:"format"`
+	EdgeuserName         string               `json:"edgeuser_name"`
+	EdgeuserPassword     string               `json:"edgeuser_password"`
+	MGMTPassword         string               `json:"mgmt_password"`
+	MGMTUser             string               `json:"mgmt_user"`
+	HostGroupName        string               `json:"hostGroupName"`
+	Model                string               `json:"model"`
+	NamePrefix           string               `json:"name_prefix"`
+	Pools                []Pool               `json:"pools"`
+	Protocol             string               `json:"protocol"`
+	Ports                []HuaweiDoradoPort   `json:"ports"`
+	Groups               []HuaweiDoradoGroup  `json:"groups"`
+	HousekeepingSettings HousekeepingSettings `json:"housekeeping_settings"`
+}
+
+////////////SEP
+
+type SepCommon struct {
+	Ckey       string        `json:"_ckey"`
+	Meta       []interface{} `json:"_meta"`
+	ConsumedBy []int         `json:"consumedBy"`
+	Desc       string        `json:"desc"`
+	Gid        int           `json:"gid"`
+	Guid       int           `json:"guid"`
+	Id         int           `json:"id"`
+	Milestones int           `json:"milestones"`
+	Name       string        `json:"name"`
+	ObjStatus  string        `json:"objStatus"`
+	ProvidedBy []int         `json:"providedBy"`
+	TechStatus string        `json:"techStatus"`
+	Type       string        `json:"type"`
+}
+
+type SepList []SepCommon
+
+type DesSep struct {
+	SepCommon
+	Config DesConfigSep `json:"config"`
+}
+
+type HitachiSep struct {
+	SepCommon
+	Config HitachiConfigSep `json:"config"`
+}
+
+type TatlinSep struct {
+	SepCommon
+	Config TatlinConfigSep `json:"config"`
+}
+
+type HuaweiDoradoSep struct {
+	SepCommon
+	Config HuaweiDoradoConfigSep `json:"config"`
+}
