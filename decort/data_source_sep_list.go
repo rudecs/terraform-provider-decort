@@ -25,6 +25,8 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -32,20 +34,23 @@ import (
 func flattenSepList(sl SepList) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
 	for _, item := range sl {
+		d, _ := json.Marshal(item.ConfigString)
+		configString := string(d)
 		temp := map[string]interface{}{
-			"ckey":        item.Ckey,
-			"meta":        flattenMeta(item.Meta),
-			"consumed_by": item.ConsumedBy,
-			"desc":        item.Desc,
-			"gid":         item.Gid,
-			"guid":        item.Guid,
-			"sep_id":      item.Id,
-			"milestones":  item.Milestones,
-			"name":        item.Name,
-			"obj_status":  item.ObjStatus,
-			"provided_by": item.ProvidedBy,
-			"tech_status": item.TechStatus,
-			"type":        item.Type,
+			"ckey":          item.Ckey,
+			"meta":          flattenMeta(item.Meta),
+			"consumed_by":   item.ConsumedBy,
+			"desc":          item.Desc,
+			"gid":           item.Gid,
+			"guid":          item.Guid,
+			"sep_id":        item.Id,
+			"milestones":    item.Milestones,
+			"name":          item.Name,
+			"obj_status":    item.ObjStatus,
+			"provided_by":   item.ProvidedBy,
+			"tech_status":   item.TechStatus,
+			"type":          item.Type,
+			"config_string": configString,
 		}
 
 		res = append(res, temp)
@@ -150,6 +155,10 @@ func dataSourceSepShortSchemaMake() map[string]*schema.Schema {
 			Computed: true,
 		},
 		"type": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"config_string": {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
