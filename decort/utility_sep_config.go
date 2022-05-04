@@ -34,24 +34,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilitySepConfigDesCheckPresence(d *schema.ResourceData, m interface{}) (*DesConfigSep, error) {
+func utilitySepConfigCheckPresence(d *schema.ResourceData, m interface{}) (SepConfig, error) {
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	sepConfigDes := &DesConfigSep{}
+	sepConfig := SepConfig{}
 
 	urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
 
-	log.Debugf("utilitySepConfigDesCheckPresence: load sep")
-	sepConfigDesRaw, err := controller.decortAPICall("POST", sepGetConfigAPI, urlValues)
+	log.Debugf("utilitySepConfigCheckPresence: load sep config")
+	sepConfigRaw, err := controller.decortAPICall("POST", sepGetConfigAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal([]byte(sepConfigDesRaw), sepConfigDes)
+	err = json.Unmarshal([]byte(sepConfigRaw), &sepConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return sepConfigDes, nil
+	return sepConfig, nil
 }

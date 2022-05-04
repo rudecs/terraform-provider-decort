@@ -25,35 +25,27 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func dataSourceSepDoradoPoolRead(d *schema.ResourceData, m interface{}) error {
-	doradoSepPool, err := utilitySepDoradoPoolCheckPresence(d, m)
+func dataSourceSepPoolRead(d *schema.ResourceData, m interface{}) error {
+	sepPool, err := utilitySepPoolCheckPresence(d, m)
 	if err != nil {
 		return err
 	}
 	id := uuid.New()
 	d.SetId(id.String())
-	d.Set("pool", flattenSepDoradoPool(doradoSepPool))
+
+	data, _ := json.Marshal(sepPool)
+	d.Set("pool", string(data))
 
 	return nil
 }
 
-func flattenSepDoradoPool(pool *Pool) []map[string]interface{} {
-	temp := make([]map[string]interface{}, 0)
-	t := map[string]interface{}{
-		"name":        pool.Name,
-		"types":       pool.Types,
-		"usage_limit": pool.UsageLimit,
-	}
-	temp = append(temp, t)
-
-	return temp
-}
-
-func dataSourceSepDoradoPoolSchemaMake() map[string]*schema.Schema {
+func dataSourceSepPoolSchemaMake() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"sep_id": {
 			Type:        schema.TypeInt,
@@ -66,42 +58,23 @@ func dataSourceSepDoradoPoolSchemaMake() map[string]*schema.Schema {
 			Description: "pool name",
 		},
 		"pool": {
-			Type:     schema.TypeList,
+			Type:     schema.TypeString,
 			Computed: true,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"name": {
-						Type:     schema.TypeString,
-						Computed: true,
-					},
-					"types": {
-						Type:     schema.TypeList,
-						Computed: true,
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-					},
-					"usage_limit": {
-						Type:     schema.TypeInt,
-						Computed: true,
-					},
-				},
-			},
 		},
 	}
 }
 
-func dataSourceSepDoradoPool() *schema.Resource {
+func dataSourceSepPool() *schema.Resource {
 	return &schema.Resource{
 		SchemaVersion: 1,
 
-		Read: dataSourceSepDoradoPoolRead,
+		Read: dataSourceSepPoolRead,
 
 		Timeouts: &schema.ResourceTimeout{
 			Read:    &Timeout30s,
 			Default: &Timeout60s,
 		},
 
-		Schema: dataSourceSepDoradoPoolSchemaMake(),
+		Schema: dataSourceSepPoolSchemaMake(),
 	}
 }

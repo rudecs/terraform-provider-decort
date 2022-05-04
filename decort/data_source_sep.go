@@ -31,71 +31,40 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func flattenSepList(sl SepList) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0)
-	for _, item := range sl {
-		data, _ := json.Marshal(item.Config)
-		temp := map[string]interface{}{
-			"ckey":        item.Ckey,
-			"meta":        flattenMeta(item.Meta),
-			"consumed_by": item.ConsumedBy,
-			"desc":        item.Desc,
-			"gid":         item.Gid,
-			"guid":        item.Guid,
-			"sep_id":      item.Id,
-			"milestones":  item.Milestones,
-			"name":        item.Name,
-			"obj_status":  item.ObjStatus,
-			"provided_by": item.ProvidedBy,
-			"tech_status": item.TechStatus,
-			"type":        item.Type,
-			"config":      string(data),
-		}
-
-		res = append(res, temp)
-	}
-	return res
-}
-
-func dataSourceSepListRead(d *schema.ResourceData, m interface{}) error {
-	sepList, err := utilitySepListCheckPresence(d, m)
+func dataSourceSepRead(d *schema.ResourceData, m interface{}) error {
+	desSep, err := utilitySepCheckPresence(d, m)
 	if err != nil {
 		return err
 	}
 	id := uuid.New()
 	d.SetId(id.String())
-	d.Set("items", flattenSepList(sepList))
+
+	d.Set("ckey", desSep.Ckey)
+	d.Set("meta", flattenMeta(desSep.Meta))
+	d.Set("consumed_by", desSep.ConsumedBy)
+	d.Set("desc", desSep.Desc)
+	d.Set("gid", desSep.Gid)
+	d.Set("guid", desSep.Guid)
+	d.Set("sep_id", desSep.Id)
+	d.Set("milestones", desSep.Milestones)
+	d.Set("name", desSep.Name)
+	d.Set("obj_status", desSep.ObjStatus)
+	d.Set("provided_by", desSep.ProvidedBy)
+	d.Set("tech_status", desSep.TechStatus)
+	d.Set("type", desSep.Type)
+	data, _ := json.Marshal(desSep.Config)
+	d.Set("config", string(data))
 
 	return nil
 }
 
-func dataSourceSepListSchemaMake() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema{
-		"page": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "page number",
-		},
-		"size": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "page size",
-		},
-		"items": {
-			Type:        schema.TypeList,
-			Computed:    true,
-			Description: "sep list",
-			Elem: &schema.Resource{
-				Schema: dataSourceSepShortSchemaMake(),
-			},
-		},
-	}
-
-	return rets
-}
-
-func dataSourceSepShortSchemaMake() map[string]*schema.Schema {
+func dataSourceSepCSchemaMake() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
+		"sep_id": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "sep type des id",
+		},
 		"ckey": {
 			Type:     schema.TypeString,
 			Computed: true,
@@ -123,10 +92,6 @@ func dataSourceSepShortSchemaMake() map[string]*schema.Schema {
 			Computed: true,
 		},
 		"guid": {
-			Type:     schema.TypeInt,
-			Computed: true,
-		},
-		"sep_id": {
 			Type:     schema.TypeInt,
 			Computed: true,
 		},
@@ -164,17 +129,17 @@ func dataSourceSepShortSchemaMake() map[string]*schema.Schema {
 	}
 }
 
-func dataSourceSepList() *schema.Resource {
+func dataSourceSep() *schema.Resource {
 	return &schema.Resource{
 		SchemaVersion: 1,
 
-		Read: dataSourceSepListRead,
+		Read: dataSourceSepRead,
 
 		Timeouts: &schema.ResourceTimeout{
 			Read:    &Timeout30s,
 			Default: &Timeout60s,
 		},
 
-		Schema: dataSourceSepListSchemaMake(),
+		Schema: dataSourceSepCSchemaMake(),
 	}
 }

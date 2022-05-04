@@ -26,32 +26,52 @@ package decort
 
 import (
 	"encoding/json"
-	"net/url"
-	"strconv"
 
-	log "github.com/sirupsen/logrus"
-
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilitySepHitachiConfigCheckPresence(d *schema.ResourceData, m interface{}) (*HitachiConfigSep, error) {
-	controller := m.(*ControllerCfg)
-	urlValues := &url.Values{}
-
-	sepHitachiConfig := &HitachiConfigSep{}
-
-	urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
-
-	log.Debugf("utilitySepHitachiConfigCheckPresence: load sep")
-	sepHitachiConfigRaw, err := controller.decortAPICall("POST", sepGetConfigAPI, urlValues)
+func dataSourceSepConfigRead(d *schema.ResourceData, m interface{}) error {
+	sepConfig, err := utilitySepConfigCheckPresence(d, m)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = json.Unmarshal([]byte(sepHitachiConfigRaw), sepHitachiConfig)
-	if err != nil {
-		return nil, err
-	}
+	id := uuid.New()
+	d.SetId(id.String())
 
-	return sepHitachiConfig, nil
+	data, _ := json.Marshal(sepConfig)
+	d.Set("config", string(data))
+
+	return nil
+}
+
+func dataSourceSepConfigSchemaMake() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"sep_id": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "storage endpoint provider ID",
+		},
+		"config": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "sep config json string",
+		},
+	}
+}
+
+func dataSourceSepConfig() *schema.Resource {
+	return &schema.Resource{
+		SchemaVersion: 1,
+
+		Read: dataSourceSepConfigRead,
+
+		Timeouts: &schema.ResourceTimeout{
+			Read:    &Timeout30s,
+			Default: &Timeout60s,
+		},
+
+		Schema: dataSourceSepConfigSchemaMake(),
+	}
 }

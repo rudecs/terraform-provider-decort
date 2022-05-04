@@ -36,23 +36,23 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func resourceSepDesCreate(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceSepDesCreate: called for sep %s type \"des\"", d.Get("name").(string))
+func resourceSepCreate(d *schema.ResourceData, m interface{}) error {
+	log.Debugf("resourceSepCreate: called for sep %s", d.Get("name").(string))
 
 	if sepId, ok := d.GetOk("sep_id"); ok {
-		if exists, err := resourceSepDesExists(d, m); exists {
+		if exists, err := resourceSepExists(d, m); exists {
 			if err != nil {
 				return err
 			}
 			d.SetId(strconv.Itoa(sepId.(int)))
-			err = resourceSepDesRead(d, m)
+			err = resourceSepRead(d, m)
 			if err != nil {
 				return err
 			}
 
 			return nil
 		}
-		return errors.New("provided device id does not exist")
+		return errors.New("provided sep id does not exist")
 	}
 
 	controller := m.(*ControllerCfg)
@@ -60,12 +60,12 @@ func resourceSepDesCreate(d *schema.ResourceData, m interface{}) error {
 
 	urlValues.Add("name", d.Get("name").(string))
 	urlValues.Add("gid", strconv.Itoa(d.Get("gid").(int)))
-	urlValues.Add("sep_type", "des")
+	urlValues.Add("sep_type", d.Get("type").(string))
 
 	if desc, ok := d.GetOk("desc"); ok {
 		urlValues.Add("description", desc.(string))
 	}
-	if configString, ok := d.GetOk("config_string"); ok {
+	if configString, ok := d.GetOk("config"); ok {
 		urlValues.Add("config", configString.(string))
 	}
 	if enable, ok := d.GetOk("enable"); ok {
@@ -98,16 +98,16 @@ func resourceSepDesCreate(d *schema.ResourceData, m interface{}) error {
 	temp = "[" + temp + "]"
 	urlValues.Add("provider_nids", temp)
 
-	sepDesId, err := controller.decortAPICall("POST", sepCreateAPI, urlValues)
+	sepId, err := controller.decortAPICall("POST", sepCreateAPI, urlValues)
 	if err != nil {
 		return err
 	}
 
 	id := uuid.New()
-	d.SetId(sepDesId)
-	d.Set("sep_id", sepDesId)
+	d.SetId(sepId)
+	d.Set("sep_id", sepId)
 
-	err = resourceSepDesRead(d, m)
+	err = resourceSepRead(d, m)
 	if err != nil {
 		return err
 	}
@@ -117,39 +117,38 @@ func resourceSepDesCreate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceSepDesRead(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceSepDesRead: called for %s id: %d", d.Get("name").(string), d.Get("sep_id").(int))
+func resourceSepRead(d *schema.ResourceData, m interface{}) error {
+	log.Debugf("resourceSepRead: called for %s id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 
-	sepDes, err := utilitySepDesCheckPresence(d, m)
-	if sepDes == nil {
+	sep, err := utilitySepCheckPresence(d, m)
+	if sep == nil {
 		d.SetId("")
 		return err
 	}
 
-	d.Set("ckey", sepDes.Ckey)
-	d.Set("meta", flattenMeta(sepDes.Meta))
-	d.Set("consumed_by", sepDes.ConsumedBy)
-	d.Set("desc", sepDes.Desc)
-	d.Set("gid", sepDes.Gid)
-	d.Set("guid", sepDes.Guid)
-	d.Set("sep_id", sepDes.Id)
-	d.Set("milestones", sepDes.Milestones)
-	d.Set("name", sepDes.Name)
-	d.Set("obj_status", sepDes.ObjStatus)
-	d.Set("provided_by", sepDes.ProvidedBy)
-	d.Set("tech_status", sepDes.TechStatus)
-	d.Set("type", sepDes.Type)
-	data, _ := json.Marshal(sepDes.Config)
-	d.Set("config_string", string(data))
-	d.Set("config", flattenSepDesConfig(sepDes.Config))
+	d.Set("ckey", sep.Ckey)
+	d.Set("meta", flattenMeta(sep.Meta))
+	d.Set("consumed_by", sep.ConsumedBy)
+	d.Set("desc", sep.Desc)
+	d.Set("gid", sep.Gid)
+	d.Set("guid", sep.Guid)
+	d.Set("sep_id", sep.Id)
+	d.Set("milestones", sep.Milestones)
+	d.Set("name", sep.Name)
+	d.Set("obj_status", sep.ObjStatus)
+	d.Set("provided_by", sep.ProvidedBy)
+	d.Set("tech_status", sep.TechStatus)
+	d.Set("type", sep.Type)
+	data, _ := json.Marshal(sep.Config)
+	d.Set("config", string(data))
 
 	return nil
 }
 
-func resourceSepDesDelete(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceSepDesDelete: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
+func resourceSepDelete(d *schema.ResourceData, m interface{}) error {
+	log.Debugf("resourceSepDelete: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 
-	sepDes, err := utilitySepDesCheckPresence(d, m)
+	sepDes, err := utilitySepCheckPresence(d, m)
 	if sepDes == nil {
 		if err != nil {
 			return err
@@ -170,10 +169,10 @@ func resourceSepDesDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceSepDesExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	log.Debugf("resourceSepDesExists: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
+func resourceSepExists(d *schema.ResourceData, m interface{}) (bool, error) {
+	log.Debugf("resourceSepExists: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 
-	sepDes, err := utilitySepDesCheckPresence(d, m)
+	sepDes, err := utilitySepCheckPresence(d, m)
 	if sepDes == nil {
 		if err != nil {
 			return false, err
@@ -184,14 +183,14 @@ func resourceSepDesExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	return true, nil
 }
 
-func resourceSepDesEdit(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceSepDesEdit: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
+func resourceSepEdit(d *schema.ResourceData, m interface{}) error {
+	log.Debugf("resourceSepEdit: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 	c := m.(*ControllerCfg)
-	urlValues := &url.Values{}
 
-	if d.HasChange("decommision") {
-		decommision := d.Get("decommision").(bool)
-		if decommision {
+	urlValues := &url.Values{}
+	if d.HasChange("decommission") {
+		decommission := d.Get("decommission").(bool)
+		if decommission {
 			urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
 			urlValues.Add("clear_physically", strconv.FormatBool(d.Get("clear_physically").(bool)))
 			_, err := c.decortAPICall("POST", sepDecommissionAPI, urlValues)
@@ -200,6 +199,7 @@ func resourceSepDesEdit(d *schema.ResourceData, m interface{}) error {
 			}
 		}
 	}
+
 	urlValues = &url.Values{}
 	if d.HasChange("upd_capacity_limit") {
 		updCapacityLimit := d.Get("upd_capacity_limit").(bool)
@@ -213,8 +213,37 @@ func resourceSepDesEdit(d *schema.ResourceData, m interface{}) error {
 	}
 
 	urlValues = &url.Values{}
+	if d.HasChange("config") {
+		urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
+		urlValues.Add("config", d.Get("config").(string))
+		_, err := c.decortAPICall("POST", sepConfigValidateAPI, urlValues)
+		if err != nil {
+			return err
+		}
+		_, err = c.decortAPICall("POST", sepConfigInsertAPI, urlValues)
+		if err != nil {
+			return err
+		}
 
-	err := resourceSepDesRead(d, m)
+	}
+
+	urlValues = &url.Values{}
+	if d.HasChange("field_edit") {
+		fieldConfig := d.Get("field_edit").([]interface{})
+		field := fieldConfig[0].(map[string]interface{})
+		urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
+		urlValues.Add("field_name", field["field_name"].(string))
+		urlValues.Add("field_value", field["field_value"].(string))
+		urlValues.Add("field_type", field["field_type"].(string))
+
+		_, err := c.decortAPICall("POST", sepConfigFieldEditAPI, urlValues)
+		if err != nil {
+			return err
+		}
+	}
+
+	urlValues = &url.Values{}
+	err := resourceSepRead(d, m)
 	if err != nil {
 		return err
 	}
@@ -340,7 +369,7 @@ func resourceSepSchemaMake() map[string]*schema.Schema {
 			Default:     false,
 			Description: "Update SEP capacity limit",
 		},
-		"decommision": {
+		"decommission": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
@@ -352,7 +381,7 @@ func resourceSepSchemaMake() map[string]*schema.Schema {
 			Default:     true,
 			Description: "clear disks and images physically",
 		},
-		"config_string": {
+		"config": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
@@ -421,7 +450,7 @@ func resourceSepSchemaMake() map[string]*schema.Schema {
 		},
 		"type": {
 			Type:        schema.TypeString,
-			Computed:    true,
+			Required:    true,
 			Description: "type of storage",
 		},
 		"enable": {
@@ -430,164 +459,40 @@ func resourceSepSchemaMake() map[string]*schema.Schema {
 			Default:     false,
 			Description: "enable SEP after creation",
 		},
-	}
-}
-
-func resourceSepDesSchemaMake(sh map[string]*schema.Schema) map[string]*schema.Schema {
-	sh["config"] = &schema.Schema{
-		Type:     schema.TypeList,
-		MaxItems: 1,
-		Computed: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"api_ips": {
-					Type:     schema.TypeList,
-					Computed: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+		"field_edit": {
+			Type:     schema.TypeList,
+			MaxItems: 1,
+			Optional: true,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"field_name": {
+						Type:     schema.TypeString,
+						Required: true,
 					},
-				},
-				"capacity_limit": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
-				"protocol": {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-				"decs3o_app_secret": {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-				"format": {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-				"edgeuser_password": {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-				"edgeuser_name": {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-				"decs3o_app_id": {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-				"transport": {
-					Type:     schema.TypeString,
-					Computed: true,
-				},
-				"pools": {
-					Type:     schema.TypeList,
-					Computed: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"types": {
-								Type:     schema.TypeList,
-								Computed: true,
-								Elem: &schema.Schema{
-									Type: schema.TypeString,
-								},
-							},
-							"reference_id": {
-								Type:     schema.TypeString,
-								Computed: true,
-							},
-							"name": {
-								Type:     schema.TypeString,
-								Computed: true,
-							},
-							"pagecache_ratio": {
-								Type:     schema.TypeInt,
-								Computed: true,
-							},
-							"uris": {
-								Type:     schema.TypeList,
-								Computed: true,
-								Elem: &schema.Resource{
-									Schema: map[string]*schema.Schema{
-										"ip": {
-											Type:     schema.TypeString,
-											Computed: true,
-										},
-										"port": {
-											Type:     schema.TypeInt,
-											Computed: true,
-										},
-									},
-								},
-							},
-						},
+					"field_value": {
+						Type:     schema.TypeString,
+						Required: true,
 					},
-				},
-				"housekeeping_settings": {
-					Type:     schema.TypeList,
-					Computed: true,
-					MaxItems: 1,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
-							"disk_del_queue": {
-								Type:     schema.TypeList,
-								Computed: true,
-								MaxItems: 1,
-								Elem: &schema.Resource{
-									Schema: map[string]*schema.Schema{
-										"chunk_max_size": {
-											Type:     schema.TypeInt,
-											Computed: true,
-										},
-										"disk_count_max": {
-											Type:     schema.TypeInt,
-											Computed: true,
-										},
-										"enabled": {
-											Type:     schema.TypeBool,
-											Computed: true,
-										},
-										"normal_time_to_sleep": {
-											Type:     schema.TypeInt,
-											Computed: true,
-										},
-										"one_minute_la_threshold": {
-											Type:     schema.TypeInt,
-											Computed: true,
-										},
-										"oversize_time_to_sleep": {
-											Type:     schema.TypeInt,
-											Computed: true,
-										},
-										"purge_attempts_threshold": {
-											Type:     schema.TypeInt,
-											Computed: true,
-										},
-										"purgatory_id": {
-											Type:     schema.TypeInt,
-											Computed: true,
-										},
-									},
-								},
-							},
-						},
+					"field_type": {
+						Type:     schema.TypeString,
+						Required: true,
 					},
 				},
 			},
 		},
 	}
-
-	return sh
 }
 
-func resourceSepDes() *schema.Resource {
+func resourceSep() *schema.Resource {
 	return &schema.Resource{
 		SchemaVersion: 1,
 
-		Create: resourceSepDesCreate,
-		Read:   resourceSepDesRead,
-		Update: resourceSepDesEdit,
-		Delete: resourceSepDesDelete,
-		Exists: resourceSepDesExists,
+		Create: resourceSepCreate,
+		Read:   resourceSepRead,
+		Update: resourceSepEdit,
+		Delete: resourceSepDelete,
+		Exists: resourceSepExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -601,7 +506,7 @@ func resourceSepDes() *schema.Resource {
 			Default: &Timeout60s,
 		},
 
-		Schema: resourceSepDesSchemaMake(resourceSepSchemaMake()),
+		Schema: resourceSepSchemaMake(),
 
 		CustomizeDiff: customdiff.All(
 			customdiff.IfValueChange("enable", func(old, new, meta interface{}) bool {

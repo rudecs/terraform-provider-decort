@@ -26,21 +26,19 @@ package decort
 
 import (
 	"encoding/json"
-	"errors"
 	"net/url"
 	"strconv"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilitySepDesCheckPresence(d *schema.ResourceData, m interface{}) (*SepDes, error) {
+func utilitySepCheckPresence(d *schema.ResourceData, m interface{}) (*Sep, error) {
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	sepDes := &SepDes{}
+	sep := &Sep{}
 
 	if d.Get("sep_id").(int) == 0 {
 		urlValues.Add("sep_id", d.Id())
@@ -48,19 +46,16 @@ func utilitySepDesCheckPresence(d *schema.ResourceData, m interface{}) (*SepDes,
 		urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
 	}
 
-	log.Debugf("utilitySepDesCheckPresence: load sep")
-	sepDesRaw, err := controller.decortAPICall("POST", sepGetAPI, urlValues)
+	log.Debugf("utilitySepCheckPresence: load sep")
+	sepRaw, err := controller.decortAPICall("POST", sepGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal([]byte(sepDesRaw), sepDes)
+	err = json.Unmarshal([]byte(sepRaw), sep)
 	if err != nil {
 		return nil, err
 	}
-	if strings.ToLower(sepDes.Type) != "des" {
-		return nil, errors.New("Invalid sep type")
-	}
 
-	return sepDes, nil
+	return sep, nil
 }

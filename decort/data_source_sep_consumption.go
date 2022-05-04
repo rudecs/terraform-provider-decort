@@ -25,8 +25,6 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
-	"strconv"
-
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -41,10 +39,7 @@ func dataSourceSepConsumptionRead(d *schema.ResourceData, m interface{}) error {
 
 	d.Set("type", sepCons.Type)
 	d.Set("total", flattenSepConsumption(sepCons.Total))
-	err = d.Set("by_pool", flattenSepConsumptionPools(sepCons.ByPool))
-	if err != nil {
-		return err
-	}
+	d.Set("by_pool", flattenSepConsumptionPools(sepCons.ByPool))
 
 	return nil
 }
@@ -66,16 +61,19 @@ func flattenSepConsumptionPools(mp map[string]SepConsumptionInd) []map[string]in
 	return sh
 }
 
-func flattenSepConsumption(sc SepConsumptionTotal) map[string]interface{} {
-	return map[string]interface{}{
-		"capacity_limit": strconv.Itoa(sc.CapacityLimit),
-		"disk_count":     strconv.Itoa(sc.DiskCount),
-		"disk_usage":     strconv.Itoa(sc.DiskUsage),
-		"snapshot_count": strconv.Itoa(sc.SnapshotCount),
-		"snapshot_usage": strconv.Itoa(sc.SnapshotUsage),
-		"usage":          strconv.Itoa(sc.Usage),
-		"usage_limit":    strconv.Itoa(sc.UsageLimit),
+func flattenSepConsumption(sc SepConsumptionTotal) []map[string]interface{} {
+	sh := make([]map[string]interface{}, 0)
+	temp := map[string]interface{}{
+		"capacity_limit": sc.CapacityLimit,
+		"disk_count":     sc.DiskCount,
+		"disk_usage":     sc.DiskUsage,
+		"snapshot_count": sc.SnapshotCount,
+		"snapshot_usage": sc.SnapshotUsage,
+		"usage":          sc.Usage,
+		"usage_limit":    sc.UsageLimit,
 	}
+	sh = append(sh, temp)
+	return sh
 }
 
 func dataSourceSepConsumptionSchemaMake() map[string]*schema.Schema {
@@ -83,7 +81,7 @@ func dataSourceSepConsumptionSchemaMake() map[string]*schema.Schema {
 		"sep_id": {
 			Type:        schema.TypeInt,
 			Required:    true,
-			Description: "sep type des id",
+			Description: "sep id",
 		},
 		"by_pool": {
 			Type:     schema.TypeList,
@@ -91,75 +89,92 @@ func dataSourceSepConsumptionSchemaMake() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"name": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "pool name",
 					},
 					"disk_count": {
-						Type:     schema.TypeInt,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "number of disks",
 					},
 					"disk_usage": {
-						Type:     schema.TypeInt,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "disk usage",
 					},
 					"snapshot_count": {
-						Type:     schema.TypeInt,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "number of snapshots",
 					},
 					"snapshot_usage": {
-						Type:     schema.TypeInt,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "snapshot usage",
 					},
 					"usage": {
-						Type:     schema.TypeInt,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "usage",
 					},
 					"usage_limit": {
-						Type:     schema.TypeInt,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "usage limit",
 					},
 				},
 			},
+			Description: "consumption divided by pool",
 		},
 		"total": {
-			Type:     schema.TypeMap,
+			Type:     schema.TypeList,
 			Computed: true,
+			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"capacity_limit": {
-						Type:     schema.TypeString,
+						Type:     schema.TypeInt,
 						Computed: true,
 					},
 					"disk_count": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "number of disks",
 					},
 					"disk_usage": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "disk usage",
 					},
 					"snapshot_count": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "number of snapshots",
 					},
 					"snapshot_usage": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "snapshot usage",
 					},
 					"usage": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "usage",
 					},
 					"usage_limit": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "usage limit",
 					},
 				},
 			},
+			Description: "total consumption",
 		},
 		"type": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "sep type",
 		},
 	}
 }

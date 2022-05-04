@@ -34,24 +34,25 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilitySepTatlinConfigCheckPresence(d *schema.ResourceData, m interface{}) (*TatlinConfigSep, error) {
+func utilitySepPoolCheckPresence(d *schema.ResourceData, m interface{}) (SepPool, error) {
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	sepTatlinConfig := &TatlinConfigSep{}
+	sepPool := SepPool{}
 
 	urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
+	urlValues.Add("pool_name", d.Get("pool_name").(string))
 
-	log.Debugf("utilitySepTatlinConfigCheckPresence: load sep")
-	sepTatlinConfigRaw, err := controller.decortAPICall("POST", sepGetConfigAPI, urlValues)
+	log.Debugf("utilitySepDesPoolCheckPresence: load sep")
+	sepPoolRaw, err := controller.decortAPICall("POST", sepGetPoolAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal([]byte(sepTatlinConfigRaw), sepTatlinConfig)
+	err = json.Unmarshal([]byte(sepPoolRaw), &sepPool)
 	if err != nil {
 		return nil, err
 	}
 
-	return sepTatlinConfig, nil
+	return sepPool, nil
 }

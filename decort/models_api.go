@@ -866,240 +866,7 @@ const sepListAPI = "/restmachine/cloudbroker/sep/list"
 
 const sepUpdateCapacityLimitAPI = "/restmachine/cloudbroker/sep/updateCapacityLimit"
 
-///Sep Configs
-///////DES config
-type DesDiskDelQueue struct {
-	PurgatoryId            int  `json:"purgatory_id"`
-	ChunkMaxSize           int  `json:"chunk_max_size"`
-	DiskCountMax           int  `json:"disk_count_max"`
-	Enabled                bool `json:"enabled"`
-	NormalTimeToSleep      int  `json:"normal_time_to_sleep"`
-	OneMinuteLaThreshold   int  `json:"one_minute_la_threshold"`
-	OversizeTimeToSleep    int  `json:"oversize_time_to_sleep"`
-	PurgeAttemptsThreshold int  `json:"purge_attempts_threshold"`
-}
-
-type DesHousekeepingSettings struct {
-	DiskDelQueue DesDiskDelQueue `json:"disk_del_queue"`
-}
-
-type URI struct {
-	IP   string `json:"ip"`
-	Port int    `json:"port"`
-}
-
-type URIList []URI
-
-type DesConfigPool struct {
-	Types          []string `json:"types"`
-	ReferenceId    string   `json:"referenceId"`
-	Name           string   `json:"name"`
-	PagecacheRatio int      `json:"pagecache_ratio"`
-	URIS           []URI    `json:"uris"`
-}
-
-type DesConfigPoolList []DesConfigPool
-
-type OVSSettings struct {
-	VPoolDataMetadataCache   int `json:"vpool_data_metadatacache"`
-	VPoolVMstorMetadataCache int `json:"vpool_vmstor_metadatacache"`
-}
-
-type DesConfigSep struct {
-	ApiIps               []string                `json:"API_IPs"`
-	Protocol             string                  `json:"protocol"`
-	Decs3oAppSecret      string                  `json:"decs3o_app_secret"`
-	Decs3oAppId          string                  `json:"decs3o_app_id"`
-	Format               string                  `json:"format"`
-	EdgeuserName         string                  `json:"edgeuser_name"`
-	EdgeuserPassword     string                  `json:"edgeuser_password"`
-	HousekeepingSettings DesHousekeepingSettings `json:"housekeeping_settings"`
-	Pools                DesConfigPoolList       `json:"pools"`
-	Transport            string                  `json:"transport"`
-	CapacityLimit        int                     `json:"capacity_limit"`
-	OVSSettings          OVSSettings             `json:"ovs_settings"`
-}
-
-///////Hitachi config
-
-type HitachiConfigPool struct {
-	CloneTechnology string   `json:"clone_technology"`
-	Id              int      `json:"id"`
-	MaxLdevId       int      `json:"maxLdevId"`
-	MinLdevId       int      `json:"minLdevId"`
-	Name            string   `json:"name"`
-	SnapshotPoolId  int      `json:"snapshot_pool_id"`
-	Snapshotable    bool     `json:"snapshotable"`
-	Types           []string `json:"types"`
-	UsageLimit      int      `json:"usage_limit"`
-}
-
-type HitachiConfigPoolList []HitachiConfigPool
-
-type HitachiConfigSep struct {
-	ApiUrls              []string              `json:"API_URLs"`
-	SN                   int                   `json:"SN"`
-	DiskMaxSize          int                   `json:"disk_max_size"`
-	Format               string                `json:"format"`
-	HostGroupNumMax      int                   `json:"hostGroupNumMax"`
-	HostGroupNumMin      int                   `json:"hostGroupNumMin"`
-	HostGroupNumber      int                   `json:"hostGroupNumber"`
-	HousekeepingSettings HousekeepingSettings  `json:"housekeeping_settings"`
-	MGMTPassword         string                `json:"mgmt_password"`
-	MGMTUser             string                `json:"mgmt_user"`
-	Model                string                `json:"model"`
-	NamePrefix           string                `json:"name_prefix"`
-	Pools                HitachiConfigPoolList `json:"pools"`
-	Ports                []string              `json:"ports"`
-	Protocol             string                `json:"protocol"`
-	SSLVerify            bool                  `json:"ssl_verify"`
-	OVSSettings          OVSSettings           `json:"ovs_settings"`
-}
-
-///////Tatlin Config
-
-type TatlinPort struct {
-	IPS  []string `json:"ips"`
-	IQN  string   `json:"iqn"`
-	Name string   `json:"name"`
-}
-
-type TatlinPortList []TatlinPort
-
-type Pool struct {
-	Name       string   `json:"name"`
-	Types      []string `json:"types"`
-	UsageLimit int      `json:"usage_limit"`
-}
-
-type PoolList []Pool
-
-type TatlinTechDisk struct {
-	Name string `json:"name"`
-	Size int    `json:"size"`
-	Pool string `json:"pool"`
-	WWID string `json:"wwid"`
-}
-
-type DiskDelQueue struct {
-	PurgatoryId            int  `json:"purgatory_id"`
-	ChunkMaxSize           int  `json:"chunk_max_size"`
-	DiskCountMax           int  `json:"disk_count_max"`
-	Enabled                bool `json:"enabled"`
-	NormalTimeToSleep      int  `json:"normal_time_to_sleep"`
-	OneMinuteLaThreshold   int  `json:"one_minute_la_threshold"`
-	OversizeTimeToSleep    int  `json:"oversize_time_to_sleep"`
-	PurgeAttemptsThreshold int  `json:"purge_attempts_threshold"`
-}
-
-type HousekeepingSettings struct {
-	DiskDelQueue DiskDelQueue `json:"disk_del_queue"`
-}
-
-type TatlinConfigSep struct {
-	ApiUrls              []string             `json:"API_URLs"`
-	DiskMaxSize          int                  `json:"disk_max_size"`
-	Format               string               `json:"format"`
-	EdgeuserName         string               `json:"edgeuser_name"`
-	EdgeuserPassword     string               `json:"edgeuser_password"`
-	MGMTPassword         string               `json:"mgmt_password"`
-	MGMTUser             string               `json:"mgmt_user"`
-	HostGroupName        string               `json:"hostGroupName"`
-	Model                string               `json:"model"`
-	NamePrefix           string               `json:"name_prefix"`
-	Ports                TatlinPortList       `json:"ports"`
-	Pools                PoolList             `json:"pools"`
-	Protocol             string               `json:"protocol"`
-	TechDisk             TatlinTechDisk       `json:"techDisk"`
-	HousekeepingSettings HousekeepingSettings `json:"housekeeping_settings"`
-	OVSSettings          OVSSettings          `json:"ovs_settings"`
-}
-
-//////Huawei Dorado
-
-type DoradoPort struct {
-	IP   string `json:"ip"`
-	Name string `json:"name"`
-}
-
-type DoradoPortList []DoradoPort
-
-type DoradoGroup struct {
-	HostGroup []string `json:"hostgroup"`
-	LungGroup []string `json:"lungroup"`
-	PortGroup []string `json:"portgroup"`
-}
-
-type DoradoConfigSep struct {
-	ApiUrls              []string             `json:"API_URLs"`
-	DiskMaxSize          int                  `json:"disk_max_size"`
-	Format               string               `json:"format"`
-	EdgeuserName         string               `json:"edgeuser_name"`
-	EdgeuserPassword     string               `json:"edgeuser_password"`
-	MGMTPassword         string               `json:"mgmt_password"`
-	MGMTUser             string               `json:"mgmt_user"`
-	HostGroupName        string               `json:"hostGroupName"`
-	Model                string               `json:"model"`
-	NamePrefix           string               `json:"name_prefix"`
-	Pools                PoolList             `json:"pools"`
-	Protocol             string               `json:"protocol"`
-	Ports                DoradoPortList       `json:"ports"`
-	Groups               DoradoGroup          `json:"groups"`
-	HousekeepingSettings HousekeepingSettings `json:"housekeeping_settings"`
-	OVSSettings          OVSSettings          `json:"ovs_settings"`
-}
-
-////////////SEP
-
-type SepCommon struct {
-	Ckey         string        `json:"_ckey"`
-	Meta         []interface{} `json:"_meta"`
-	ConsumedBy   []int         `json:"consumedBy"`
-	Desc         string        `json:"desc"`
-	Gid          int           `json:"gid"`
-	Guid         int           `json:"guid"`
-	Id           int           `json:"id"`
-	Milestones   int           `json:"milestones"`
-	Name         string        `json:"name"`
-	ObjStatus    string        `json:"objStatus"`
-	ProvidedBy   []int         `json:"providedBy"`
-	TechStatus   string        `json:"techStatus"`
-	Type         string        `json:"type"`
-	ConfigString interface{}   `json:"config"`
-}
-
-type SepList []SepCommon
-
-type SepDes struct {
-	SepCommon
-	Config DesConfigSep `json:"config"`
-}
-
-type SepDesList []SepDes
-
-type SepHitachi struct {
-	SepCommon
-	Config HitachiConfigSep `json:"config"`
-}
-
-type SepHitachiList []SepHitachi
-
-type SepTatlin struct {
-	SepCommon
-	Config TatlinConfigSep `json:"config"`
-}
-
-type SepTatlinList []SepTatlin
-
-type SepDorado struct {
-	SepCommon
-	Config DoradoConfigSep `json:"config"`
-}
-
-type SepDoradoList []SepDorado
-
-//////Consumption
-
+///Sep Models
 type SepConsumptionInd struct {
 	DiskCount     int `json:"disk_count"`
 	DiskUsage     int `json:"disk_usage"`
@@ -1121,3 +888,25 @@ type SepConsumption struct {
 }
 
 type SepDiskList []int
+
+type Sep struct {
+	Ckey       string        `json:"_ckey"`
+	Meta       []interface{} `json:"_meta"`
+	ConsumedBy []int         `json:"consumedBy"`
+	Desc       string        `json:"desc"`
+	Gid        int           `json:"gid"`
+	Guid       int           `json:"guid"`
+	Id         int           `json:"id"`
+	Milestones int           `json:"milestones"`
+	Name       string        `json:"name"`
+	ObjStatus  string        `json:"objStatus"`
+	ProvidedBy []int         `json:"providedBy"`
+	TechStatus string        `json:"techStatus"`
+	Type       string        `json:"type"`
+	Config     SepConfig     `json:"config"`
+}
+
+type SepConfig map[string]interface{}
+
+type SepList []Sep
+type SepPool map[string]interface{}
