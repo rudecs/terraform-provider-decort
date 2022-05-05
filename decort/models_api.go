@@ -836,6 +836,24 @@ type Snapshot struct {
 
 type SnapshotList []Snapshot
 
+////////////////
+/// VGPU API ///
+////////////////
+
+const vgpuListAPI = "/restmachine/cloudbroker/vgpu/list"
+
+type VGPU struct {
+	AccountID int    `json:"accountId"`
+	ID        int    `json:"id"`
+	Mode      string `json:"mode"`
+	PgpuID    int    `json:"pgpuid"`
+	ProfileID int    `json:"profileId"`
+	RAM       int    `json:"ram"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
+	VmID      int    `json:"vmid"`
+}
+
 /////////////////////////////
 //       PCIDEVICE         //
 /////////////////////////////
