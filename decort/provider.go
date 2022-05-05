@@ -111,6 +111,9 @@ func Provider() *schema.Provider {
 			"decort_cdrom_image":   resourceCDROMImage(),
 			"decort_delete_images": resourceDeleteImages(),
 			"decort_snapshot":      resourceSnapshot(),
+			"decort_pcidevice":     resourcePcidevice(),
+			"decort_sep":           resourceSep(),
+			"decort_sep_config":    resourceSepConfig(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -126,6 +129,14 @@ func Provider() *schema.Provider {
 			"decort_image_list_stacks": dataSourceImageListStacks(),
 			"decort_snapshot_list":     dataSourceSnapshotList(),
 			"decort_vgpu":              dataSourceVGPU(),
+			"decort_pcidevice":         dataSourcePcidevice(),
+			"decort_pcidevice_list":    dataSourcePcideviceList(),
+			"decort_sep_list":          dataSourceSepList(),
+			"decort_sep":               dataSourceSep(),
+			"decort_sep_consumption":   dataSourceSepConsumption(),
+			"decort_sep_disk_list":     dataSourceSepDiskList(),
+			"decort_sep_config":        dataSourceSepConfig(),
+			"decort_sep_pool":          dataSourceSepPool(),
 			// "decort_pfw": dataSourcePfw(),
 		},
 

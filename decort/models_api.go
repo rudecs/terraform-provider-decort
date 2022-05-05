@@ -853,3 +853,105 @@ type VGPU struct {
 	Type      string `json:"type"`
 	VmID      int    `json:"vmid"`
 }
+
+/////////////////////////////
+//       PCIDEVICE         //
+/////////////////////////////
+
+const pcideviceListAPI = "/restmachine/cloudbroker/pcidevice/list"
+const pcideviceDisableAPI = "/restmachine/cloudbroker/pcidevice/disable"
+const pcideviceEnableAPI = "/restmachine/cloudbroker/pcidevice/enable"
+const pcideviceCreateAPI = "/restmachine/cloudbroker/pcidevice/create"
+const pcideviceDeleteAPI = "/restmachine/cloudbroker/pcidevice/delete"
+
+type Pcidevice struct {
+	CKey        string        `json:"_ckey"`
+	Meta        []interface{} `json:"_meta"`
+	Computeid   int           `json:"computeId"`
+	Description string        `json:"description"`
+	Guid        int           `json:"guid"`
+	HwPath      string        `json:"hwPath"`
+	ID          int           `json:"id"`
+	Name        string        `json:"name"`
+	RgID        int           `json:"rgId"`
+	StackID     int           `json:"stackId"`
+	Status      string        `json:"status"`
+	SystemName  string        `json:"systemName"`
+}
+
+type PcideviceList []Pcidevice
+
+///////////////////
+///// SEP API /////
+///////////////////
+const sepAddConsumerNodesAPI = "/restmachine/cloudbroker/sep/addConsumerNodes"
+const sepDelConsumerNodesAPI = "/restmachine/cloudbroker/sep/delConsumerNodes"
+const sepAddProviderNodesAPI = "/restmachine/cloudbroker/sep/addProviderNodes"
+
+const sepConfigFieldEditAPI = "/restmachine/cloudbroker/sep/configFieldEdit"
+const sepConfigInsertAPI = "/restmachine/cloudbroker/sep/configInsert"
+const sepConfigValidateAPI = "/restmachine/cloudbroker/sep/configValidate"
+
+const sepConsumptionAPI = "/restmachine/cloudbroker/sep/consumption"
+
+const sepDecommissionAPI = "/restmachine/cloudbroker/sep/decommission"
+
+const sepEnableAPI = "/restmachine/cloudbroker/sep/enable"
+const sepDisableAPI = "/restmachine/cloudbroker/sep/disable"
+
+const sepDiskListAPI = "/restmachine/cloudbroker/sep/diskList"
+
+const sepGetAPI = "/restmachine/cloudbroker/sep/get"
+const sepGetConfigAPI = "/restmachine/cloudbroker/sep/getConfig"
+const sepGetPoolAPI = "/restmachine/cloudbroker/sep/getPool"
+
+const sepCreateAPI = "/restmachine/cloudbroker/sep/create"
+const sepDeleteAPI = "/restmachine/cloudbroker/sep/delete"
+const sepListAPI = "/restmachine/cloudbroker/sep/list"
+
+const sepUpdateCapacityLimitAPI = "/restmachine/cloudbroker/sep/updateCapacityLimit"
+
+///Sep Models
+type SepConsumptionInd struct {
+	DiskCount     int `json:"disk_count"`
+	DiskUsage     int `json:"disk_usage"`
+	SnapshotCount int `json:"snapshot_count"`
+	SnapshotUsage int `json:"snapshot_usage"`
+	Usage         int `json:"usage"`
+	UsageLimit    int `json:"usage_limit"`
+}
+
+type SepConsumptionTotal struct {
+	CapacityLimit int `json:"capacity_limit"`
+	SepConsumptionInd
+}
+
+type SepConsumption struct {
+	Total  SepConsumptionTotal          `json:"total"`
+	Type   string                       `json:"type"`
+	ByPool map[string]SepConsumptionInd `json:"byPool"`
+}
+
+type SepDiskList []int
+
+type Sep struct {
+	Ckey       string        `json:"_ckey"`
+	Meta       []interface{} `json:"_meta"`
+	ConsumedBy []int         `json:"consumedBy"`
+	Desc       string        `json:"desc"`
+	Gid        int           `json:"gid"`
+	Guid       int           `json:"guid"`
+	Id         int           `json:"id"`
+	Milestones int           `json:"milestones"`
+	Name       string        `json:"name"`
+	ObjStatus  string        `json:"objStatus"`
+	ProvidedBy []int         `json:"providedBy"`
+	TechStatus string        `json:"techStatus"`
+	Type       string        `json:"type"`
+	Config     SepConfig     `json:"config"`
+}
+
+type SepConfig map[string]interface{}
+
+type SepList []Sep
+type SepPool map[string]interface{}
