@@ -24,6 +24,7 @@ Visit https://github.com/rudecs/terraform-provider-decort for full source code p
 package decort
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -122,6 +123,19 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 
 	d.SetId(api_resp) // rg/create API returns ID of the newly creted resource group on success
 	// rg.ID, _ = strconv.Atoi(api_resp)
+	if !set_quota {
+		resp, err := utilityResgroupCheckPresence(d, m)
+		if err != nil {
+			return err
+		}
+
+		rg := ResgroupGetResp{}
+		if err := json.Unmarshal([]byte(resp), &rg); err != nil {
+			return err
+		}
+
+		d.Set("quota", parseQuota(rg.Quota))
+	}
 
 	// re-read newly created RG to make sure schema contains complete and up to date set of specifications
 	return resourceResgroupRead(d, m)
@@ -130,7 +144,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceResgroupRead: called for RG name %s, account ID %s",
 		d.Get("name").(string), d.Get("account_id").(int))
-		
+
 	rg_facts, err := utilityResgroupCheckPresence(d, m)
 	if rg_facts == "" {
 		// if empty string is returned from utilityResgroupCheckPresence then there is no
@@ -165,9 +179,8 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 	if attr_new.(int) != attr_old.(int) {
 		return fmt.Errorf("resourceResgroupUpdate: RG ID %s: changing ext_net_id for existing RG is not allowed", d.Id())
 	}
-	
 
-	do_general_update := false      // will be true if general RG update is necessary (API rg/update)
+	do_general_update := false // will be true if general RG update is necessary (API rg/update)
 
 	controller := m.(*ControllerCfg)
 	url_values := &url.Values{}
@@ -314,18 +327,18 @@ func resourceResgroup() *schema.Resource {
 			},
 
 			"account_id": {
-				Type:        schema.TypeInt,
-				Required:    true,
+				Type:         schema.TypeInt,
+				Required:     true,
 				ValidateFunc: validation.IntAtLeast(1),
-				Description: "Unique ID of the account, which this resource group belongs to.",
+				Description:  "Unique ID of the account, which this resource group belongs to.",
 			},
 
 			"def_net_type": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "PRIVATE",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "PRIVATE",
 				ValidateFunc: validation.StringInSlice([]string{"PRIVATE", "PUBLIC", "NONE"}, false),
-				Description: "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
+				Description:  "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
 			},
 
 			"def_net_id": {
@@ -354,7 +367,7 @@ func resourceResgroup() *schema.Resource {
 			},
 
 			/* commented out, as in this version of provider we use default Grid ID
-			"grid_id": { 
+			"grid_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,     // if 0 is passed, default Grid ID will be used
@@ -367,6 +380,7 @@ func resourceResgroup() *schema.Resource {
 			"quota": {
 				Type:     schema.TypeList,
 				Optional: true,
+				Computed: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: quotaRgSubresourceSchemaMake(),
@@ -387,30 +401,30 @@ func resourceResgroup() *schema.Resource {
 			},
 
 			/*
-			"status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Current status of this resource group.",
-			},
-
-			"vins": {
-				Type:     schema.TypeList, // this is a list of ints
-				Computed: true,
-				MaxItems: LimitMaxVinsPerResgroup,
-				Elem: &schema.Schema{
-					Type: schema.TypeInt,
+				"status": {
+					Type:        schema.TypeString,
+					Computed:    true,
+					Description: "Current status of this resource group.",
 				},
-				Description: "List of VINs deployed in this resource group.",
-			},
 
-			"computes": {
-				Type:     schema.TypeList, // this is a list of ints
-				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeInt,
+				"vins": {
+					Type:     schema.TypeList, // this is a list of ints
+					Computed: true,
+					MaxItems: LimitMaxVinsPerResgroup,
+					Elem: &schema.Schema{
+						Type: schema.TypeInt,
+					},
+					Description: "List of VINs deployed in this resource group.",
 				},
-				Description: "List of computes deployed in this resource group.",
-			},
+
+				"computes": {
+					Type:     schema.TypeList, // this is a list of ints
+					Computed: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeInt,
+					},
+					Description: "List of computes deployed in this resource group.",
+				},
 			*/
 		},
 	}
