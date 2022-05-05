@@ -17,6 +17,7 @@
   - sep_config
   - sep_pool
   - sep_consumption
+  - vgpu
 - resources:
   - image
   - virtual_image

@@ -17,7 +17,8 @@ Terraform provider для платформы Digital Energy Cloud Orchestration 
 - Работа с accounts,
 - Работа с snapshots,
 - Работа с pcidevice,
-- Работа с sep.
+- Работа с sep,
+- Работа с vgpu.
 
 Вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
 
