@@ -836,6 +836,33 @@ type Snapshot struct {
 
 type SnapshotList []Snapshot
 
+/////////////////////////////
+//       PCIDEVICE         //
+/////////////////////////////
+
+const pcideviceListAPI = "/restmachine/cloudbroker/pcidevice/list"
+const pcideviceDisableAPI = "/restmachine/cloudbroker/pcidevice/disable"
+const pcideviceEnableAPI = "/restmachine/cloudbroker/pcidevice/enable"
+const pcideviceCreateAPI = "/restmachine/cloudbroker/pcidevice/create"
+const pcideviceDeleteAPI = "/restmachine/cloudbroker/pcidevice/delete"
+
+type Pcidevice struct {
+	CKey        string        `json:"_ckey"`
+	Meta        []interface{} `json:"_meta"`
+	Computeid   int           `json:"computeId"`
+	Description string        `json:"description"`
+	Guid        int           `json:"guid"`
+	HwPath      string        `json:"hwPath"`
+	ID          int           `json:"id"`
+	Name        string        `json:"name"`
+	RgID        int           `json:"rgId"`
+	StackID     int           `json:"stackId"`
+	Status      string        `json:"status"`
+	SystemName  string        `json:"systemName"`
+}
+
+type PcideviceList []Pcidevice
+
 ///////////////////
 ///// SEP API /////
 ///////////////////
