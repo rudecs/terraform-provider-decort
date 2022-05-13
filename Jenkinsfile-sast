@@ -22,7 +22,7 @@ spec:
             steps {
                 container('alpine') {
                     sh 'apk update && apk add openjdk11 java-postgresql-jdbc'
-                    dependencyCheck additionalArguments: '-f JSON -f HTML \
+                    dependencyCheck additionalArguments: '-f JSON -f HTML -n\
                         --dbDriverName org.postgresql.Driver \
                         --dbDriverPath /usr/share/java/postgresql-jdbc.jar \
                         --dbUser $DEPCHECKDB_USR \
