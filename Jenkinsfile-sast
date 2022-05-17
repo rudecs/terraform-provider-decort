@@ -21,12 +21,14 @@ spec:
             }
             steps {
                 sh 'apk update && apk add openjdk11 java-postgresql-jdbc go'
-                dependencyCheck additionalArguments: '-f JSON -f HTML -n --enableExperimental\
+                dependencyCheck additionalArguments: '-f JSON -f HTML -n --enableExperimental \
+                    -l deplog \
                     --dbDriverName org.postgresql.Driver \
                     --dbDriverPath /usr/share/java/postgresql-jdbc.jar \
                     --dbUser $DEPCHECKDB_USR \
                     --dbPassword $DEPCHECKDB_PSW \
                     --connectionString jdbc:postgresql://postgres-postgresql.postgres/depcheck', odcInstallation: 'depcheck'
+                sh 'cat deplog'
             }
         }
         stage('SonarQube analysis') {
