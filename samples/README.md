@@ -18,6 +18,7 @@
   - sep_pool
   - sep_consumption
   - vgpu
+  - disk_list
 - resources:
   - image
   - virtual_image
