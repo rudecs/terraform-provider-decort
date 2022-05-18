@@ -298,46 +298,62 @@ const ComputeResizeAPI = "/restmachine/cloudapi/compute/resize"
 type SnapshotRecord struct {
 	Guid        string `json:"guid"`
 	Label       string `json:"label"`
+	ResId       string `json:"resId"`
 	SnapSetGuid string `json:"snapSetGuid"`
 	SnapSetTime uint64 `json:"snapSetTime"`
 	TimeStamp   uint64 `json:"timestamp"`
 }
 
+type SnapshotRecordList []SnapshotRecord
+
 type DiskRecord struct {
-	// ACLs `json:"ACL"` - it is a dictionary, special parsing required
-	// was - Acl map[string]string  `json:"acl"`
-	AccountID       int    `json:"accountId"`
-	AccountName     string `json:"accountName"` // NOTE: absent from compute/get output
-	BootPartition   int    `json:"bootPartition"`
-	CreatedTime     uint64 `json:"creationTime"`
-	DeletedTime     uint64 `json:"deletionTime"`
-	Desc            string `json:"desc"`
-	DestructionTime uint64 `json:"destructionTime"`
-	DiskPath        string `json:"diskPath"`
-	GridID          int    `json:"gid"`
-	ID              uint   `json:"id"`
-	ImageID         int    `json:"imageId"`
-	Images          []int  `json:"images"`
-	// IOTune 'json:"iotune" - it is a dictionary
-	Name string `json:"name"`
-	// Order                   `json:"order"`
-	ParentId int `json:"parentId"`
-	PciSlot  int `json:"pciSlot"`
-	// ResID string           `json:"resId"`
-	// ResName string         `json:"resName"`
-	// Params string          `json:"params"`
-	Pool      string `json:"pool"`
-	PurgeTime uint64 `json:"purgeTime"`
-	// Role string            `json:"role"`
-	SepType    string           `json:"sepType"`
-	SepID      int              `json:"sepId"` // NOTE: absent from compute/get output
-	SizeMax    int              `json:"sizeMax"`
-	SizeUsed   int              `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
-	Snapshots  []SnapshotRecord `json:"snapshots"`
-	Status     string           `json:"status"`
-	TechStatus string           `json:"techStatus"`
-	Type       string           `json:"type"`
-	ComputeID  int              `json:"vmid"`
+	Acl                 map[string]interface{} `json:"acl"`
+	AccountID           int                    `json:"accountId"`
+	AccountName         string                 `json:"accountName"`
+	BootPartition       int                    `json:"bootPartition"`
+	CreatedTime         uint64                 `json:"creationTime"`
+	ComputeID           int                    `json:"computeId"`
+	ComputeName         string                 `json:"computeName"`
+	DeletedTime         uint64                 `json:"deletionTime"`
+	DeviceName          string                 `json:"devicename"`
+	Desc                string                 `json:"desc"`
+	DestructionTime     uint64                 `json:"destructionTime"`
+	DiskPath            string                 `json:"diskPath"`
+	GridID              int                    `json:"gid"`
+	GUID                int                    `json:"guid"`
+	ID                  uint                   `json:"id"`
+	ImageID             int                    `json:"imageId"`
+	Images              []int                  `json:"images"`
+	IOTune              map[string]interface{} `json:"iotune"`
+	IQN                 string                 `json:"iqn"`
+	Login               string                 `json:"login"`
+	Name                string                 `json:"name"`
+	MachineId           int                    `json:"machineId"`
+	MachineName         string                 `json:"machineName"`
+	Milestones          uint64                 `json:"milestones"`
+	Order               int                    `json:"order"`
+	Params              string                 `json:"params"`
+	Passwd              string                 `json:"passwd"`
+	ParentId            int                    `json:"parentId"`
+	PciSlot             int                    `json:"pciSlot"`
+	Pool                string                 `json:"pool"`
+	PurgeTime           uint64                 `json:"purgeTime"`
+	PurgeAttempts       uint64                 `json:"purgeAttempts"`
+	RealityDeviceNumber int                    `json:"realityDeviceNumber"`
+	ReferenceId         string                 `json:"referenceId"`
+	ResID               string                 `json:"resId"`
+	ResName             string                 `json:"resName"`
+	Role                string                 `json:"role"`
+	SepType             string                 `json:"sepType"`
+	SepID               int                    `json:"sepId"` // NOTE: absent from compute/get output
+	SizeMax             int                    `json:"sizeMax"`
+	SizeUsed            int                    `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
+	Snapshots           []SnapshotRecord       `json:"snapshots"`
+	Status              string                 `json:"status"`
+	TechStatus          string                 `json:"techStatus"`
+	Type                string                 `json:"type"`
+	UpdateBy            uint64                 `json:"updateBy"`
+	VMID                int                    `json:"vmid"`
 }
 
 type OsUserRecord struct {
@@ -502,6 +518,7 @@ const DisksCreateAPI = "/restmachine/cloudapi/disks/create"
 const DisksGetAPI = "/restmachine/cloudapi/disks/get" // Returns single DiskRecord on success
 
 const DisksListAPI = "/restmachine/cloudapi/disks/list" // Returns list of DiskRecord on success
+
 type DisksListResp []DiskRecord
 
 //
