@@ -263,7 +263,7 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		bdsParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
 		log.Debugf("resourceComputeUpdate: compute ID %s, boot disk ID %d resize %d -> %d",
 			d.Id(), d.Get("boot_disk_id").(int), oldSize.(int), newSize.(int))
-		_, err := controller.decortAPICall("POST", DisksResizeAPI, params)
+		_, err := controller.decortAPICall("POST", DisksResizeAPI, bdsParams)
 		if err != nil {
 			return err
 		}
