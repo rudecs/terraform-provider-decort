@@ -145,6 +145,7 @@ func resourcePfwSchemaMake() map[string]*schema.Schema {
 		"public_port_end": {
 			Type:         schema.TypeInt,
 			Optional:     true,
+			Computed:     true,
 			ForceNew:     true,
 			ValidateFunc: validation.IntBetween(1, 65535),
 			Description:  "End port number (inclusive) for the ranged rule.",
