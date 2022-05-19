@@ -23,7 +23,9 @@ import (
 	// "fmt"
 	"bytes"
 	"hash/fnv"
-	log "github.com/sirupsen/logrus" 
+
+	log "github.com/sirupsen/logrus"
+
 	// "net/url"
 	"sort"
 
@@ -43,19 +45,19 @@ func networkSubresIPAddreDiffSupperss(key, oldVal, newVal string, d *schema.Reso
 	return true // suppress difference
 }
 
-// This function is based on the original Terraform SerializeResourceForHash found 
+// This function is based on the original Terraform SerializeResourceForHash found
 // in helper/schema/serialize.go
-// It skips network subresource attributes, which are irrelevant for identification 
+// It skips network subresource attributes, which are irrelevant for identification
 // of unique network blocks
 func networkSubresourceSerialize(output *bytes.Buffer, val interface{}, resource *schema.Resource) {
 	if val == nil {
 		return
 	}
-	
+
 	rs := resource.Schema
 	m := val.(map[string]interface{})
 
-	var keys []string
+	keys := make([]string, 0, len(rs))
 	allComputed := true
 
 	for k, val := range rs {
@@ -96,7 +98,7 @@ func networkSubresourceSerialize(output *bytes.Buffer, val interface{}, resource
 // from network subresource (e.g. in flattenCompute)
 //
 // This function is based on the original Terraform function HashResource from
-// helper/schema/set.go 
+// helper/schema/set.go
 func HashNetworkSubresource(resource *schema.Resource) schema.SchemaSetFunc {
 	return func(v interface{}) int {
 		var serialized bytes.Buffer
@@ -111,11 +113,11 @@ func HashNetworkSubresource(resource *schema.Resource) schema.SchemaSetFunc {
 func networkSubresourceSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"net_type": {
-			Type:        schema.TypeString,
-			Required:    true,
-			StateFunc:   stateFuncToUpper,
+			Type:         schema.TypeString,
+			Required:     true,
+			StateFunc:    stateFuncToUpper,
 			ValidateFunc: validation.StringInSlice([]string{"EXTNET", "VINS"}, false), // observe case while validating
-			Description: "Type of the network for this connection, either EXTNET or VINS.",
+			Description:  "Type of the network for this connection, either EXTNET or VINS.",
 		},
 
 		"net_id": {
@@ -125,11 +127,11 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 		},
 
 		"ip_address": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
+			Type:             schema.TypeString,
+			Optional:         true,
+			Computed:         true,
 			DiffSuppressFunc: networkSubresIPAddreDiffSupperss,
-			Description: "Optional IP address to assign to this connection. This IP should belong to the selected network and free for use.",
+			Description:      "Optional IP address to assign to this connection. This IP should belong to the selected network and free for use.",
 		},
 
 		"mac": {
@@ -137,7 +139,6 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "MAC address associated with this connection. MAC address is assigned automatically.",
 		},
-
 	}
 	return rets
 }

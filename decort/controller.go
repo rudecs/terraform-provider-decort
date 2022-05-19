@@ -94,8 +94,7 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 		decort_username: "",
 	}
 
-	var allow_unverified_ssl bool
-	allow_unverified_ssl = d.Get("allow_unverified_ssl").(bool)
+	allow_unverified_ssl := d.Get("allow_unverified_ssl").(bool)
 
 	if ret_config.controller_url == "" {
 		return nil, fmt.Errorf("Empty DECORT cloud controller URL provided.")
@@ -138,7 +137,7 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 
 	if allow_unverified_ssl {
 		log.Warn("ControllerConfigure: allow_unverified_ssl is set - will not check certificates!")
-		transCfg := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+		transCfg := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}} //nolint:gosec
 		ret_config.cc_client = &http.Client{
 			Transport: transCfg,
 			Timeout:   Timeout180s,
@@ -336,7 +335,7 @@ func (config *ControllerCfg) validateLegacyUser() (bool, error) {
 	return true, nil
 }
 
-func (config *ControllerCfg) decortAPICall(method string, api_name string, url_values *url.Values) (json_resp string, err error) {
+func (config *ControllerCfg) decortAPICall(method string, api_name string, url_values *url.Values) (json_resp string, err error) { //nolint:unparam
 	// This is a convenience wrapper around standard HTTP request methods that is aware of the
 	// authorization mode for which the provider was initialized and compiles request accordingly.
 

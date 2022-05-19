@@ -36,38 +36,6 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-func (ctrl *ControllerCfg) utilityResgroupConfigGet(rgid int) (*ResgroupGetResp, error) {
-	urlValues := &url.Values{}
-	urlValues.Add("rgId", fmt.Sprintf("%d", rgid))
-	rgFacts, err := ctrl.decortAPICall("POST", ResgroupGetAPI, urlValues)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debugf("utilityResgroupConfigGet: ready to unmarshal string %s", rgFacts)
-	model := &ResgroupGetResp{}
-	err = json.Unmarshal([]byte(rgFacts), model)
-	if err != nil {
-		return nil, err
-	}
-
-	/*
-		ret := &ResgroupConfig{}
-		ret.AccountID = model.AccountID
-		ret.Location = model.Location
-		ret.Name = model.Name
-		ret.ID = rgid
-		ret.GridID = model.GridID
-		ret.ExtIP = model.ExtIP   // legacy field for VDC - this will eventually become obsoleted by true Resource Groups
-		// Quota ResgroupQuotaConfig
-		// Network NetworkConfig
-	*/
-	log.Debugf("utilityResgroupConfigGet: account ID %d, GridID %d, Name %s",
-		model.AccountID, model.GridID, model.Name)
-
-	return model, nil
-}
-
 // On success this function returns a string, as returned by API rg/get, which could be unmarshalled
 // into ResgroupGetResp structure
 func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
@@ -104,7 +72,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	} else {
 		idSet = true
 	}
-	
+
 	if idSet {
 		// go straight for the RG by its ID
 		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", theId)
@@ -165,11 +133,3 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 
 	return "", fmt.Errorf("Cannot find RG name %s owned by account ID %d", rgName, validatedAccountId)
 }
-
-func utilityResgroupGetDefaultGridID() (interface{}, error) {
-	if DefaultGridID > 0 {
-		return fmt.Sprintf("%d", DefaultGridID), nil
-	}
-
-	return "", fmt.Errorf("utilityResgroupGetDefaultGridID: invalid default Grid ID %d", DefaultGridID)
-  }

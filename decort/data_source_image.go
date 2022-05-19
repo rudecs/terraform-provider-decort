@@ -69,7 +69,6 @@ func flattenImage(d *schema.ResourceData, image *Image) {
 	d.Set("meta", flattenMeta(image.Meta))
 	d.Set("desc", image.Desc)
 	d.Set("shared_with", image.SharedWith)
-	return
 }
 
 func dataSourceImageRead(d *schema.ResourceData, m interface{}) error {

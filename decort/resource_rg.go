@@ -70,7 +70,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	arg_value, arg_set := d.GetOk("quota")
 	if arg_set {
 		log.Debugf("resourceResgroupCreate: setting Quota on RG requested")
-		quota_record, _ = makeQuotaRecord(arg_value.([]interface{}))
+		quota_record = makeQuotaRecord(arg_value.([]interface{}))
 		set_quota = true
 	}
 
@@ -142,7 +142,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceResgroupRead: called for RG name %s, account ID %s",
+	log.Debugf("resourceResgroupRead: called for RG name %s, account ID %d",
 		d.Get("name").(string), d.Get("account_id").(int))
 
 	rg_facts, err := utilityResgroupCheckPresence(d, m)
@@ -199,9 +199,9 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 	quota_value, quota_set := d.GetOk("quota")
 	if quota_set {
 		log.Debugf("resourceResgroupUpdate: quota specified - looking for deltas from the old quota.")
-		quotarecord_new, _ := makeQuotaRecord(quota_value.([]interface{}))
+		quotarecord_new := makeQuotaRecord(quota_value.([]interface{}))
 		quota_value_old, _ := d.GetChange("quota") // returns old as 1st, new as 2nd return value
-		quotarecord_old, _ := makeQuotaRecord(quota_value_old.([]interface{}))
+		quotarecord_old := makeQuotaRecord(quota_value_old.([]interface{}))
 
 		if quotarecord_new.Cpu != quotarecord_old.Cpu {
 			do_general_update = true
@@ -260,11 +260,14 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 	// NOTE: this method forcibly destroys target resource group with flag "permanently", so there is no way to
 	// restore the destroyed resource group as well all Computes & VINSes that existed in it
-	log.Debugf("resourceResgroupDelete: called for RG name %s, account ID %s",
+	log.Debugf("resourceResgroupDelete: called for RG name %s, account ID %d",
 		d.Get("name").(string), d.Get("account_id").(int))
 
 	rg_facts, err := utilityResgroupCheckPresence(d, m)
 	if rg_facts == "" {
+		if err != nil {
+			return err
+		}
 		// the target RG does not exist - in this case according to Terraform best practice
 		// we exit from Destroy method without error
 		return nil

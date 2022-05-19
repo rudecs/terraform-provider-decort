@@ -31,7 +31,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilityPcideviceListCheckPresence(d *schema.ResourceData, m interface{}) (PcideviceList, error) {
+func utilityPcideviceListCheckPresence(_ *schema.ResourceData, m interface{}) (PcideviceList, error) {
 	pcideviceList := PcideviceList{}
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
