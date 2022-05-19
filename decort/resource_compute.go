@@ -246,6 +246,7 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		log.Debugf("resourceComputeUpdate: changing CPU %d -> %d and/or RAM %d -> %d",
 			oldCpu.(int), newCpu.(int),
 			oldRam.(int), newRam.(int))
+		params.Add("force", "true")
 		_, err := controller.decortAPICall("POST", ComputeResizeAPI, params)
 		if err != nil {
 			return err
