@@ -59,25 +59,40 @@ type AccountAclRecord struct {
 	UgroupID   string `json:"userGroupId"`
 }
 
+type ResourceLimits struct {
+	CUC      float64 `json:"CU_C"`
+	CUD      float64 `json:"CU_D"`
+	CUI      float64 `json:"CU_I"`
+	CUM      float64 `json:"CU_M"`
+	CUNP     float64 `json:"CU_NP"`
+	GpuUnits float64 `json:"gpu_units"`
+}
+
 type ResgroupRecord struct {
-	ACLs           []UserAclRecord  `json:"acl"`
-	Owner          AccountAclRecord `json:"accountAcl"`
-	AccountID      int              `json:"accountId"`
-	AccountName    string           `json:"accountName"`
-	CreatedBy      string           `json:"createdBy"`
-	CreatedTime    uint64           `json:"createdTime"`
-	DefaultNetID   int              `json:"def_net_id"`
-	DefaultNetType string           `json:"def_net_type"`
-	Decsription    string           `json:"desc"`
-	GridID         int              `json:"gid"`
-	ID             uint             `json:"id"`
-	LockStatus     string           `json:"lockStatus"`
-	Name           string           `json:"name"`
-	Status         string           `json:"status"`
-	UpdatedBy      string           `json:"updatedBy"`
-	UpdatedTime    uint64           `json:"updatedTime"`
-	Vins           []int            `json:"vins"`
-	Computes       []int            `json:"vms"`
+	ACLs             []AccountAclRecord `json:"acl"`
+	AccountID        int                `json:"accountId"`
+	AccountName      string             `json:"accountName"`
+	CreatedBy        string             `json:"createdBy"`
+	CreatedTime      uint64             `json:"createdTime"`
+	DefaultNetID     int                `json:"def_net_id"`
+	DefaultNetType   string             `json:"def_net_type"`
+	DeletedBy        string             `json:"deletedBy"`
+	DeletedTime      int                `json:"deletedTime"`
+	Decsription      string             `json:"desc"`
+	GridID           int                `json:"gid"`
+	GUID             int                `json:"guid"`
+	ID               uint               `json:"id"`
+	LockStatus       string             `json:"lockStatus"`
+	Milestones       int                `json:"milestones"`
+	Name             string             `json:"name"`
+	RegisterComputes bool               `json:"registerComputes"`
+	ResourceLimits   ResourceLimits     `json:"resourceLimits"`
+	Secret           string             `json:"secret"`
+	Status           string             `json:"status"`
+	UpdatedBy        string             `json:"updatedBy"`
+	UpdatedTime      uint64             `json:"updatedTime"`
+	Vins             []int              `json:"vins"`
+	Computes         []int              `json:"vms"`
 }
 
 const ResgroupListAPI = "/restmachine/cloudapi/rg/list"

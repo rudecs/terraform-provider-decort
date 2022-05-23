@@ -19,6 +19,7 @@
   - sep_consumption
   - vgpu
   - disk_list
+  - rg_list
 - resources:
   - image
   - virtual_image

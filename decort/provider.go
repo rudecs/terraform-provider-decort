@@ -138,6 +138,7 @@ func Provider() *schema.Provider {
 			"decort_sep_config":        dataSourceSepConfig(),
 			"decort_sep_pool":          dataSourceSepPool(),
 			"decort_disk_list":         dataSourceDiskList(),
+			"decort_rg_list":           dataSourceRgList(),
 			// "decort_pfw": dataSourcePfw(),
 		},
 
