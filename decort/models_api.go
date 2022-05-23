@@ -987,3 +987,86 @@ type SepConfig map[string]interface{}
 
 type SepList []Sep
 type SepPool map[string]interface{}
+
+///////////////////////
+/////  ACCOUNTS    ////
+///////////////////////
+
+const accountAddUserAPI = "/cloudapi/account/addUser"
+const accountAuditsAPI = "/cloudapi/account/audits"
+const accountCreateAPI = "/cloudapi/account/create"
+const accountDeleteAPI = "/cloudapi/account/delete"
+const accountDeleteAccountsAPI = "/cloudapi/account/deleteAccounts"
+const accountDeleteUserAPI = "/cloudapi/account/deleteUser"
+const accountDisableAPI = "/cloudapi/account/disable"
+const accountEnableAPI = "/cloudapi/account/enable"
+const accountGetAPI = "/cloudapi/account/get"
+const accountGetConsumedAccountUnitsAPI = "/cloudapi/account/getConsumedAccountUnits"
+const accountGetConsumedCloudUnitsByTypeAPI = "/cloudapi/account/getConsumedCloudUnitsByType"
+const accountGetConsumptionGetAPI = "/cloudapi/account/getConsumption"
+const accountGetConsumptionPostAPI = "/cloudapi/account/getConsumption"
+const accountGetReservedAccountUnitsAPI = "/cloudapi/account/getReservedAccountUnits"
+const accountGetStatsAPI = "/cloudapi/account/getStats"
+
+//const accountListAPI = "/cloudapi/account/list"
+const accountListAPI = "/restmachine/cloudbroker/account/list"
+const accountListComputesAPI = "/cloudapi/account/listComputes"
+const accountListCSAPI = "/cloudapi/account/listCS"
+const accountListDeletedAPI = "/cloudapi/account/listDeleted"
+const accountListDisksAPI = "/cloudapi/account/listDisks"
+const accountListFlipGroupsAPI = "/cloudapi/account/listFlipGroups"
+const accountListRGAPI = "/cloudapi/account/listRG"
+const accountListTemplatesAPI = "/cloudapi/account/listTemplates"
+const accountListVinsAPI = "/cloudapi/account/listVins"
+const accountListVMsAPI = "/cloudapi/account/listVMs"
+const accountRestoreAPI = "/cloudapi/account/restore"
+const accountUpdateAPI = "/cloudapi/account/update"
+const accountUpdateUserAPI = "/cloudapi/account/updateUser"
+
+////Structs
+
+type Account struct {
+	DCLocation        string             `json:"DCLocation"`
+	CKey              string             `jspn:"_ckey"`
+	Meta              []interface{}      `json:"_meta"`
+	Acl               []AccountAclRecord `json:"acl"`
+	Company           string             `json:"company"`
+	CompanyUrl        string             `json:"companyurl"`
+	CreatedBy         string             `jspn:"createdBy"`
+	CreatedTime       int                `json:"createdTime"`
+	DeactiovationTime float64            `json:"deactivationTime"`
+	DeletedBy         string             `json:"deletedBy"`
+	DeletedTime       int                `json:"deletedTime"`
+	DisplayName       string             `json:"displayname"`
+	GUID              int                `json:"guid"`
+	ID                int                `json:"id"`
+	Name              string             `json:"name"`
+	ResourceLimits    ResourceLimits     `json:"resourceLimits"`
+	SendAccessEmails  bool               `json:"sendAccessEmails"`
+	ServiceAccount    bool               `json:"serviceAccount"`
+	Status            string             `json:"status"`
+	UpdatedTime       int                `json:"updatedTime"`
+	Version           int                `json:"version"`
+	Vins              []int              `json:"vins"`
+}
+
+type AccountList []Account
+
+type Resource struct {
+	CPU        int `json:"cpu"`
+	Disksize   int `json:"disksize"`
+	Extips     int `json:"extips"`
+	Exttraffic int `json:"exttraffic"`
+	GPU        int `json:"gpu"`
+	RAM        int `json:"ram"`
+}
+
+type Resources struct {
+	Current  Resource `json:"Current"`
+	Reserved Resource `json:"Reserved"`
+}
+
+type AccountWithResources struct {
+	Account
+	Resources Resources `json:"Resources"`
+}

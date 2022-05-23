@@ -20,6 +20,7 @@
   - vgpu
   - disk_list
   - rg_list
+  - account_list
 - resources:
   - image
   - virtual_image
