@@ -47,13 +47,19 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("name", d.Get("name").(string))
 	urlValues.Add("size", fmt.Sprintf("%d", d.Get("size").(int)))
 	urlValues.Add("type", "D") // NOTE: only disks of Data type are managed via plugin
-	urlValues.Add("sep_id", fmt.Sprintf("%d", d.Get("sep_id").(int)))
-	urlValues.Add("pool", d.Get("pool").(string))
-	
+
+	if sepId, ok := d.GetOk("sep_id"); ok {
+		urlValues.Add("sep_id", strconv.Itoa(sepId.(int)))
+	}
+
+	if poolName, ok := d.GetOk("pool"); ok {
+		urlValues.Add("pool", poolName.(string))
+	}
+
 	argVal, argSet := d.GetOk("description")
 	if argSet {
 		urlValues.Add("description", argVal.(string))
-	} 
+	}
 
 	apiResp, err := controller.decortAPICall("POST", DisksCreateAPI, urlValues)
 	if err != nil {
@@ -65,9 +71,9 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 
 	log.Debugf("resourceDiskCreate: new Disk ID / name %d / %s creation sequence complete", diskId, d.Get("name").(string))
 
-	// We may reuse dataSourceDiskRead here as we maintain similarity 
+	// We may reuse dataSourceDiskRead here as we maintain similarity
 	// between Disk resource and Disk data source schemas
-	// Disk resource read function will also update resource ID on success, so that Terraform 
+	// Disk resource read function will also update resource ID on success, so that Terraform
 	// will know the resource exists (however, we already did it a few lines before)
 	return dataSourceDiskRead(d, m)
 }
@@ -100,8 +106,8 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 
 	oldSize, newSize := d.GetChange("size")
 	if oldSize.(int) < newSize.(int) {
-		log.Debugf("resourceDiskUpdate: resizing disk ID %s - %d GB -> %d GB", 
-		           d.Id(), oldSize.(int), newSize.(int))
+		log.Debugf("resourceDiskUpdate: resizing disk ID %s - %d GB -> %d GB",
+			d.Id(), oldSize.(int), newSize.(int))
 		sizeParams := &url.Values{}
 		sizeParams.Add("diskId", d.Id())
 		sizeParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
@@ -116,8 +122,8 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 
 	oldName, newName := d.GetChange("name")
 	if oldName.(string) != newName.(string) {
-		log.Debugf("resourceDiskUpdate: renaming disk ID %d - %s -> %s", 
-		           d.Get("disk_id").(int), oldName.(string), newName.(string))
+		log.Debugf("resourceDiskUpdate: renaming disk ID %d - %s -> %s",
+			d.Get("disk_id").(int), oldName.(string), newName.(string))
 		renameParams := &url.Values{}
 		renameParams.Add("diskId", d.Id())
 		renameParams.Add("name", newName.(string))
@@ -129,24 +135,24 @@ func resourceDiskUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	/*
-	NOTE: plugin will manage disks of type "Data" only, and type cannot be changed once disk is created
+		NOTE: plugin will manage disks of type "Data" only, and type cannot be changed once disk is created
 
-	oldType, newType := d.GetChange("type")
-	if oldType.(string) != newType.(string) {
-		return fmt.Errorf("resourceDiskUpdate: Disk ID %s - changing type of existing disk not allowed", d.Id())
-	}
+		oldType, newType := d.GetChange("type")
+		if oldType.(string) != newType.(string) {
+			return fmt.Errorf("resourceDiskUpdate: Disk ID %s - changing type of existing disk not allowed", d.Id())
+		}
 	*/
 
 	d.Partial(false)
 
-	// we may reuse dataSourceDiskRead here as we maintain similarity 
+	// we may reuse dataSourceDiskRead here as we maintain similarity
 	// between Compute resource and Compute data source schemas
-	return dataSourceDiskRead(d, m) 
+	return dataSourceDiskRead(d, m)
 }
 
 func resourceDiskDelete(d *schema.ResourceData, m interface{}) error {
-	// NOTE: this function tries to detach and destroy target Disk "permanently", so 
-	// there is no way to restore it. 
+	// NOTE: this function tries to detach and destroy target Disk "permanently", so
+	// there is no way to restore it.
 	// If, however, the disk is attached to a compute, the method will
 	// fail (by failing the underpinning DECORt API call, which is issued with detach=false)
 	log.Debugf("resourceDiskDelete: called for Disk ID / name %d / %s, Account ID %d",
@@ -166,8 +172,8 @@ func resourceDiskDelete(d *schema.ResourceData, m interface{}) error {
 	// However, this may change in the future, as TF state management logic may want
 	// to delete disk resource BEFORE it is detached from compute instance, and, while
 	// perfectly OK from data preservation viewpoint, this is breaking expected TF workflow
-	// in the eyes of an experienced TF user 
-	params.Add("detach", "0") 
+	// in the eyes of an experienced TF user
+	params.Add("detach", "0")
 	params.Add("permanently", "1")
 
 	controller := m.(*ControllerCfg)
@@ -198,7 +204,7 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"name": {
 			Type:        schema.TypeString,
-			Optional:    true,
+			Required:    true,
 			Description: "Name of this disk. NOTE: disk names are NOT unique within an account. If disk ID is specified, disk name is ignored.",
 		},
 
@@ -210,34 +216,34 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 
 		"account_id": {
 			Type:        schema.TypeInt,
-			Optional:    true,
+			Required:    true,
 			Description: "ID of the account this disk belongs to.",
 		},
 
 		"sep_id": {
 			Type:        schema.TypeInt,
-			Required:    true,
+			Optional:    true,
+			Computed:    true,
 			ForceNew:    true,
-			ValidateFunc: validation.IntAtLeast(1),
 			Description: "Storage end-point provider serving this disk. Cannot be changed for existing disk.",
 		},
 
 		"pool": {
 			Type:        schema.TypeString,
-			Required:    true,
+			Optional:    true,
+			Computed:    true,
 			ForceNew:    true,
-			ValidateFunc: validation.StringIsNotEmpty,
 			Description: "Pool where this disk is located. Cannot be changed for existing disk.",
 		},
 
 		"size": {
-			Type:        schema.TypeInt,
-			Required:    true,
+			Type:         schema.TypeInt,
+			Required:     true,
 			ValidateFunc: validation.IntAtLeast(1),
-			Description: "Size of the disk in GB. Note, that existing disks can only be grown in size.",
+			Description:  "Size of the disk in GB. Note, that existing disks can only be grown in size.",
 		},
 
-		/* We moved "type" attribute to computed attributes section, as plugin manages disks of only 
+		/* We moved "type" attribute to computed attributes section, as plugin manages disks of only
 		   one type - "D", e.g. data disks.
 		"type": {
 			Type:        schema.TypeString,
@@ -256,7 +262,7 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Description: "Optional user-defined text description of this disk.",
 		},
 
-		// The rest of the attributes are all computed 
+		// The rest of the attributes are all computed
 		"account_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -282,14 +288,14 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 		},
 
 		/*
-		"snapshots": {
-			Type:        schema.TypeList,
-			Computed:    true,
-			Elem:          &schema.Resource {
-				Schema:    snapshotSubresourceSchemaMake(),
+			"snapshots": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem:          &schema.Resource {
+					Schema:    snapshotSubresourceSchemaMake(),
+				},
+				Description: "List of user-created snapshots for this disk."
 			},
-			Description: "List of user-created snapshots for this disk."
-		},
 		*/
 	}
 
