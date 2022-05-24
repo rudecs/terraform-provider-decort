@@ -1015,7 +1015,9 @@ const accountListAPI = "/restmachine/cloudbroker/account/list"
 const accountListComputesAPI = "/restmachine/cloudbroker/account/listComputes"
 const accountListCSAPI = "/cloudapi/account/listCS"
 const accountListDeletedAPI = "/cloudapi/account/listDeleted"
-const accountListDisksAPI = "/cloudapi/account/listDisks"
+
+//const accountListDisksAPI = "/restmachine/cloudapi/account/listDisks"
+const accountListDisksAPI = "/restmachine/cloudbroker/account/listDisks"
 const accountListFlipGroupsAPI = "/cloudapi/account/listFlipGroups"
 const accountListRGAPI = "/cloudapi/account/listRG"
 const accountListTemplatesAPI = "/cloudapi/account/listTemplates"
@@ -1097,3 +1099,14 @@ type AccountCompute struct {
 }
 
 type AccountComputesList []AccountCompute
+
+type AccountDisk struct {
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	Pool    string `json:"pool"`
+	SepId   int    `json:"sepId"`
+	SizeMax int    `json:"sizeMax"`
+	Type    string `json:"type"`
+}
+
+type AccountDisksList []AccountDisk
