@@ -993,7 +993,9 @@ type SepPool map[string]interface{}
 ///////////////////////
 
 const accountAddUserAPI = "/cloudapi/account/addUser"
-const accountAuditsAPI = "/cloudapi/account/audits"
+
+//const accountAuditsAPI = "/restmachine/cloudapi/account/audits"
+const accountAuditsAPI = "/restmachine/cloudbroker/account/audits"
 const accountCreateAPI = "/cloudapi/account/create"
 const accountDeleteAPI = "/cloudapi/account/delete"
 const accountDeleteAccountsAPI = "/cloudapi/account/deleteAccounts"
@@ -1134,3 +1136,13 @@ type AccountVin struct {
 }
 
 type AccountVinsList []AccountVin
+
+type AccountAudit struct {
+	Call         string  `json:"call"`
+	ResponseTime float64 `json:"responsetime"`
+	StatusCode   int     `json:"statuscode"`
+	Timestamp    float64 `json:"timestamp"`
+	User         string  `json:"user"`
+}
+
+type AccountAuditsList []AccountAudit

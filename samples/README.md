@@ -21,6 +21,10 @@
   - disk_list
   - rg_list
   - account_list
+  - account_computes_list
+  - account_disks_list
+  - account_vins_list
+  - account_audits_list
 - resources:
   - image
   - virtual_image
