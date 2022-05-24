@@ -110,8 +110,8 @@ func utilityGetAccountIdBySchema(d *schema.ResourceData, m interface{}) (int, er
 		initiate API calls to the DECORT cloud controller and try to match relevant account
 		by the name.
 
-		NOTE that for some resources (most notably, Resource Group) "account_name" attribute is 
-		marked as "Computed: true", so the only way to fully identify Resource Group is to specify 
+		NOTE that for some resources (most notably, Resource Group) "account_name" attribute is
+		marked as "Computed: true", so the only way to fully identify Resource Group is to specify
 		"account_id", which is marked as "Required: true"
 
 	*/

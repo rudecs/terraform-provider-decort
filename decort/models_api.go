@@ -1008,9 +1008,11 @@ const accountGetConsumptionPostAPI = "/cloudapi/account/getConsumption"
 const accountGetReservedAccountUnitsAPI = "/cloudapi/account/getReservedAccountUnits"
 const accountGetStatsAPI = "/cloudapi/account/getStats"
 
-//const accountListAPI = "/cloudapi/account/list"
+//const accountListAPI = "/restmachine/cloudapi/account/list"
 const accountListAPI = "/restmachine/cloudbroker/account/list"
-const accountListComputesAPI = "/cloudapi/account/listComputes"
+
+//const accountListComputesAPI = "/restmachine/cloudapi/account/listComputes"
+const accountListComputesAPI = "/restmachine/cloudbroker/account/listComputes"
 const accountListCSAPI = "/cloudapi/account/listCS"
 const accountListDeletedAPI = "/cloudapi/account/listDeleted"
 const accountListDisksAPI = "/cloudapi/account/listDisks"
@@ -1070,3 +1072,28 @@ type AccountWithResources struct {
 	Account
 	Resources Resources `json:"Resources"`
 }
+
+type AccountCompute struct {
+	AccountId      int    `json:"accountId"`
+	AccountName    string `json:"accountName"`
+	CPUs           int    `json:"cpus"`
+	CreatedBy      string `json:"createdBy"`
+	CreatedTime    int    `json:"createdTime"`
+	DeletedBy      string `json:"deletedBy"`
+	DeletedTime    int    `json:"deletedTime"`
+	ComputeId      int    `json:"id"`
+	ComputeName    string `json:"name"`
+	RAM            int    `json:"ram"`
+	Registered     bool   `json:"registered"`
+	RgId           int    `json:"rgId"`
+	RgName         string `json:"rgName"`
+	Status         string `json:"status"`
+	TechStatus     string `json:"techStatus"`
+	TotalDisksSize int    `json:"totalDisksSize"`
+	UpdatedBy      string `json:"updatedBy"`
+	UpdatedTime    int    `json:"updatedTime"`
+	UserManaged    bool   `json:"userManaged"`
+	VinsConnected  int    `json:"vinsConnected"`
+}
+
+type AccountComputesList []AccountCompute
