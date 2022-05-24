@@ -31,14 +31,14 @@ import (
 
 func flattenAccountDisksList(adl AccountDisksList) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
-	for _, acc := range adl {
+	for _, ad := range adl {
 		temp := map[string]interface{}{
-			"disk_id":   acc.ID,
-			"disk_name": acc.Name,
-			"pool":      acc.Pool,
-			"sep_id":    acc.SepId,
-			"size_max":  acc.SizeMax,
-			"type":      acc.Type,
+			"disk_id":   ad.ID,
+			"disk_name": ad.Name,
+			"pool":      ad.Pool,
+			"sep_id":    ad.SepId,
+			"size_max":  ad.SizeMax,
+			"type":      ad.Type,
 		}
 		res = append(res, temp)
 	}
@@ -46,7 +46,7 @@ func flattenAccountDisksList(adl AccountDisksList) []map[string]interface{} {
 
 }
 
-func dataSourceAccountDiskssListRead(d *schema.ResourceData, m interface{}) error {
+func dataSourceAccountDisksListRead(d *schema.ResourceData, m interface{}) error {
 	accountDisksList, err := utilityAccountDisksListCheckPresence(d, m)
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func dataSourceAccountDisksList() *schema.Resource {
 	return &schema.Resource{
 		SchemaVersion: 1,
 
-		Read: dataSourceAccountDiskssListRead,
+		Read: dataSourceAccountDisksListRead,
 
 		Timeouts: &schema.ResourceTimeout{
 			Read:    &Timeout30s,

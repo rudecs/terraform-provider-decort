@@ -1021,7 +1021,9 @@ const accountListDisksAPI = "/restmachine/cloudbroker/account/listDisks"
 const accountListFlipGroupsAPI = "/cloudapi/account/listFlipGroups"
 const accountListRGAPI = "/cloudapi/account/listRG"
 const accountListTemplatesAPI = "/cloudapi/account/listTemplates"
-const accountListVinsAPI = "/cloudapi/account/listVins"
+
+//const accountListVinsAPI = "/restmachine/cloudapi/account/listVins"
+const accountListVinsAPI = "/restmachine/cloudbroker/account/listVins"
 const accountListVMsAPI = "/cloudapi/account/listVMs"
 const accountRestoreAPI = "/cloudapi/account/restore"
 const accountUpdateAPI = "/cloudapi/account/update"
@@ -1110,3 +1112,25 @@ type AccountDisk struct {
 }
 
 type AccountDisksList []AccountDisk
+
+type AccountVin struct {
+	AccountId   int    `json:"accountId"`
+	AccountName string `json:"accountName"`
+	Computes    int    `json:"computes"`
+	CreatedBy   string `json:"createdBy"`
+	CreatedTime int    `json:"createdTime"`
+	DeletedBy   string `json:"deletedBy"`
+	DeletedTime int    `json:"deletedTime"`
+	ExternalIP  string `json:"externalIP"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Network     string `json:"network"`
+	PriVnfDevId int    `json:"priVnfDevId"`
+	RgId        int    `json:"rgId"`
+	RgName      string `json:"rgName"`
+	Status      string `json:"status"`
+	UpdatedBy   string `json:"updatedBy"`
+	UpdatedTime int    `json:"updatedTime"`
+}
+
+type AccountVinsList []AccountVin
