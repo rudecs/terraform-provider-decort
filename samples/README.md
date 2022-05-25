@@ -25,6 +25,7 @@
   - account_disks_list
   - account_vins_list
   - account_audits_list
+  - account
 - resources:
   - image
   - virtual_image

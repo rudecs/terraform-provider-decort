@@ -104,7 +104,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	} else {
 		idSet = true
 	}
-	
+
 	if idSet {
 		// go straight for the RG by its ID
 		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", theId)
@@ -124,10 +124,6 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 
 	// Valid account ID is required to locate a resource group
 	// obtain Account ID by account name - it should not be zero on success
-	validatedAccountId, err := utilityGetAccountIdBySchema(d, m)
-	if err != nil {
-		return "", err
-	}
 
 	urlValues.Add("includedeleted", "false")
 	apiResp, err := controller.decortAPICall("POST", ResgroupListAPI, urlValues)
@@ -145,7 +141,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	log.Debugf("utilityResgroupCheckPresence: traversing decoded Json of length %d", len(model))
 	for index, item := range model {
 		// match by RG name & account ID
-		if item.Name == rgName.(string) && item.AccountID == validatedAccountId {
+		if item.Name == rgName.(string) && item.AccountID == d.Get("account_id").(int) {
 			log.Debugf("utilityResgroupCheckPresence: match RG name %s / ID %d, account ID %d at index %d",
 				item.Name, item.ID, item.AccountID, index)
 
@@ -163,7 +159,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 		}
 	}
 
-	return "", fmt.Errorf("Cannot find RG name %s owned by account ID %d", rgName, validatedAccountId)
+	return "", fmt.Errorf("Cannot find RG name %s owned by account ID %d", rgName, d.Get("account_id").(int))
 }
 
 func utilityResgroupGetDefaultGridID() (interface{}, error) {
@@ -172,4 +168,4 @@ func utilityResgroupGetDefaultGridID() (interface{}, error) {
 	}
 
 	return "", fmt.Errorf("utilityResgroupGetDefaultGridID: invalid default Grid ID %d", DefaultGridID)
-  }
+}
