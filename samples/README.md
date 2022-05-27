@@ -30,6 +30,7 @@
   - account_counsumed_units
   - account_counsumed_units_by_type
   - account_reserved_units
+  - account_templates_list
 - resources:
   - image
   - virtual_image

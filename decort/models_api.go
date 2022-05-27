@@ -1012,7 +1012,7 @@ const accountListDeletedAPI = "/cloudapi/account/listDeleted"
 const accountListDisksAPI = "/restmachine/cloudapi/account/listDisks"
 const accountListFlipGroupsAPI = "/cloudapi/account/listFlipGroups"
 const accountListRGAPI = "/restmachine/cloudapi/account/listRG"
-const accountListTemplatesAPI = "/cloudapi/account/listTemplates"
+const accountListTemplatesAPI = "/restmachine/cloudapi/account/listTemplates"
 const accountListVinsAPI = "/restmachine/cloudapi/account/listVins"
 const accountListVMsAPI = "/cloudapi/account/listVMs"
 const accountRestoreAPI = "/restmachine/cloudapi/account/restore"
@@ -1188,3 +1188,18 @@ type AccountRG struct {
 }
 
 type AccountRGList []AccountRG
+
+type AccountTemplate struct {
+	UNCPath   string `json:"UNCPath"`
+	AccountId int    `json:"accountId"`
+	Desc      string `json:"desc"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Public    bool   `json:"public"`
+	Size      int    `json:"size"`
+	Status    string `json:"status"`
+	Type      string `json:"type"`
+	Username  string `json:"username"`
+}
+
+type AccountTemplatesList []AccountTemplate
