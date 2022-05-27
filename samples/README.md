@@ -27,6 +27,7 @@
   - account_audits_list
   - account
   - account_rg_list
+  - account_counsumed_units
 - resources:
   - image
   - virtual_image
