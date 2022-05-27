@@ -28,6 +28,7 @@
   - account
   - account_rg_list
   - account_counsumed_units
+  - account_counsumed_units_by_type
 - resources:
   - image
   - virtual_image
