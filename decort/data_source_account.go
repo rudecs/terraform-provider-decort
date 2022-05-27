@@ -41,7 +41,7 @@ func dataSourceAccountRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("resources", flattenAccResources(acc.Resources))
 	d.Set("ckey", acc.CKey)
 	d.Set("meta", flattenMeta(acc.Meta))
-	d.Set("acl", flattenRgAcl(acc.Acl))
+	d.Set("acl", flattenAccAcl(acc.Acl))
 	d.Set("company", acc.Company)
 	d.Set("companyurl", acc.CompanyUrl)
 	d.Set("created_by", acc.CreatedBy)
@@ -60,7 +60,47 @@ func dataSourceAccountRead(d *schema.ResourceData, m interface{}) error {
 	d.Set("updated_time", acc.UpdatedTime)
 	d.Set("version", acc.Version)
 	d.Set("vins", acc.Vins)
+	d.Set("vinses", acc.Vinses)
+	d.Set("computes", flattenAccComputes(acc.Computes))
+	d.Set("machines", flattenAccMachines(acc.Machines))
 	return nil
+}
+
+func flattenAccComputes(acs Computes) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	temp := map[string]interface{}{
+		"started": acs.Started,
+		"stopped": acs.Stopped,
+	}
+	res = append(res, temp)
+	return res
+}
+
+func flattenAccMachines(ams Machines) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	temp := map[string]interface{}{
+		"running": ams.Running,
+		"halted":  ams.Halted,
+	}
+	res = append(res, temp)
+	return res
+}
+
+func flattenAccAcl(acls []AccountAclRecord) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	for _, acls := range acls {
+		temp := map[string]interface{}{
+			"can_be_deleted": acls.CanBeDeleted,
+			"explicit":       acls.IsExplicit,
+			"guid":           acls.Guid,
+			"right":          acls.Rights,
+			"status":         acls.Status,
+			"type":           acls.Type,
+			"user_group_id":  acls.UgroupID,
+		}
+		res = append(res, temp)
+	}
+	return res
 }
 
 func flattenAccResources(r Resources) []map[string]interface{} {
@@ -188,6 +228,10 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
+					"can_be_deleted": {
+						Type:     schema.TypeBool,
+						Computed: true,
+					},
 					"explicit": {
 						Type:     schema.TypeBool,
 						Computed: true,
@@ -314,6 +358,44 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 			Elem: &schema.Schema{
 				Type: schema.TypeInt,
 			},
+		},
+		"computes": {
+			Type:     schema.TypeList,
+			Computed: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"started": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+					"stopped": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+				},
+			},
+		},
+		"machines": {
+			Type:     schema.TypeList,
+			Computed: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"halted": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+					"running": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+				},
+			},
+		},
+		"vinses": {
+			Type:     schema.TypeInt,
+			Computed: true,
 		},
 	}
 	return res

@@ -114,6 +114,7 @@ func Provider() *schema.Provider {
 			"decort_pcidevice":     resourcePcidevice(),
 			"decort_sep":           resourceSep(),
 			"decort_sep_config":    resourceSepConfig(),
+			"decort_account":       resourceAccount(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

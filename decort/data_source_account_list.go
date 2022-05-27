@@ -29,6 +29,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
+func flattenAccountList(al AccountCloudApiList) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	for _, acc := range al {
+		temp := map[string]interface{}{
+			"acl":          flattenRgAcl(acc.Acl),
+			"created_time": acc.CreatedTime,
+			"deleted_time": acc.DeletedTime,
+			"account_id":   acc.ID,
+			"account_name": acc.Name,
+			"status":       acc.Status,
+			"updated_time": acc.UpdatedTime,
+		}
+		res = append(res, temp)
+	}
+	return res
+}
+
+/*uncomment for cloudbroker
 func flattenAccountList(al AccountList) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
 	for _, acc := range al {
@@ -36,31 +54,42 @@ func flattenAccountList(al AccountList) []map[string]interface{} {
 			"dc_location":        acc.DCLocation,
 			"ckey":               acc.CKey,
 			"meta":               flattenMeta(acc.Meta),
-			"acl":                flattenRgAcl(acc.Acl),
+
+			"acl": flattenRgAcl(acc.Acl),
+
 			"company":            acc.Company,
 			"companyurl":         acc.CompanyUrl,
 			"created_by":         acc.CreatedBy,
-			"created_time":       acc.CreatedTime,
+
+			"created_time": acc.CreatedTime,
+
 			"deactivation_time":  acc.DeactiovationTime,
 			"deleted_by":         acc.DeletedBy,
-			"deleted_time":       acc.DeletedTime,
+
+			"deleted_time": acc.DeletedTime,
+
 			"displayname":        acc.DisplayName,
 			"guid":               acc.GUID,
-			"account_id":         acc.ID,
-			"account_name":       acc.Name,
+
+			"account_id":   acc.ID,
+			"account_name": acc.Name,
+
 			"resource_limits":    flattenRgResourceLimits(acc.ResourceLimits),
 			"send_access_emails": acc.SendAccessEmails,
 			"service_account":    acc.ServiceAccount,
-			"status":             acc.Status,
-			"updated_time":       acc.UpdatedTime,
+
+			"status":       acc.Status,
+			"updated_time": acc.UpdatedTime,
+
 			"version":            acc.Version,
 			"vins":               acc.Vins,
+
 		}
 		res = append(res, temp)
 	}
 	return res
-
 }
+*/
 
 func dataSourceAccountListRead(d *schema.ResourceData, m interface{}) error {
 	accountList, err := utilityAccountListCheckPresence(d, m)
@@ -92,6 +121,7 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
+					/*uncomment for cloudbroker
 					"dc_location": {
 						Type:     schema.TypeString,
 						Computed: true,
@@ -106,7 +136,7 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
-					},
+					},*/
 					"acl": {
 						Type:     schema.TypeList,
 						Computed: true,
@@ -139,6 +169,7 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 							},
 						},
 					},
+					/*uncomment for cloudbroker
 					"company": {
 						Type:     schema.TypeString,
 						Computed: true,
@@ -151,10 +182,12 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
+					*/
 					"created_time": {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
+					/*uncomment for cloudbroker
 					"deactivation_time": {
 						Type:     schema.TypeFloat,
 						Computed: true,
@@ -163,10 +196,12 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
+					*/
 					"deleted_time": {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
+					/*uncomment for cloudbroker
 					"displayname": {
 						Type:     schema.TypeString,
 						Computed: true,
@@ -175,6 +210,7 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
+					*/
 					"account_id": {
 						Type:     schema.TypeInt,
 						Computed: true,
@@ -183,6 +219,7 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
+					/*uncomment for cloudbroker
 					"resource_limits": {
 						Type:     schema.TypeList,
 						Computed: true,
@@ -224,6 +261,7 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 						Type:     schema.TypeBool,
 						Computed: true,
 					},
+					*/
 					"status": {
 						Type:     schema.TypeString,
 						Computed: true,
@@ -232,6 +270,7 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
+					/*uncomment for cloudbroker
 					"version": {
 						Type:     schema.TypeInt,
 						Computed: true,
@@ -243,6 +282,7 @@ func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 							Type: schema.TypeInt,
 						},
 					},
+					*/
 				},
 			},
 		},

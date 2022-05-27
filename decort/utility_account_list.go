@@ -34,6 +34,33 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
+func utilityAccountListCheckPresence(d *schema.ResourceData, m interface{}) (AccountCloudApiList, error) {
+	accountList := AccountCloudApiList{}
+	controller := m.(*ControllerCfg)
+	urlValues := &url.Values{}
+
+	if page, ok := d.GetOk("page"); ok {
+		urlValues.Add("page", strconv.Itoa(page.(int)))
+	}
+	if size, ok := d.GetOk("size"); ok {
+		urlValues.Add("size", strconv.Itoa(size.(int)))
+	}
+
+	log.Debugf("utilityAccountListCheckPresence: load account list")
+	accountListRaw, err := controller.decortAPICall("POST", accountListAPI, urlValues)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal([]byte(accountListRaw), &accountList)
+	if err != nil {
+		return nil, err
+	}
+
+	return accountList, nil
+}
+
+/*uncomment for cloudbroker
 func utilityAccountListCheckPresence(d *schema.ResourceData, m interface{}) (AccountList, error) {
 	accountList := AccountList{}
 	controller := m.(*ControllerCfg)
@@ -59,3 +86,4 @@ func utilityAccountListCheckPresence(d *schema.ResourceData, m interface{}) (Acc
 
 	return accountList, nil
 }
+*/

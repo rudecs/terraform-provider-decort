@@ -51,12 +51,13 @@ type UserAclRecord struct {
 }
 
 type AccountAclRecord struct {
-	IsExplicit bool   `json:"explicit"`
-	Guid       string `json:"guid"`
-	Rights     string `json:"right"`
-	Status     string `json:"status"`
-	Type       string `json:"type"`
-	UgroupID   string `json:"userGroupId"`
+	IsExplicit   bool   `json:"explicit"`
+	Guid         string `json:"guid"`
+	Rights       string `json:"right"`
+	Status       string `json:"status"`
+	Type         string `json:"type"`
+	UgroupID     string `json:"userGroupId"`
+	CanBeDeleted bool   `json:"canBeDeleted"`
 }
 
 type ResourceLimits struct {
@@ -992,46 +993,28 @@ type SepPool map[string]interface{}
 /////  ACCOUNTS    ////
 ///////////////////////
 
-const accountAddUserAPI = "/cloudapi/account/addUser"
-
-//const accountAuditsAPI = "/restmachine/cloudapi/account/audits"
-const accountAuditsAPI = "/restmachine/cloudbroker/account/audits"
-const accountCreateAPI = "/cloudapi/account/create"
-const accountDeleteAPI = "/cloudapi/account/delete"
+const accountAddUserAPI = "/restmachine/cloudapi/account/addUser"
+const accountAuditsAPI = "/restmachine/cloudapi/account/audits"
+const accountCreateAPI = "/restmachine/cloudapi/account/create"
+const accountDeleteAPI = "/restmachine/cloudapi/account/delete"
 const accountDeleteAccountsAPI = "/cloudapi/account/deleteAccounts"
-const accountDeleteUserAPI = "/cloudapi/account/deleteUser"
-const accountDisableAPI = "/cloudapi/account/disable"
-const accountEnableAPI = "/cloudapi/account/enable"
-
-//const accountGetAPI = "/restmachine/cloudapi/account/get"
-const accountGetAPI = "/restmachine/cloudbroker/account/get"
-const accountGetConsumedAccountUnitsAPI = "/cloudapi/account/getConsumedAccountUnits"
-const accountGetConsumedCloudUnitsByTypeAPI = "/cloudapi/account/getConsumedCloudUnitsByType"
-const accountGetConsumptionGetAPI = "/cloudapi/account/getConsumption"
-const accountGetConsumptionPostAPI = "/cloudapi/account/getConsumption"
-const accountGetReservedAccountUnitsAPI = "/cloudapi/account/getReservedAccountUnits"
-const accountGetStatsAPI = "/cloudapi/account/getStats"
-
-//const accountListAPI = "/restmachine/cloudapi/account/list"
-const accountListAPI = "/restmachine/cloudbroker/account/list"
-
-//const accountListComputesAPI = "/restmachine/cloudapi/account/listComputes"
-const accountListComputesAPI = "/restmachine/cloudbroker/account/listComputes"
+const accountDeleteUserAPI = "/restmachine/cloudapi/account/deleteUser"
+const accountDisableAPI = "/restmachine/cloudapi/account/disable"
+const accountEnableAPI = "/restmachine/cloudapi/account/enable"
+const accountGetAPI = "/restmachine/cloudapi/account/get"
+const accountListAPI = "/restmachine/cloudapi/account/list"
+const accountListComputesAPI = "/restmachine/cloudapi/account/listComputes"
 const accountListCSAPI = "/cloudapi/account/listCS"
 const accountListDeletedAPI = "/cloudapi/account/listDeleted"
-
-//const accountListDisksAPI = "/restmachine/cloudapi/account/listDisks"
-const accountListDisksAPI = "/restmachine/cloudbroker/account/listDisks"
+const accountListDisksAPI = "/restmachine/cloudapi/account/listDisks"
 const accountListFlipGroupsAPI = "/cloudapi/account/listFlipGroups"
 const accountListRGAPI = "/cloudapi/account/listRG"
 const accountListTemplatesAPI = "/cloudapi/account/listTemplates"
-
-//const accountListVinsAPI = "/restmachine/cloudapi/account/listVins"
-const accountListVinsAPI = "/restmachine/cloudbroker/account/listVins"
+const accountListVinsAPI = "/restmachine/cloudapi/account/listVins"
 const accountListVMsAPI = "/cloudapi/account/listVMs"
-const accountRestoreAPI = "/cloudapi/account/restore"
-const accountUpdateAPI = "/cloudapi/account/update"
-const accountUpdateUserAPI = "/cloudapi/account/updateUser"
+const accountRestoreAPI = "/restmachine/cloudapi/account/restore"
+const accountUpdateAPI = "/restmachine/cloudapi/account/update"
+const accountUpdateUserAPI = "/restmachine/cloudapi/account/updateUser"
 
 ////Structs
 
@@ -1062,6 +1045,18 @@ type Account struct {
 
 type AccountList []Account
 
+type AccountCloudApi struct {
+	Acl         []AccountAclRecord `json:"acl"`
+	CreatedTime int                `json:"createdTime"`
+	DeletedTime int                `json:"deletedTime"`
+	ID          int                `json:"id"`
+	Name        string             `json:"name"`
+	Status      string             `json:"status"`
+	UpdatedTime int                `json:"updatedTime"`
+}
+
+type AccountCloudApiList []AccountCloudApi
+
 type Resource struct {
 	CPU        int `json:"cpu"`
 	Disksize   int `json:"disksize"`
@@ -1076,9 +1071,22 @@ type Resources struct {
 	Reserved Resource `json:"Reserved"`
 }
 
+type Computes struct {
+	Started int `json:"started"`
+	Stopped int `json:"stopped"`
+}
+
+type Machines struct {
+	Running int `json:"running"`
+	Halted  int `json:"halted"`
+}
+
 type AccountWithResources struct {
 	Account
 	Resources Resources `json:"Resources"`
+	Computes  Computes  `json:"computes"`
+	Machines  Machines  `json:"machines"`
+	Vinses    int       `json:"vinses"`
 }
 
 type AccountCompute struct {

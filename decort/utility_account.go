@@ -39,7 +39,11 @@ func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (*Accoun
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 
-	urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
+	if (strconv.Itoa(d.Get("account_id").(int))) != "0" {
+		urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
+	} else {
+		urlValues.Add("accountId", d.Id())
+	}
 
 	log.Debugf("utilityAccountCheckPresence: load account")
 	accountRaw, err := controller.decortAPICall("POST", accountGetAPI, urlValues)

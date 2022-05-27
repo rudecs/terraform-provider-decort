@@ -1,6 +1,6 @@
 /*
-Copyright (c) 2019-2021 Digital Energy Cloud Solutions LLC. All Rights Reserved.
-Author: Sergey Shubin, <sergey.shubin@digitalenergy.online>, <svs1370@gmail.com>
+Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Author: Stanislav Solovev, <spsolovev@digitalenergy.online>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
