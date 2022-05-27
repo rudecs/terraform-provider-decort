@@ -26,6 +26,7 @@
   - account_vins_list
   - account_audits_list
   - account
+  - account_rg_list
 - resources:
   - image
   - virtual_image
@@ -37,6 +38,7 @@
   - pcidevice
   - sep
   - sep_config
+  - account
 
 ## Как пользоваться примерами
 1. Установить terraform

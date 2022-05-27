@@ -145,6 +145,7 @@ func Provider() *schema.Provider {
 			"decort_account_disks_list":    dataSourceAccountDisksList(),
 			"decort_account_vins_list":     dataSourceAccountVinsList(),
 			"decort_account_audits_list":   dataSourceAccountAuditsList(),
+			"decort_account_rg_list":       dataSourceAccountRGList(),
 			// "decort_pfw": dataSourcePfw(),
 		},
 

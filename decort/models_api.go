@@ -1008,7 +1008,7 @@ const accountListCSAPI = "/cloudapi/account/listCS"
 const accountListDeletedAPI = "/cloudapi/account/listDeleted"
 const accountListDisksAPI = "/restmachine/cloudapi/account/listDisks"
 const accountListFlipGroupsAPI = "/cloudapi/account/listFlipGroups"
-const accountListRGAPI = "/cloudapi/account/listRG"
+const accountListRGAPI = "/restmachine/cloudapi/account/listRG"
 const accountListTemplatesAPI = "/cloudapi/account/listTemplates"
 const accountListVinsAPI = "/restmachine/cloudapi/account/listVins"
 const accountListVMsAPI = "/cloudapi/account/listVMs"
@@ -1156,3 +1156,32 @@ type AccountAudit struct {
 }
 
 type AccountAuditsList []AccountAudit
+
+type AccountRGComputes struct {
+	Started int `json:"Started"`
+	Stopped int `json:"Stopped"`
+}
+
+type AccountRGResources struct {
+	Consumed Resource `json:"Consumed"`
+	Limits   Resource `json:"Limits"`
+	Reserved Resource `json:"Reserved"`
+}
+
+type AccountRG struct {
+	Computes    AccountRGComputes  `json:"Computes"`
+	Resources   AccountRGResources `json:"Resources"`
+	CreatedBy   string             `json:"createdBy"`
+	CreatedTime int                `json:"createdTime"`
+	DeletedBy   string             `json:"deletedBy"`
+	DeletedTime int                `json:"deletedTime"`
+	RGID        int                `json:"id"`
+	Milestones  int                `json:"milestones"`
+	RGName      string             `json:"name"`
+	Status      string             `json:"status"`
+	UpdatedBy   string             `json:"updatedBy"`
+	UpdatedTime int                `json:"updatedTime"`
+	Vinses      int                `json:"vinses"`
+}
+
+type AccountRGList []AccountRG
