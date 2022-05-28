@@ -1006,14 +1006,12 @@ const accountGetConsumedUnitsByTypeAPI = "/restmachine/cloudapi/account/getConsu
 const accountGetReservedUnitsAPI = "/restmachine/cloudapi/account/getReservedAccountUnits"
 const accountListAPI = "/restmachine/cloudapi/account/list"
 const accountListComputesAPI = "/restmachine/cloudapi/account/listComputes"
-const accountListCSAPI = "/cloudapi/account/listCS"
 const accountListDeletedAPI = "/restmachine/cloudapi/account/listDeleted"
 const accountListDisksAPI = "/restmachine/cloudapi/account/listDisks"
-const accountListFlipGroupsAPI = "/cloudapi/account/listFlipGroups"
+const accountListFlipGroupsAPI = "/restmachine/cloudapi/account/listFlipGroups"
 const accountListRGAPI = "/restmachine/cloudapi/account/listRG"
 const accountListTemplatesAPI = "/restmachine/cloudapi/account/listTemplates"
 const accountListVinsAPI = "/restmachine/cloudapi/account/listVins"
-const accountListVMsAPI = "/cloudapi/account/listVMs"
 const accountRestoreAPI = "/restmachine/cloudapi/account/restore"
 const accountUpdateAPI = "/restmachine/cloudapi/account/update"
 const accountUpdateUserAPI = "/restmachine/cloudapi/account/updateUser"
@@ -1202,3 +1200,29 @@ type AccountTemplate struct {
 }
 
 type AccountTemplatesList []AccountTemplate
+
+type AccountFlipGroup struct {
+	AccountId   int    `json:"accountId"`
+	ClientType  string `json:"clientType"`
+	ConnType    string `json:"connType"`
+	CreatedBy   string `json:"createdBy"`
+	CreatedTime int    `json:"createdTime"`
+	DefaultGW   string `json:"defaultGW"`
+	DeletedBy   string `json:"deletedBy"`
+	DeletedTime int    `json:"deletedTime"`
+	Desc        string `json:"desc"`
+	GID         int    `json:"gid"`
+	GUID        int    `json:"guid"`
+	ID          int    `json:"id"`
+	IP          string `json:"ip"`
+	Milestones  int    `json:"milestones"`
+	Name        string `json:"name"`
+	NetID       int    `json:"netId"`
+	NetType     string `json:"netType"`
+	NetMask     int    `json:"netmask"`
+	Status      string `json:"status"`
+	UpdatedBy   string `json:"updatedBy"`
+	UpdatedTime int    `json:"updatedTime"`
+}
+
+type AccountFlipGroupsList []AccountFlipGroup

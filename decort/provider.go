@@ -151,6 +151,7 @@ func Provider() *schema.Provider {
 			"decort_account_reserved_units":         dataSourceAccountReservedUnits(),
 			"decort_account_templates_list":         dataSourceAccountTemplatessList(),
 			"decort_account_deleted_list":           dataSourceAccountDeletedList(),
+			"decort_account_flipgroups_list":        dataSourceAccountFlipGroupsList(),
 			// "decort_pfw": dataSourcePfw(),
 		},
 
