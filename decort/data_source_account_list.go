@@ -29,94 +29,83 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func flattenRgList(rgl ResgroupListResp) []map[string]interface{} {
+func flattenAccountList(al AccountCloudApiList) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
-	for _, rg := range rgl {
+	for _, acc := range al {
 		temp := map[string]interface{}{
-			"account_id":        rg.AccountID,
-			"account_name":      rg.AccountName,
-			"acl":               flattenRgAcl(rg.ACLs),
-			"created_by":        rg.CreatedBy,
-			"created_time":      rg.CreatedTime,
-			"def_net_id":        rg.DefaultNetID,
-			"def_net_type":      rg.DefaultNetType,
-			"deleted_by":        rg.DeletedBy,
-			"deleted_time":      rg.DeletedTime,
-			"desc":              rg.Decsription,
-			"gid":               rg.GridID,
-			"guid":              rg.GUID,
-			"rg_id":             rg.ID,
-			"lock_status":       rg.LockStatus,
-			"milestones":        rg.Milestones,
-			"name":              rg.Name,
-			"register_computes": rg.RegisterComputes,
-			"resource_limits":   flattenRgResourceLimits(rg.ResourceLimits),
-			"secret":            rg.Secret,
-			"status":            rg.Status,
-			"updated_by":        rg.UpdatedBy,
-			"updated_time":      rg.UpdatedTime,
-			"vins":              rg.Vins,
-			"vms":               rg.Computes,
-		}
-		res = append(res, temp)
-	}
-	return res
-
-}
-
-func flattenRgAcl(rgAcls []AccountAclRecord) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0)
-	for _, rgAcl := range rgAcls {
-		temp := map[string]interface{}{
-			"explicit":      rgAcl.IsExplicit,
-			"guid":          rgAcl.Guid,
-			"right":         rgAcl.Rights,
-			"status":        rgAcl.Status,
-			"type":          rgAcl.Type,
-			"user_group_id": rgAcl.UgroupID,
+			"acl":          flattenRgAcl(acc.Acl),
+			"created_time": acc.CreatedTime,
+			"deleted_time": acc.DeletedTime,
+			"account_id":   acc.ID,
+			"account_name": acc.Name,
+			"status":       acc.Status,
+			"updated_time": acc.UpdatedTime,
 		}
 		res = append(res, temp)
 	}
 	return res
 }
 
-func flattenRgResourceLimits(rl ResourceLimits) []map[string]interface{} {
+/*uncomment for cloudbroker
+func flattenAccountList(al AccountList) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
-	temp := map[string]interface{}{
-		"cu_c":      rl.CUC,
-		"cu_d":      rl.CUD,
-		"cu_i":      rl.CUI,
-		"cu_m":      rl.CUM,
-		"cu_np":     rl.CUNP,
-		"gpu_units": rl.GpuUnits,
+	for _, acc := range al {
+		temp := map[string]interface{}{
+			"dc_location":        acc.DCLocation,
+			"ckey":               acc.CKey,
+			"meta":               flattenMeta(acc.Meta),
+
+			"acl": flattenRgAcl(acc.Acl),
+
+			"company":            acc.Company,
+			"companyurl":         acc.CompanyUrl,
+			"created_by":         acc.CreatedBy,
+
+			"created_time": acc.CreatedTime,
+
+			"deactivation_time":  acc.DeactiovationTime,
+			"deleted_by":         acc.DeletedBy,
+
+			"deleted_time": acc.DeletedTime,
+
+			"displayname":        acc.DisplayName,
+			"guid":               acc.GUID,
+
+			"account_id":   acc.ID,
+			"account_name": acc.Name,
+
+			"resource_limits":    flattenRgResourceLimits(acc.ResourceLimits),
+			"send_access_emails": acc.SendAccessEmails,
+			"service_account":    acc.ServiceAccount,
+
+			"status":       acc.Status,
+			"updated_time": acc.UpdatedTime,
+
+			"version":            acc.Version,
+			"vins":               acc.Vins,
+
+		}
+		res = append(res, temp)
 	}
-	res = append(res, temp)
-
 	return res
-
 }
+*/
 
-func dataSourceRgListRead(d *schema.ResourceData, m interface{}) error {
-	rgList, err := utilityRgListCheckPresence(d, m)
+func dataSourceAccountListRead(d *schema.ResourceData, m interface{}) error {
+	accountList, err := utilityAccountListCheckPresence(d, m)
 	if err != nil {
 		return err
 	}
 
 	id := uuid.New()
 	d.SetId(id.String())
-	d.Set("items", flattenRgList(rgList))
+	d.Set("items", flattenAccountList(accountList))
 
 	return nil
 }
 
-func dataSourceRgListSchemaMake() map[string]*schema.Schema {
+func dataSourceAccountListSchemaMake() map[string]*schema.Schema {
 	res := map[string]*schema.Schema{
-		"includedeleted": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			Description: "included deleted resource groups",
-		},
 		"page": {
 			Type:        schema.TypeInt,
 			Optional:    true,
@@ -132,14 +121,22 @@ func dataSourceRgListSchemaMake() map[string]*schema.Schema {
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"account_id": {
-						Type:     schema.TypeInt,
-						Computed: true,
-					},
-					"account_name": {
+					/*uncomment for cloudbroker
+					"dc_location": {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
+					"ckey": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
+					"meta": {
+						Type:     schema.TypeList,
+						Computed: true,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+					},*/
 					"acl": {
 						Type:     schema.TypeList,
 						Computed: true,
@@ -172,62 +169,57 @@ func dataSourceRgListSchemaMake() map[string]*schema.Schema {
 							},
 						},
 					},
+					/*uncomment for cloudbroker
+					"company": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
+					"companyurl": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
 					"created_by": {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
+					*/
 					"created_time": {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
-					"def_net_id": {
-						Type:     schema.TypeInt,
-						Computed: true,
-					},
-					"def_net_type": {
-						Type:     schema.TypeString,
+					/*uncomment for cloudbroker
+					"deactivation_time": {
+						Type:     schema.TypeFloat,
 						Computed: true,
 					},
 					"deleted_by": {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
+					*/
 					"deleted_time": {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
-					"desc": {
+					/*uncomment for cloudbroker
+					"displayname": {
 						Type:     schema.TypeString,
-						Computed: true,
-					},
-					"gid": {
-						Type:     schema.TypeInt,
 						Computed: true,
 					},
 					"guid": {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
-					"rg_id": {
+					*/
+					"account_id": {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
-					"lock_status": {
+					"account_name": {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
-					"milestones": {
-						Type:     schema.TypeInt,
-						Computed: true,
-					},
-					"name": {
-						Type:     schema.TypeString,
-						Computed: true,
-					},
-					"register_computes": {
-						Type:     schema.TypeBool,
-						Computed: true,
-					},
+					/*uncomment for cloudbroker
 					"resource_limits": {
 						Type:     schema.TypeList,
 						Computed: true,
@@ -261,19 +253,25 @@ func dataSourceRgListSchemaMake() map[string]*schema.Schema {
 							},
 						},
 					},
-					"secret": {
-						Type:     schema.TypeString,
+					"send_access_emails": {
+						Type:     schema.TypeBool,
 						Computed: true,
 					},
+					"service_account": {
+						Type:     schema.TypeBool,
+						Computed: true,
+					},
+					*/
 					"status": {
 						Type:     schema.TypeString,
 						Computed: true,
 					},
-					"updated_by": {
-						Type:     schema.TypeString,
+					"updated_time": {
+						Type:     schema.TypeInt,
 						Computed: true,
 					},
-					"updated_time": {
+					/*uncomment for cloudbroker
+					"version": {
 						Type:     schema.TypeInt,
 						Computed: true,
 					},
@@ -284,13 +282,7 @@ func dataSourceRgListSchemaMake() map[string]*schema.Schema {
 							Type: schema.TypeInt,
 						},
 					},
-					"vms": {
-						Type:     schema.TypeList,
-						Computed: true,
-						Elem: &schema.Schema{
-							Type: schema.TypeInt,
-						},
-					},
+					*/
 				},
 			},
 		},
@@ -298,17 +290,17 @@ func dataSourceRgListSchemaMake() map[string]*schema.Schema {
 	return res
 }
 
-func dataSourceRgList() *schema.Resource {
+func dataSourceAccountList() *schema.Resource {
 	return &schema.Resource{
 		SchemaVersion: 1,
 
-		Read: dataSourceRgListRead,
+		Read: dataSourceAccountListRead,
 
 		Timeouts: &schema.ResourceTimeout{
 			Read:    &Timeout30s,
 			Default: &Timeout60s,
 		},
 
-		Schema: dataSourceRgListSchemaMake(),
+		Schema: dataSourceAccountListSchemaMake(),
 	}
 }

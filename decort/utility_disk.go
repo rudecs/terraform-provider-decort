@@ -16,16 +16,15 @@ limitations under the License.
 */
 
 /*
-This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration 
+This file is part of Terraform (by Hashicorp) provider for Digital Energy Cloud Orchestration
 Technology platfom.
 
-Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates. 
+Visit https://github.com/rudecs/terraform-provider-decort for full source code package and updates.
 */
 
 package decort
 
 import (
-
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -36,16 +35,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-
 func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
-	// This function tries to locate Disk by one of the following algorithms depending on 
+	// This function tries to locate Disk by one of the following algorithms depending on
 	// the parameters passed:
 	//    - if disk ID is specified -> by disk ID
 	//    - if disk name is specifeid -> by disk name and either account ID or account name
 	//
 	// NOTE: disk names are not unique, so the first occurence of this name in the account will
 	// be returned. There is no such ambiguity when locating disk by its ID.
-	// 
+	//
 	// If succeeded, it returns non empty string that contains JSON formatted facts about the disk
 	// as returned by disks/get API call.
 	// Otherwise it returns empty string and meaningful error.
@@ -64,7 +62,7 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	if err != nil || theId <= 0 {
 		diskId, argSet := d.GetOk("disk_id")
 		if argSet {
-			theId =diskId.(int)
+			theId = diskId.(int)
 			idSet = true
 		}
 	} else {
@@ -92,18 +90,14 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 
 	// Valid account ID is required to locate disks
 	// obtain Account ID by account name - it should not be zero on success
-	validatedAccountId, err := utilityGetAccountIdBySchema(d, m)
-	if err != nil {
-		return "", err
-	}
 
-	urlValues.Add("accountId", fmt.Sprintf("%d", validatedAccountId))
+	urlValues.Add("accountId", fmt.Sprintf("%d", d.Get("account_id").(int)))
 	diskFacts, err := controller.decortAPICall("POST", DisksListAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
 
-	log.Debugf("utilityDiskCheckPresence: ready to unmarshal string %s", diskFacts) 
+	log.Debugf("utilityDiskCheckPresence: ready to unmarshal string %s", diskFacts)
 
 	disksList := DisksListResp{}
 	err = json.Unmarshal([]byte(diskFacts), &disksList)
@@ -119,23 +113,23 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 			log.Debugf("utilityDiskCheckPresence: index %d, matched disk name %q", index, item.Name)
 			// we found the disk we need - not get detailed information via API call to disks/get
 			/*
-			// TODO: this may not be optimal as it initiates one extra call to the DECORT controller
-			// in spite of the fact that we already have all required information about the disk in
-			// item variable
-			//
-			get_urlValues := &url.Values{}
-			get_urlValues.Add("diskId", fmt.Sprintf("%d", item.ID))
-			diskFacts, err = controller.decortAPICall("POST", DisksGetAPI, get_urlValues)
-			if err != nil {
-				return "", err
-			}
-			return diskFacts, nil
+				// TODO: this may not be optimal as it initiates one extra call to the DECORT controller
+				// in spite of the fact that we already have all required information about the disk in
+				// item variable
+				//
+				get_urlValues := &url.Values{}
+				get_urlValues.Add("diskId", fmt.Sprintf("%d", item.ID))
+				diskFacts, err = controller.decortAPICall("POST", DisksGetAPI, get_urlValues)
+				if err != nil {
+					return "", err
+				}
+				return diskFacts, nil
 			*/
 			reencodedItem, err := json.Marshal(item)
 			if err != nil {
 				return "", err
 			}
-			return string(reencodedItem[:]), nil 
+			return string(reencodedItem[:]), nil
 		}
 	}
 
