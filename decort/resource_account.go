@@ -69,24 +69,56 @@ func resourceAccountCreate(d *schema.ResourceData, m interface{}) error {
 	if resLimits, ok := d.GetOk("resource_limits"); ok {
 		resLimit := resLimits.([]interface{})[0]
 		resLimitConv := resLimit.(map[string]interface{})
-
 		if resLimitConv["cu_m"] != nil {
-			urlValues.Add("maxMemoryCapacity", strconv.Itoa(int(resLimitConv["cu_m"].(float64))))
+			maxMemCap := int(resLimitConv["cu_m"].(float64))
+			if maxMemCap == 0 {
+				urlValues.Add("maxMemoryCapacity", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxMemoryCapacity", strconv.Itoa(maxMemCap))
+			}
 		}
 		if resLimitConv["cu_d"] != nil {
-			urlValues.Add("maxVDiskCapacity", strconv.Itoa(int(resLimitConv["cu_d"].(float64))))
+			maxDiskCap := int(resLimitConv["cu_d"].(float64))
+			if maxDiskCap == 0 {
+				urlValues.Add("maxVDiskCapacity", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxVDiskCapacity", strconv.Itoa(maxDiskCap))
+			}
 		}
 		if resLimitConv["cu_c"] != nil {
-			urlValues.Add("maxCPUCapacity", strconv.Itoa(int(resLimitConv["cu_c"].(float64))))
+			maxCPUCap := int(resLimitConv["cu_c"].(float64))
+			if maxCPUCap == 0 {
+				urlValues.Add("maxCPUCapacity", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxCPUCapacity", strconv.Itoa(maxCPUCap))
+			}
+
 		}
 		if resLimitConv["cu_i"] != nil {
-			urlValues.Add("maxNumPublicIP", strconv.Itoa(int(resLimitConv["cu_i"].(float64))))
+			maxNumPublicIP := int(resLimitConv["cu_i"].(float64))
+			if maxNumPublicIP == 0 {
+				urlValues.Add("maxNumPublicIP", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxNumPublicIP", strconv.Itoa(maxNumPublicIP))
+			}
+
 		}
 		if resLimitConv["cu_np"] != nil {
-			urlValues.Add("maxNetworkPeerTransfer", strconv.Itoa(int(resLimitConv["cu_np"].(float64))))
+			maxNP := int(resLimitConv["cu_np"].(float64))
+			if maxNP == 0 {
+				urlValues.Add("maxNetworkPeerTransfer", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxNetworkPeerTransfer", strconv.Itoa(maxNP))
+			}
+
 		}
 		if resLimitConv["gpu_units"] != nil {
-			urlValues.Add("gpu_units", strconv.Itoa(int(resLimitConv["gpu_units"].(float64))))
+			gpuUnits := int(resLimitConv["gpu_units"].(float64))
+			if gpuUnits == 0 {
+				urlValues.Add("gpu_units", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("gpu_units", strconv.Itoa(gpuUnits))
+			}
 		}
 	}
 
@@ -223,22 +255,55 @@ func resourceAccountEdit(d *schema.ResourceData, m interface{}) error {
 		resLimitConv := resLimit.(map[string]interface{})
 
 		if resLimitConv["cu_m"] != nil {
-			urlValues.Add("maxMemoryCapacity", strconv.Itoa(int(resLimitConv["cu_m"].(float64))))
+			maxMemCap := int(resLimitConv["cu_m"].(float64))
+			if maxMemCap == 0 {
+				urlValues.Add("maxMemoryCapacity", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxMemoryCapacity", strconv.Itoa(maxMemCap))
+			}
 		}
 		if resLimitConv["cu_d"] != nil {
-			urlValues.Add("maxVDiskCapacity", strconv.Itoa(int(resLimitConv["cu_d"].(float64))))
+			maxDiskCap := int(resLimitConv["cu_d"].(float64))
+			if maxDiskCap == 0 {
+				urlValues.Add("maxVDiskCapacity", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxVDiskCapacity", strconv.Itoa(maxDiskCap))
+			}
 		}
 		if resLimitConv["cu_c"] != nil {
-			urlValues.Add("maxCPUCapacity", strconv.Itoa(int(resLimitConv["cu_c"].(float64))))
+			maxCPUCap := int(resLimitConv["cu_c"].(float64))
+			if maxCPUCap == 0 {
+				urlValues.Add("maxCPUCapacity", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxCPUCapacity", strconv.Itoa(maxCPUCap))
+			}
+
 		}
 		if resLimitConv["cu_i"] != nil {
-			urlValues.Add("maxNumPublicIP", strconv.Itoa(int(resLimitConv["cu_i"].(float64))))
+			maxNumPublicIP := int(resLimitConv["cu_i"].(float64))
+			if maxNumPublicIP == 0 {
+				urlValues.Add("maxNumPublicIP", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxNumPublicIP", strconv.Itoa(maxNumPublicIP))
+			}
+
 		}
 		if resLimitConv["cu_np"] != nil {
-			urlValues.Add("maxNetworkPeerTransfer", strconv.Itoa(int(resLimitConv["cu_np"].(float64))))
+			maxNP := int(resLimitConv["cu_np"].(float64))
+			if maxNP == 0 {
+				urlValues.Add("maxNetworkPeerTransfer", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("maxNetworkPeerTransfer", strconv.Itoa(maxNP))
+			}
+
 		}
 		if resLimitConv["gpu_units"] != nil {
-			urlValues.Add("gpu_units", strconv.Itoa(int(resLimitConv["gpu_units"].(float64))))
+			gpuUnits := int(resLimitConv["gpu_units"].(float64))
+			if gpuUnits == 0 {
+				urlValues.Add("gpu_units", strconv.Itoa(-1))
+			} else {
+				urlValues.Add("gpu_units", strconv.Itoa(gpuUnits))
+			}
 		}
 
 		urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
