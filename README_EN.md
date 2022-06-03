@@ -17,7 +17,8 @@ NOTE: provider rc-1.25 is designed for DECORT API 3.7.x. For older API versions 
 - Work with snapshots,
 - Work with pcidevice.
 - Work with sep,
-- Work with vgpu.
+- Work with vgpu,
+- Work with bservice.
 
 This provider supports Import operations on pre-existing resources.
 

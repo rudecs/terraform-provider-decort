@@ -1226,3 +1226,261 @@ type AccountFlipGroup struct {
 }
 
 type AccountFlipGroupsList []AccountFlipGroup
+
+////////////////////
+//// BSERVICE   ////
+////////////////////
+
+const bserviceCreateAPI = "/restmachine/cloudapi/bservice/create"
+const bserviceDeleteAPI = "/restmachine/cloudapi/bservice/delete"
+const bserviceDisableAPI = "/restmachine/cloudapi/bservice/disable"
+const bserviceEnableAPI = "/restmachine/cloudapi/bservice/enable"
+const bserviceGetAPI = "/restmachine/cloudapi/bservice/get"
+const bserviceGroupAddAPI = "/restmachine/cloudapi/bservice/groupAdd"
+const bserviceGroupComputeRemoveAPI = "/restmachine/cloudapi/bservice/groupComputeRemove"
+const bserviceGroupGetAPI = "/restmachine/cloudapi/bservice/groupGet"
+const bserviceGroupParentAddAPI = "/restmachine/cloudapi/bservice/groupParentAdd"
+const bserviceGroupParentRemoveAPI = "/restmachine/cloudapi/bservice/groupParentRemove"
+const bserviceGroupRemoveAPI = "/restmachine/cloudapi/bservice/groupRemove"
+const bserviceGroupResizeAPI = "/restmachine/cloudapi/bservice/groupResize"
+const bserviceGroupStartAPI = "/restmachine/cloudapi/bservice/groupStart"
+const bserviceGroupStopAPI = "/restmachine/cloudapi/bservice/groupStop"
+const bserviceGroupUpdateAPI = "/restmachine/cloudapi/bservice/groupUpdate"
+const bserviceGroupUpdateExtnetAPI = "/restmachine/cloudapi/bservice/groupUpdateExtnet"
+const bserviceGroupUpdateVinsAPI = "/restmachine/cloudapi/bservice/groupUpdateVins"
+const bserviceListAPI = "/restmachine/cloudapi/bservice/list"
+const bserviceListDeletedAPI = "/restmachine/cloudapi/bservice/listDeleted"
+const bserviceRestoreAPI = "/restmachine/cloudapi/bservice/restore"
+const bserviceSnapshotCreateAPI = "/restmachine/cloudapi/bservice/snapshotCreate"
+const bserviceSnapshotDeleteAPI = "/restmachine/cloudapi/bservice/snapshotDelete"
+const bserviceSnapshotListAPI = "/restmachine/cloudapi/bservice/snapshotList"
+const bserviceSnapshotRollbackAPI = "/restmachine/cloudapi/bservice/snapshotRollback"
+const bserviceStartAPI = "/restmachine/cloudapi/bservice/start"
+const bserviceStopAPI = "/restmachine/cloudapi/bservice/stop"
+
+///Structs
+
+type BasicServiceCompute struct {
+	CompGroupId   int    `json:"compgroupId"`
+	CompGroupName string `json:"compgroupName"`
+	CompGroupRole string `json:"compgroupRole"`
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+}
+
+type BasicServiceComputes []BasicServiceCompute
+
+type BasicServiceSnapshot struct {
+	GUID      string `json:"guid"`
+	Label     string `json:"label"`
+	Timestamp int    `json:"timestamp"`
+	Valid     bool   `json:"valid"`
+}
+
+type BasicServiceSnapshots []BasicServiceSnapshot
+
+type BasicService struct {
+	AccountId   int    `json:"accountId"`
+	AccountName string `json:"accountName"`
+	BaseDomain  string `json:"baseDomain"`
+
+	CreatedBy     string `json:"createdBy"`
+	CreatedTime   int    `json:"createdTime"`
+	DeletedBy     string `json:"deletedBy"`
+	DeletedTime   int    `json:"deletedTime"`
+	GID           int    `json:"gid"`
+	Groups        []int  `json:"groups"`
+	GUID          int    `json:"guid"`
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	ParentSrvId   int    `json:"parentSrvId"`
+	ParentSrvType string `json:"parentSrvType"`
+	RGID          int    `json:"rgId"`
+	RGName        string `json:"rgName"`
+	SSHUser       string `json:"sshUser"`
+	Status        string `json:"status"`
+	TechStatus    string `json:"techStatus"`
+	UpdatedBy     string `json:"updatedBy"`
+	UpdatedTime   int    `json:"updatedTime"`
+	UserManaged   bool   `json:"userManaged"`
+}
+
+type BasicServiceList []BasicService
+
+type BasicServiceExtend struct {
+	BasicService
+	Computes   BasicServiceComputes  `json:"computes"`
+	CPUTotal   int                   `json:"cpuTotal"`
+	DiskTotal  int                   `json:"diskTotal"`
+	GroupsName []string              `json:"groupsName"`
+	Milestones int                   `json:"milestones"`
+	RamTotal   int                   `json:"ramTotal"`
+	Snapshots  BasicServiceSnapshots `json:"snapshots"`
+	SSHKey     string                `json:"sshKey"`
+}
+
+type BasicServiceGroupOSUser struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
+type BasicServiceGroupOSUsers []BasicServiceGroupOSUser
+
+type BasicServicceGroupCompute struct {
+	ID         int                      `json:"id"`
+	IPAdresses []string                 `json:"ipAddresses"`
+	Name       string                   `json:"name"`
+	OSUsers    BasicServiceGroupOSUsers `json:"osUsers"`
+}
+
+type BasicServiceGroupComputes []BasicServicceGroupCompute
+
+type BasicServiceGroup struct {
+	AccountId    int                       `json:"accountId"`
+	AccountName  string                    `json:"accountName"`
+	Computes     BasicServiceGroupComputes `json:"computes"`
+	Consistency  bool                      `json:"consistency"`
+	CPU          int                       `json:"cpu"`
+	CreatedBy    string                    `json:"createdBy"`
+	CreatedTime  int                       `json:"createdTime"`
+	DeletedBy    string                    `json:"deletedBy"`
+	DeletedTime  int                       `json:"deletedTime"`
+	Disk         int                       `json:"disk"`
+	Driver       string                    `json:"driver"`
+	Extnets      []int                     `json:"extnets"`
+	GID          int                       `json:"gid"`
+	GUID         int                       `json:"guid"`
+	ID           int                       `json:"id"`
+	ImageId      int                       `json:"imageId"`
+	Milestones   int                       `json:"milestones"`
+	Name         string                    `json:"name"`
+	Parents      []int                     `json:"parents"`
+	RAM          int                       `json:"ram"`
+	RGID         int                       `json:"rgId"`
+	RGName       string                    `json:"rgName"`
+	Role         string                    `json:"role"`
+	SepId        int                       `json:"sepId"`
+	SeqNo        int                       `json:"seqNo"`
+	ServiceId    int                       `json:"serviceId"`
+	Status       string                    `json:"status"`
+	TechStatus   string                    `json:"techStatus"`
+	TimeoutStart int                       `json:"timeoutStart"`
+	UpdatedBy    string                    `json:"updatedBy"`
+	UpdatedTime  int                       `json:"updatedTime"`
+	Vinses       []int                     `json:"vinses"`
+}
+
+///////////////////
+///// EXTNET  /////
+///////////////////
+
+const extnetListAPI = "/restmachine/cloudapi/extnet/list"
+const extnetListComputesAPI = "/restmachine/cloudapi/extnet/listComputes"
+const extnetGetDefaultAPI = "/restmachine/cloudapi/extnet/getDefault"
+const extnetGetAPI = "/restmachine/cloudapi/extnet/get"
+
+type Extnet struct {
+	ID     int    `json:"id"`
+	IPCidr string `json:"ipcidr"`
+	Name   string `json:"name"`
+}
+type ExtnetExtend struct {
+	Extnet
+	IPAddr string `json:"ipaddr"`
+}
+
+type ExtnetList []Extnet
+type ExtnetExtendList []ExtnetExtend
+
+type ExtnetComputes struct {
+	AccountId   int              `json:"accountId"`
+	AccountName string           `json:"accountName"`
+	Extnets     ExtnetExtendList `json:"extnets"`
+	ID          int              `json:"id"`
+	Name        string           `json:"name"`
+	RGID        int              `json:"rgId"`
+	RGName      string           `json:"rgName"`
+}
+
+type ExtnetComputesList []ExtnetComputes
+
+type ExtnetQos struct {
+	ERate   int    `json:"eRate"`
+	GUID    string `json:"guid"`
+	InBurst int    `json:"inBurst"`
+	InRate  int    `json:"inRate"`
+}
+
+type ExtnetReservation struct {
+	ClientType string `json:"clientType"`
+	Desc       string `json:"desc"`
+	DomainName string `json:"domainname"`
+	HostName   string `json:"hostname"`
+	IP         string `json:"ip"`
+	MAC        string `json:"mac"`
+	Type       string `json:"type"`
+	VMID       int    `json:"vmId"`
+}
+
+type ExtnetReservations []ExtnetReservation
+
+type ExtnetVNFS struct {
+	DHCP int `json:"dhcp"`
+}
+
+type ExtnetDetailed struct {
+	CKey               string             `json:"_ckey"`
+	Meta               []interface{}      `json:"_meta"`
+	CheckIPs           []string           `json:"checkIPs"`
+	CheckIps           []string           `json:"checkIps"`
+	Default            bool               `json:"default"`
+	DefaultQos         ExtnetQos          `json:"defaultQos"`
+	Desc               string             `json:"desc"`
+	Dns                []string           `json:"dns"`
+	Excluded           []string           `json:"excluded"`
+	FreeIps            int                `json:"free_ips"`
+	Gateway            string             `json:"gateway"`
+	GID                int                `json:"gid"`
+	GUID               int                `json:"guid"`
+	ID                 int                `json:"id"`
+	IPCidr             string             `json:"ipcidr"`
+	Milestones         int                `json:"milestones"`
+	Name               string             `json:"name"`
+	Network            string             `json:"network"`
+	NetworkId          int                `json:"networkId"`
+	PreReservationsNum int                `json:"preReservationsNum"`
+	Prefix             int                `json:"prefix"`
+	PriVnfDevId        int                `json:"priVnfDevId"`
+	Reservations       ExtnetReservations `json:"reservations"`
+	SharedWith         []int              `json:"sharedWith"`
+	Status             string             `json:"status"`
+	VlanID             int                `json:"vlanId"`
+	VNFS               ExtnetVNFS         `json:"vnfs"`
+}
+
+//////////////
+//// VINS ////
+//////////////
+
+const vinsListAPI = "/restmachine/cloudapi/vins/list"
+
+type Vins struct {
+	AccountId   int    `json:"accountId"`
+	AccountName string `json:"accountName"`
+	CreatedBy   string `json:"createdBy"`
+	CreatedTime int    `json:"createdTime"`
+	DeletedBy   string `json:"deletedBy"`
+	DeletedTime int    `json:"deletedTime"`
+	ExternalIP  string `json:"externalIP"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Network     string `json:"network"`
+	RGID        int    `json:"rgId"`
+	RGName      string `json:"rgName"`
+	Status      string `json:"status"`
+	UpdatedBy   string `json:"updatedBy"`
+	UpdatedTime int    `json:"updatedTime"`
+	VXLanID     int    `json:"vxlanId"`
+}
+
+type VinsList []Vins

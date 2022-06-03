@@ -51,7 +51,7 @@ func resourceAccountCreate(d *schema.ResourceData, m interface{}) error {
 
 			return nil
 		}
-		return errors.New("provided sep id does not exist")
+		return errors.New("provided account id does not exist")
 	}
 
 	controller := m.(*ControllerCfg)
@@ -142,7 +142,7 @@ func resourceAccountCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceAccountRead(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceSepRead")
+	log.Debugf("resourceAccountRead")
 
 	acc, err := utilityAccountCheckPresence(d, m)
 	if acc == nil {
