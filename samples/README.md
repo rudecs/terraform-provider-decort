@@ -32,6 +32,14 @@
   - account_reserved_units
   - account_templates_list
   - account_deleted_list
+  - bservice_list
+  - bservice
+  - bservice_group
+  - extnet_default
+  - extnet_list
+  - extnet
+  - extnet_computes_list
+  - vins_list
 - resources:
   - image
   - virtual_image
@@ -44,6 +52,8 @@
   - sep
   - sep_config
   - account
+  - bservice
+  - bservice_group
 
 ## Как пользоваться примерами
 1. Установить terraform
