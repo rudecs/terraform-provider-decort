@@ -28,7 +28,7 @@ provider "decort" {
 }
 
 data "decort_bservice_snapshot_list" "bsl" {
-  #id back service
+  #id basic service
   #обязательный параметр
   #тип - число
   service_id = 11111

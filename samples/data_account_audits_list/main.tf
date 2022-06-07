@@ -31,7 +31,7 @@ data "decort_account_audits_list" "aal" {
   #id аккаунта
   #обязательный параметр
   #тип - число
-  account_id = 28096
+  account_id = 11111
 
 }
 

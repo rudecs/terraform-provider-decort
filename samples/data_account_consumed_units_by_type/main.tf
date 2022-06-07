@@ -34,9 +34,9 @@ data "decort_account_consumed_units_by_type" "acubt" {
   #id аккаунта
   #обязательный параметр
   #тип - число
-  account_id = 88366
+  account_id = 33333
 
-  #тип вычислительной еденицы
+  #тип вычислительной единицы
   #обязательный параметр
   #тип - строка
   #значения:
@@ -46,7 +46,7 @@ data "decort_account_consumed_units_by_type" "acubt" {
   #cu_i - кол-во публичных ip адресов
   #cu_np - кол-во полученного/отданного трафика, в ГБ
   #gpu_units - кол-во gpu ядер
-  cu_type = "cu_a"
+  cu_type = "cu_с"
 }
 
 output "test" {

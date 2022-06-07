@@ -19,7 +19,8 @@ Terraform provider для платформы Digital Energy Cloud Orchestration 
 - Работа с pcidevice,
 - Работа с sep,
 - Работа с vgpu,
-- Работа с bservice.
+- Работа с bservice,
+- Работа с extnets.
 
 Вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
 
