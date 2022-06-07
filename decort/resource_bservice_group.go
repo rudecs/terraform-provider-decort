@@ -518,6 +518,7 @@ func resourceBasicServiceGroupSchemaMake() map[string]*schema.Schema {
 		"compgroup_id": {
 			Type:     schema.TypeInt,
 			Optional: true,
+			Computed: true,
 		},
 		"account_id": {
 			Type:     schema.TypeInt,

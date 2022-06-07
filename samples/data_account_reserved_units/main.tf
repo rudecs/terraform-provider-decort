@@ -30,7 +30,7 @@ data "decort_account_reserved_units" "aru" {
   #id аккаунта
   #обязательный параметр
   #тип - число
-  account_id = 88366
+  account_id = 11111
 }
 
 output "test" {

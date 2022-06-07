@@ -30,7 +30,7 @@ data "decort_account_vins_list" "avl" {
   #id аккаунта
   #обязательный параметр
   #тип - число
-  account_id = 28096
+  account_id = 22222
 
 }
 

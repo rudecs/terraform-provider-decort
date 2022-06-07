@@ -30,7 +30,7 @@ provider "decort" {
 }
 
 resource "decort_bservice_group" "bsg" {
-  #id back service
+  #id basic service
   #обязательный параметр
   #тип - число
   service_id = 444444
@@ -138,7 +138,7 @@ resource "decort_bservice_group" "bsg" {
 
   #режим увеличения числа выч. мощностей
   #необязательный параметр
-  #тип - число
+  #тип - строка
   #используется в связке с comp_count при редактировании группы
   #возможные варианты - RELATIVE и ABSOLUTE
   #mode = "RELATIVE"

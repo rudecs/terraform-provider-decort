@@ -29,7 +29,7 @@ data "decort_account_rg_list" "argl" {
   #id аккаунта
   #обязательный параметр
   #тип - число
-  account_id = 88366
+  account_id = 66666
 }
 
 output "test" {

@@ -29,7 +29,7 @@ data "decort_account_consumed_units" "acu" {
   #id аккаунта
   #обязательный параметр
   #тип - число
-  account_id = 88366
+  account_id = 22222
 }
 
 output "test" {
