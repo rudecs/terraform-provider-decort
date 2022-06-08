@@ -26,8 +26,6 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-var decsController *ControllerCfg
-
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{

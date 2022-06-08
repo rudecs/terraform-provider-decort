@@ -191,7 +191,7 @@ func resourceSnapshot() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			customdiff.IfValueChange("rollback", func(old, new, meta interface{}) bool {
 				o := old.(bool)
-				if o != new.(bool) && o == false {
+				if o != new.(bool) && !o {
 					return true
 				}
 				return false

@@ -160,6 +160,9 @@ func resourceDiskDelete(d *schema.ResourceData, m interface{}) error {
 
 	diskFacts, err := utilityDiskCheckPresence(d, m)
 	if diskFacts == "" {
+		if err != nil {
+			return err
+		}
 		// the specified Disk does not exist - in this case according to Terraform best practice
 		// we exit from Destroy method without error
 		return nil

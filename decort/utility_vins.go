@@ -35,28 +35,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func (ctrl *ControllerCfg) utilityVinsConfigGet(vinsid int) (*VinsRecord, error) {
-	urlValues := &url.Values{}
-	urlValues.Add("vinsId", fmt.Sprintf("%d", vinsid))
-	vinsFacts, err := ctrl.decortAPICall("POST", VinsGetAPI, urlValues)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debugf("utilityVinsConfigGet: ready to unmarshal string %q", vinsFacts)
-	model := &VinsRecord{}
-	err = json.Unmarshal([]byte(vinsFacts), model)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Debugf("utilityVinsConfigGet: Name %d, account name:ID %s:%d, RG Name:ID %s:%d",
-		model.Name, model.AccountName, model.AccountID, 
-		model.RgName, model.RgID)
-
-	return model, nil
-}
-
 // On success this function returns a string, as returned by API vins/get, which could be unmarshalled
 // into VinsGetResp structure
 func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
@@ -129,7 +107,7 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	if err != nil {
 		return "", err
 	}
-	
+
 	// log.Debugf("%s", apiResp)
 	// log.Debugf("utilityResgroupCheckPresence: ready to decode response body from %s", VinsSearchAPI)
 	model := VinsSearchResp{}
@@ -141,24 +119,24 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	log.Debugf("utilityVinsCheckPresence: traversing decoded Json of length %d", len(model))
 	for index, item := range model {
 		if item.Name == vinsName.(string) {
-			if ( accountSet && item.AccountID != accountId.(int) ) || 
-			   ( rgSet && item.RgID != rgId.(int) ) {
-				   // double check that account ID and Rg ID match, if set in the schema
-				   continue
+			if (accountSet && item.AccountID != accountId.(int)) ||
+				(rgSet && item.RgID != rgId.(int)) {
+				// double check that account ID and Rg ID match, if set in the schema
+				continue
 			}
 
 			log.Debugf("utilityVinsCheckPresence: match ViNS name %s / ID %d, account ID %d, RG ID %d at index %d",
-				       item.Name, item.ID, item.AccountID, item.RgID, index)
+				item.Name, item.ID, item.AccountID, item.RgID, index)
 
-			// element returned by API vins/search does not contain all information we may need to 
+			// element returned by API vins/search does not contain all information we may need to
 			// manage ViNS, so we have to get detailed info by calling API vins/get
 			rqValues := &url.Values{}
-			rqValues.Add("vinsId", fmt.Sprintf("%d",item.ID))
+			rqValues.Add("vinsId", fmt.Sprintf("%d", item.ID))
 			vinsGetResp, err := controller.decortAPICall("POST", VinsGetAPI, rqValues)
 			if err != nil {
 				return "", err
 			}
-			return vinsGetResp, nil 
+			return vinsGetResp, nil
 		}
 	}
 

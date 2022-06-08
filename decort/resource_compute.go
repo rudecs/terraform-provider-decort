@@ -132,7 +132,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		log.Debugf("resourceComputeCreate: calling utilityComputeExtraDisksConfigure to attach %d extra disk(s)", argVal.(*schema.Set).Len())
 		err = controller.utilityComputeExtraDisksConfigure(d, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
-			log.Errorf("resourceComputeCreate: error when attaching extra disk(s) to a new Compute ID %s: %s", compId, err)
+			log.Errorf("resourceComputeCreate: error when attaching extra disk(s) to a new Compute ID %d: %v", compId, err)
 			extraDisksOk = false
 		}
 	}
@@ -167,8 +167,7 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		reqValues := &url.Values{}
 		reqValues.Add("computeId", fmt.Sprintf("%d", compId))
 		log.Debugf("resourceComputeCreate: starting Compute ID %d after completing its resource configuration", compId)
-		apiResp, err = controller.decortAPICall("POST", ComputeStartAPI, reqValues)
-		if err != nil {
+		if _, err := controller.decortAPICall("POST", ComputeStartAPI, reqValues); err != nil {
 			return err
 		}
 	}
@@ -269,7 +268,7 @@ func resourceComputeUpdate(d *schema.ResourceData, m interface{}) error {
 		}
 		d.SetPartial("boot_disk_size")
 	} else if oldSize.(int) > newSize.(int) {
-		log.Warnf("resourceComputeUpdate: compute ID %d - shrinking boot disk is not allowed", d.Id())
+		log.Warnf("resourceComputeUpdate: compute ID %s - shrinking boot disk is not allowed", d.Id())
 	}
 
 	// 3. Calculate and apply changes to data disks
@@ -320,6 +319,9 @@ func resourceComputeDelete(d *schema.ResourceData, m interface{}) error {
 
 	compFacts, err := utilityComputeCheckPresence(d, m)
 	if compFacts == "" {
+		if err != nil {
+			return err
+		}
 		// the target Compute does not exist - in this case according to Terraform best practice
 		// we exit from Destroy method without error
 		return nil
@@ -540,39 +542,6 @@ func resourceCompute() *schema.Resource {
 				Default:     true,
 				Description: "Is compute started.",
 			},
-
-			/*
-				"disks": {
-					Type:     schema.TypeList,
-					Computed: true,
-					Elem: &schema.Resource{
-						Schema: dataSourceDiskSchemaMake(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
-					},
-					Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
-				},
-
-				"interfaces": {
-					Type:     schema.TypeList,
-					Computed: true,
-					Elem: &schema.Resource{
-						Schema: interfaceSubresourceSchemaMake(),
-					},
-					Description: "Specification for the virtual NICs configured on this compute instance.",
-				},
-
-
-				"status": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Current model status of this compute instance.",
-				},
-
-				"tech_status": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Current technical status of this compute instance.",
-				},
-			*/
 		},
 	}
 }

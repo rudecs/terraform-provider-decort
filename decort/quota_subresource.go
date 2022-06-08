@@ -28,7 +28,7 @@ import (
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
-func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
+func makeQuotaRecord(arg_list []interface{}) QuotaRecord {
 	quota := QuotaRecord{
 		Cpu:        -1,
 		Ram:        -1., // this is float64, but may change in the future
@@ -63,7 +63,7 @@ func makeQuotaRecord(arg_list []interface{}) (QuotaRecord, int) {
 		quota.GpuUnits = subres_data["gpu_units"].(int)
 	}
 
-	return quota, 1
+	return quota
 }
 
 func parseQuota(quota QuotaRecord) []interface{} {
