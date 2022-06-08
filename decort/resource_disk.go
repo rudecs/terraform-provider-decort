@@ -47,8 +47,14 @@ func resourceDiskCreate(d *schema.ResourceData, m interface{}) error {
 	urlValues.Add("name", d.Get("name").(string))
 	urlValues.Add("size", fmt.Sprintf("%d", d.Get("size").(int)))
 	urlValues.Add("type", "D") // NOTE: only disks of Data type are managed via plugin
-	urlValues.Add("sep_id", fmt.Sprintf("%d", d.Get("sep_id").(int)))
-	urlValues.Add("pool", d.Get("pool").(string))
+
+	if sepId, ok := d.GetOk("sep_id"); ok {
+		urlValues.Add("sep_id", strconv.Itoa(sepId.(int)))
+	}
+
+	if poolName, ok := d.GetOk("pool"); ok {
+		urlValues.Add("pool", poolName.(string))
+	}
 
 	argVal, argSet := d.GetOk("description")
 	if argSet {
@@ -201,7 +207,7 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"name": {
 			Type:        schema.TypeString,
-			Optional:    true,
+			Required:    true,
 			Description: "Name of this disk. NOTE: disk names are NOT unique within an account. If disk ID is specified, disk name is ignored.",
 		},
 
@@ -213,24 +219,24 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 
 		"account_id": {
 			Type:        schema.TypeInt,
-			Optional:    true,
+			Required:    true,
 			Description: "ID of the account this disk belongs to.",
 		},
 
 		"sep_id": {
-			Type:         schema.TypeInt,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.IntAtLeast(1),
-			Description:  "Storage end-point provider serving this disk. Cannot be changed for existing disk.",
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			ForceNew:    true,
+			Description: "Storage end-point provider serving this disk. Cannot be changed for existing disk.",
 		},
 
 		"pool": {
-			Type:         schema.TypeString,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-			Description:  "Pool where this disk is located. Cannot be changed for existing disk.",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
+			ForceNew:    true,
+			Description: "Pool where this disk is located. Cannot be changed for existing disk.",
 		},
 
 		"size": {

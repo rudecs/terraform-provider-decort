@@ -39,10 +39,6 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 
 	// Valid account ID is required to create new resource group
 	// obtain Account ID by account name - it should not be zero on success
-	validated_account_id, err := utilityGetAccountIdBySchema(d, m)
-	if err != nil {
-		return err
-	}
 
 	rg_name, arg_set := d.GetOk("name")
 	if !arg_set {
@@ -62,7 +58,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 
 	// all required parameters are set in the schema - we can continue with RG creation
 	log.Debugf("resourceResgroupCreate: called for RG name %s, account ID %d",
-		rg_name.(string), validated_account_id)
+		rg_name.(string), d.Get("account_id").(int))
 
 	// quota settings are optional
 	set_quota := false
@@ -77,10 +73,10 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	controller := m.(*ControllerCfg)
 	log.Debugf("resourceResgroupCreate: called by user %q for RG name %s, account ID %d",
 		controller.getDecortUsername(),
-		rg_name.(string), validated_account_id)
+		rg_name.(string), d.Get("account_id").(int))
 
 	url_values := &url.Values{}
-	url_values.Add("accountId", fmt.Sprintf("%d", validated_account_id))
+	url_values.Add("accountId", fmt.Sprintf("%d", d.Get("account_id").(int)))
 	url_values.Add("name", rg_name.(string))
 	url_values.Add("gid", fmt.Sprintf("%d", DefaultGridID)) // use default Grid ID, similar to disk resource mgmt convention
 	url_values.Add("owner", controller.getDecortUsername())
