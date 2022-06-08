@@ -129,11 +129,3 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 
 	return "", fmt.Errorf("Cannot find RG name %s owned by account ID %d", rgName, d.Get("account_id").(int))
 }
-
-func utilityResgroupGetDefaultGridID() (interface{}, error) {
-	if DefaultGridID > 0 {
-		return fmt.Sprintf("%d", DefaultGridID), nil
-	}
-
-	return "", fmt.Errorf("utilityResgroupGetDefaultGridID: invalid default Grid ID %d", DefaultGridID)
-}

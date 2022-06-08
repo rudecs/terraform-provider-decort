@@ -32,7 +32,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func utilityExtnetDefaultCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
+func utilityExtnetDefaultCheckPresence(_ *schema.ResourceData, m interface{}) (string, error) {
 	controller := m.(*ControllerCfg)
 	urlValues := &url.Values{}
 

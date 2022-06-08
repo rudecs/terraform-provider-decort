@@ -428,7 +428,7 @@ func isChangedUser(els []interface{}, el interface{}) bool {
 		elOldConv := elOld.(map[string]interface{})
 		elConv := el.(map[string]interface{})
 		if elOldConv["user_id"].(string) == elConv["user_id"].(string) &&
-			(strings.ToUpper(elOldConv["access_type"].(string)) != strings.ToUpper(elConv["access_type"].(string)) ||
+			(!strings.EqualFold(elOldConv["access_type"].(string), elConv["access_type"].(string)) ||
 				elOldConv["recursive_delete"].(bool) != elConv["recursive_delete"].(bool)) {
 			return true
 		}
