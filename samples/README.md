@@ -33,6 +33,8 @@
   - account_templates_list
   - account_deleted_list
   - bservice_list
+  - bservice_snapshot_list
+  - bservice_deleted_list
   - bservice
   - bservice_group
   - extnet_default
