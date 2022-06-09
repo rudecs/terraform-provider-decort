@@ -17,17 +17,17 @@ description: |-
 
 ### Required
 
-- **pool** (String) Pool where this disk is located. Cannot be changed for existing disk.
-- **sep_id** (Number) Storage end-point provider serving this disk. Cannot be changed for existing disk.
+- **account_id** (Number) ID of the account this disk belongs to.
+- **name** (String) Name of this disk. NOTE: disk names are NOT unique within an account. If disk ID is specified, disk name is ignored.
 - **size** (Number) Size of the disk in GB. Note, that existing disks can only be grown in size.
 
 ### Optional
 
-- **account_id** (Number) ID of the account this disk belongs to.
 - **description** (String) Optional user-defined text description of this disk.
 - **disk_id** (Number) ID of the disk to get. If disk ID is specified, then disk name and account ID are ignored.
 - **id** (String) The ID of this resource.
-- **name** (String) Name of this disk. NOTE: disk names are NOT unique within an account. If disk ID is specified, disk name is ignored.
+- **pool** (String) Pool where this disk is located. Cannot be changed for existing disk.
+- **sep_id** (Number) Storage end-point provider serving this disk. Cannot be changed for existing disk.
 - **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
