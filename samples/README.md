@@ -18,6 +18,30 @@
   - sep_pool
   - sep_consumption
   - vgpu
+  - disk_list
+  - rg_list
+  - account_list
+  - account_computes_list
+  - account_disks_list
+  - account_vins_list
+  - account_audits_list
+  - account
+  - account_rg_list
+  - account_counsumed_units
+  - account_counsumed_units_by_type
+  - account_reserved_units
+  - account_templates_list
+  - account_deleted_list
+  - bservice_list
+  - bservice_snapshot_list
+  - bservice_deleted_list
+  - bservice
+  - bservice_group
+  - extnet_default
+  - extnet_list
+  - extnet
+  - extnet_computes_list
+  - vins_list
 - resources:
   - image
   - virtual_image
@@ -29,6 +53,9 @@
   - pcidevice
   - sep
   - sep_config
+  - account
+  - bservice
+  - bservice_group
 
 ## Как пользоваться примерами
 1. Установить terraform

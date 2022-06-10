@@ -87,8 +87,7 @@ func resourceImageCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	api := ""
-	isSync := d.Get("sync").(bool)
-	if !isSync {
+	if isSync := d.Get("sync").(bool); !isSync {
 		api = imageCreateAPI
 	} else {
 		api = imageSyncCreateAPI
@@ -640,16 +639,10 @@ func resourceImage() *schema.Resource {
 		},
 		CustomizeDiff: customdiff.All(
 			customdiff.IfValueChange("enabled", func(old, new, meta interface{}) bool {
-				if old.(bool) != new.(bool) {
-					return true
-				}
-				return false
+				return old.(bool) != new.(bool)
 			}, resourceImageChangeEnabled),
 			customdiff.IfValueChange("name", func(old, new, meta interface{}) bool {
-				if old.(string) != new.(string) && old.(string) != "" {
-					return true
-				}
-				return false
+				return old.(string) != new.(string) && old.(string) != ""
 			}, resourceImageEditName),
 			customdiff.IfValueChange("shared_with", func(old, new, meta interface{}) bool {
 				o := old.([]interface{})
@@ -667,16 +660,10 @@ func resourceImage() *schema.Resource {
 						count++
 					}
 				}
-				if count == 0 {
-					return true
-				}
-				return false
+				return count == 0
 			}, resourceImageShare),
 			customdiff.IfValueChange("computeci_id", func(old, new, meta interface{}) bool {
-				if old.(int) != new.(int) {
-					return true
-				}
-				return false
+				return old.(int) != new.(int)
 			}, resourceImageChangeComputeci),
 			customdiff.IfValueChange("enabled_stacks", func(old, new, meta interface{}) bool {
 				o := old.([]interface{})
@@ -693,10 +680,7 @@ func resourceImage() *schema.Resource {
 						count++
 					}
 				}
-				if count == 0 {
-					return true
-				}
-				return false
+				return count == 0
 			}, resourceImageUpdateNodes),
 		),
 

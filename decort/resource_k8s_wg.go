@@ -108,16 +108,14 @@ func resourceK8sWgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	wg, err := utilityK8sWgCheckPresence(d, m)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	urlValues := &url.Values{}
 	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
 	urlValues.Add("workersGroupId", d.Id())
 
-	newNum := d.Get("num").(int)
-
-	if newNum > wg.Num {
+	if newNum := d.Get("num").(int); newNum > wg.Num {
 		urlValues.Add("num", strconv.Itoa(newNum-wg.Num))
 		_, err := controller.decortAPICall("POST", K8sWorkerAddAPI, urlValues)
 		if err != nil {

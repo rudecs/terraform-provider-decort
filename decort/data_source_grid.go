@@ -37,7 +37,6 @@ func flattenGrid(d *schema.ResourceData, grid *Grid) {
 	d.Set("guid", grid.Guid)
 	d.Set("location_code", grid.LocationCode)
 	d.Set("id", grid.Id)
-	return
 }
 
 func dataSourceGridRead(d *schema.ResourceData, m interface{}) error {

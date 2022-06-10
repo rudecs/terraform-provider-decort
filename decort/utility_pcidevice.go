@@ -43,21 +43,12 @@ func utilityPcideviceCheckPresence(d *schema.ResourceData, m interface{}) (*Pcid
 		id, _ := strconv.Atoi(d.Id())
 		pcideviceId = id
 	}
-	pcidevice := &Pcidevice{}
-
-	flag := false
 
 	for _, pd := range pcideviceList {
 		if pd.ID == pcideviceId {
-			pcidevice = &pd
-			flag = true
-			break
+			return &pd, nil
 		}
 	}
 
-	if !flag {
-		return nil, nil
-	}
-
-	return pcidevice, nil
+	return nil, nil
 }

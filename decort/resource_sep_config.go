@@ -55,9 +55,7 @@ func resourceSepConfigCreate(d *schema.ResourceData, m interface{}) error {
 		return errors.New("provided sep id config does not exist")
 	}
 
-	resourceSepConfigRead(d, m)
-
-	return nil
+	return resourceSepConfigRead(d, m)
 }
 
 func resourceSepConfigRead(d *schema.ResourceData, m interface{}) error {

@@ -40,7 +40,7 @@ import (
 func ipcidrDiffSupperss(key, oldVal, newVal string, d *schema.ResourceData) bool {
 	if oldVal == "" && newVal != "" {
 		// if old value for "ipcidr" resource is empty string, it means that we are creating new ViNS
-		// and there is a chance that the user will want specific IP address range for this ViNS -  
+		// and there is a chance that the user will want specific IP address range for this ViNS -
 		// check if "ipcidr" is explicitly set in TF file to a non-empty string.
 		log.Debugf("ipcidrDiffSupperss: key=%s, oldVal=%q, newVal=%q -> suppress=FALSE", key, oldVal, newVal)
 		return false // there is a difference between stored and new value
@@ -51,7 +51,7 @@ func ipcidrDiffSupperss(key, oldVal, newVal string, d *schema.ResourceData) bool
 
 func resourceVinsCreate(d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceVinsCreate: called for ViNS name %s, Account ID %d, RG ID %d",
-	           d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
+		d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
 
 	apiToCall := VinsCreateInAccountAPI
 
@@ -65,7 +65,7 @@ func resourceVinsCreate(d *schema.ResourceData, m interface{}) error {
 		apiToCall = VinsCreateInRgAPI
 		urlValues.Add("rgId", fmt.Sprintf("%d", argVal.(int)))
 	} else {
-		// RG ID either not set at all or set to 0 - user may want ViNS at account level 
+		// RG ID either not set at all or set to 0 - user may want ViNS at account level
 		argVal, argSet = d.GetOk("account_id")
 		if !argSet || argVal.(int) <= 0 {
 			// No valid Account ID (and no RG ID either) - cannot create ViNS
@@ -79,14 +79,14 @@ func resourceVinsCreate(d *schema.ResourceData, m interface{}) error {
 		if argVal.(int) > 0 {
 			// connect to specific external network
 			urlValues.Add("extNetId", fmt.Sprintf("%d", argVal.(int)))
-			/* 
-			 Commented out, as we've made "ext_net_ip" parameter non-configurable via Terraform!
+			/*
+				 Commented out, as we've made "ext_net_ip" parameter non-configurable via Terraform!
 
-			// in case of specific ext net connection user may also want a particular IP address
-			argVal, argSet = d.GetOk("ext_net_ip")
-			if argSet && argVal.(string) != "" {
-				urlValues.Add("extIp", argVal.(string))
-			}
+				// in case of specific ext net connection user may also want a particular IP address
+				argVal, argSet = d.GetOk("ext_net_ip")
+				if argSet && argVal.(string) != "" {
+					urlValues.Add("extIp", argVal.(string))
+				}
 			*/
 		} else {
 			// ext_net_id is set to a negative value - connect to default external network
@@ -100,7 +100,7 @@ func resourceVinsCreate(d *schema.ResourceData, m interface{}) error {
 		log.Debugf("resourceVinsCreate: ipcidr is set to %s", argVal.(string))
 		urlValues.Add("ipcidr", argVal.(string))
 	}
-	
+
 	argVal, argSet = d.GetOk("description")
 	if argSet {
 		urlValues.Add("desc", argVal.(string))
@@ -116,9 +116,9 @@ func resourceVinsCreate(d *schema.ResourceData, m interface{}) error {
 
 	log.Debugf("resourceVinsCreate: new ViNS ID / name %d / %s creation sequence complete", vinsId, d.Get("name").(string))
 
-	// We may reuse dataSourceVinsRead here as we maintain similarity 
+	// We may reuse dataSourceVinsRead here as we maintain similarity
 	// between ViNS resource and ViNS data source schemas
-	// ViNS resource read function will also update resource ID on success, so that Terraform 
+	// ViNS resource read function will also update resource ID on success, so that Terraform
 	// will know the resource exists (however, we already did it a few lines before)
 	return dataSourceVinsRead(d, m)
 }
@@ -138,12 +138,12 @@ func resourceVinsRead(d *schema.ResourceData, m interface{}) error {
 func resourceVinsUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Debugf("resourceVinsUpdate: called for ViNS ID / name %s / %s,  Account ID %d, RG ID %d",
-		d.Id(), d.Get("name").(string), d.Get("account_id").(int),  d.Get("rg_id").(int))
+		d.Id(), d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
 
 	controller := m.(*ControllerCfg)
 
 	d.Partial(true)
-	
+
 	// 1. Handle external network connection change
 	oldExtNetId, newExtNedId := d.GetChange("ext_net_id")
 	if oldExtNetId.(int) != newExtNedId.(int) {
@@ -168,15 +168,15 @@ func resourceVinsUpdate(d *schema.ResourceData, m interface{}) error {
 				return err
 			}
 		}
-		
+
 		d.SetPartial("ext_net_id")
 	}
 
 	d.Partial(false)
 
-	// we may reuse dataSourceVinsRead here as we maintain similarity 
+	// we may reuse dataSourceVinsRead here as we maintain similarity
 	// between Compute resource and Compute data source schemas
-	return dataSourceVinsRead(d, m) 
+	return dataSourceVinsRead(d, m)
 }
 
 func resourceVinsDelete(d *schema.ResourceData, m interface{}) error {
@@ -185,6 +185,9 @@ func resourceVinsDelete(d *schema.ResourceData, m interface{}) error {
 
 	vinsFacts, err := utilityVinsCheckPresence(d, m)
 	if vinsFacts == "" {
+		if err != nil {
+			return err
+		}
 		// the specified ViNS does not exist - in this case according to Terraform best practice
 		// we exit from Destroy method without error
 		return nil
@@ -192,8 +195,8 @@ func resourceVinsDelete(d *schema.ResourceData, m interface{}) error {
 
 	params := &url.Values{}
 	params.Add("vinsId", d.Id())
-	params.Add("force", "1")        // disconnect all computes before deleting ViNS
-	params.Add("permanently", "1")  // delete ViNS immediately bypassing recycle bin
+	params.Add("force", "1")       // disconnect all computes before deleting ViNS
+	params.Add("permanently", "1") // delete ViNS immediately bypassing recycle bin
 
 	controller := m.(*ControllerCfg)
 	_, err = controller.decortAPICall("POST", VinsDeleteAPI, params)
@@ -222,10 +225,10 @@ func resourceVinsExists(d *schema.ResourceData, m interface{}) (bool, error) {
 func resourceVinsSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"name": {
-			Type:        schema.TypeString,
-			Required:    true,
+			Type:         schema.TypeString,
+			Required:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
-			Description: "Name of the ViNS. Names are case sensitive and unique within the context of an account or resource group.",
+			Description:  "Name of the ViNS. Names are case sensitive and unique within the context of an account or resource group.",
 		},
 
 		/* we do not need ViNS ID as an argument because if we already know this ID, it is not practical to call resource provider.
@@ -246,25 +249,25 @@ func resourceVinsSchemaMake() map[string]*schema.Schema {
 		},
 
 		"account_id": {
-			Type:        schema.TypeInt,
-			Required:    true,
-			ForceNew:    true,
+			Type:         schema.TypeInt,
+			Required:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.IntAtLeast(1),
-			Description: "ID of the account, which this ViNS belongs to. For ViNS created at account level, resource group ID is 0.",
+			Description:  "ID of the account, which this ViNS belongs to. For ViNS created at account level, resource group ID is 0.",
 		},
 
 		"ext_net_id": {
-			Type:        schema.TypeInt,
-			Required:    true,
+			Type:         schema.TypeInt,
+			Required:     true,
 			ValidateFunc: validation.IntAtLeast(0),
-			Description: "ID of the external network this ViNS is connected to. Pass 0 if no external connection required.",
+			Description:  "ID of the external network this ViNS is connected to. Pass 0 if no external connection required.",
 		},
 
 		"ipcidr": {
-			Type:        schema.TypeString,
-			Optional:    true,
+			Type:             schema.TypeString,
+			Optional:         true,
 			DiffSuppressFunc: ipcidrDiffSupperss,
-			Description: "Network address to use by this ViNS. This parameter is only valid when creating new ViNS.",
+			Description:      "Network address to use by this ViNS. This parameter is only valid when creating new ViNS.",
 		},
 
 		"description": {

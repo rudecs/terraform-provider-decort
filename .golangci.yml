@@ -1,0 +1,33 @@
+linters:
+  enable:
+    - bodyclose
+    - decorder
+    - dogsled
+    - errorlint
+    - exportloopref
+    - gocognit
+    - goconst
+    - gocyclo
+    - gosec
+    - ifshort
+    - makezero
+    #- nestif - disabled till better times
+    - nilerr
+    - prealloc
+    - unconvert
+    - unparam
+
+linters-settings:
+  errcheck:
+    exclude-functions:
+      - (*github.com/hashicorp/terraform-plugin-sdk/helper/schema.ResourceData).Set
+  staticcheck:
+    go: "1.18"
+    checks:
+      - all
+      - -SA1019
+  nestif:
+    min-complexity: 7
+
+issues:
+  max-same-issues: 0
