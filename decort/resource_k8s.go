@@ -223,15 +223,13 @@ func resourceK8sUpdate(d *schema.ResourceData, m interface{}) error {
 
 		if newWorkers.Num > wg.Num {
 			urlValues.Add("num", strconv.Itoa(newWorkers.Num-wg.Num))
-			_, err := controller.decortAPICall("POST", K8sWorkerAddAPI, urlValues)
-			if err != nil {
+			if _, err := controller.decortAPICall("POST", K8sWorkerAddAPI, urlValues); err != nil {
 				return err
 			}
 		} else {
 			for i := wg.Num - 1; i >= newWorkers.Num; i-- {
 				urlValues.Set("workerId", strconv.Itoa(wg.DetailedInfo[i].ID))
-				_, err := controller.decortAPICall("POST", K8sWorkerDeleteAPI, urlValues)
-				if err != nil {
+				if _, err := controller.decortAPICall("POST", K8sWorkerDeleteAPI, urlValues); err != nil {
 					return err
 				}
 			}

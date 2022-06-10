@@ -38,14 +38,14 @@ import (
 
 func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceData, do_delta bool) error {
 	// d is filled with data according to computeResource schema, so extra disks config is retrieved via "extra_disks" key
-	// If do_delta is true, this function will identify changes between new and existing specs for extra disks and try to 
+	// If do_delta is true, this function will identify changes between new and existing specs for extra disks and try to
 	// update compute configuration accordingly
-	// Otherwise it will apply whatever is found in the new set of "extra_disks" right away. 
+	// Otherwise it will apply whatever is found in the new set of "extra_disks" right away.
 	// Primary use of do_delta=false is when calling this function from compute Create handler.
 
-	// Note that this function will not abort on API errors, but will continue to configure (attach / detach) other individual 
+	// Note that this function will not abort on API errors, but will continue to configure (attach / detach) other individual
 	// disks via atomic API calls. However, it will not retry failed manipulation on the same disk.
-	log.Debugf("utilityComputeExtraDisksConfigure: called for Compute ID %s with do_delta = %b", d.Id(), do_delta)
+	log.Debugf("utilityComputeExtraDisksConfigure: called for Compute ID %s with do_delta = %t", d.Id(), do_delta)
 
 	// NB: as of rc-1.25 "extra_disks" are TypeSet with the elem of TypeInt
 	old_set, new_set := d.GetChange("extra_disks")
@@ -71,11 +71,11 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 		}
 
 		if apiErrCount > 0 {
-			log.Errorf("utilityComputeExtraDisksConfigure: there were %d error(s) when attaching disks to Compute ID %s. Last error was: %s", 
-			           apiErrCount, d.Id(), lastSavedError)
+			log.Errorf("utilityComputeExtraDisksConfigure: there were %d error(s) when attaching disks to Compute ID %s. Last error was: %s",
+				apiErrCount, d.Id(), lastSavedError)
 			return lastSavedError
 		}
-		
+
 		return nil
 	}
 
@@ -110,8 +110,8 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 	}
 
 	if apiErrCount > 0 {
-		log.Errorf("utilityComputeExtraDisksConfigure: there were %d error(s) when managing disks of Compute ID %s. Last error was: %s", 
-				   apiErrCount, d.Id(), lastSavedError)
+		log.Errorf("utilityComputeExtraDisksConfigure: there were %d error(s) when managing disks of Compute ID %s. Last error was: %s",
+			apiErrCount, d.Id(), lastSavedError)
 		return lastSavedError
 	}
 
@@ -120,11 +120,11 @@ func (ctrl *ControllerCfg) utilityComputeExtraDisksConfigure(d *schema.ResourceD
 
 func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceData, do_delta bool) error {
 	// "d" is filled with data according to computeResource schema, so extra networks config is retrieved via "network" key
-	// If do_delta is true, this function will identify changes between new and existing specs for network and try to 
+	// If do_delta is true, this function will identify changes between new and existing specs for network and try to
 	// update compute configuration accordingly
-	// Otherwise it will apply whatever is found in the new set of "network" right away. 
+	// Otherwise it will apply whatever is found in the new set of "network" right away.
 	// Primary use of do_delta=false is when calling this function from compute Create handler.
-	
+
 	old_set, new_set := d.GetChange("network")
 
 	apiErrCount := 0
@@ -137,7 +137,7 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 
 		for _, runner := range new_set.(*schema.Set).List() {
 			urlValues := &url.Values{}
-			net_data := runner.(map[string]interface{}) 
+			net_data := runner.(map[string]interface{})
 			urlValues.Add("computeId", d.Id())
 			urlValues.Add("netType", net_data["net_type"].(string))
 			urlValues.Add("netId", fmt.Sprintf("%d", net_data["net_id"].(int)))
@@ -154,8 +154,8 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		}
 
 		if apiErrCount > 0 {
-			log.Errorf("utilityComputeNetworksConfigure: there were %d error(s) when managing networks of Compute ID %s. Last error was: %s", 
-					   apiErrCount, d.Id(), lastSavedError)
+			log.Errorf("utilityComputeNetworksConfigure: there were %d error(s) when managing networks of Compute ID %s. Last error was: %s",
+				apiErrCount, d.Id(), lastSavedError)
 			return lastSavedError
 		}
 		return nil
@@ -172,8 +172,8 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		_, err := ctrl.decortAPICall("POST", ComputeNetDetachAPI, urlValues)
 		if err != nil {
 			// failed to detach this network - there will be partial resource update
-			log.Errorf("utilityComputeNetworksConfigure: failed to detach net ID %d of type %s from Compute ID %s: %s", 
-			           net_data["net_id"].(int), net_data["net_type"].(string), d.Id(), err)
+			log.Errorf("utilityComputeNetworksConfigure: failed to detach net ID %d of type %s from Compute ID %s: %s",
+				net_data["net_id"].(int), net_data["net_type"].(string), d.Id(), err)
 			apiErrCount++
 			lastSavedError = err
 		}
@@ -185,7 +185,7 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		urlValues := &url.Values{}
 		net_data := runner.(map[string]interface{})
 		urlValues.Add("computeId", d.Id())
-		urlValues.Add("netId", fmt.Sprintf("%d",net_data["net_id"].(int)))
+		urlValues.Add("netId", fmt.Sprintf("%d", net_data["net_id"].(int)))
 		urlValues.Add("netType", net_data["net_type"].(string))
 		if net_data["ip_address"].(string) != "" {
 			urlValues.Add("ipAddr", net_data["ip_address"].(string))
@@ -193,16 +193,16 @@ func (ctrl *ControllerCfg) utilityComputeNetworksConfigure(d *schema.ResourceDat
 		_, err := ctrl.decortAPICall("POST", ComputeNetAttachAPI, urlValues)
 		if err != nil {
 			// failed to attach this network - there will be partial resource update
-			log.Errorf("utilityComputeNetworksConfigure: failed to attach net ID %d of type %s to Compute ID %s: %s", 
-			           net_data["net_id"].(int), net_data["net_type"].(string), d.Id(), err)
+			log.Errorf("utilityComputeNetworksConfigure: failed to attach net ID %d of type %s to Compute ID %s: %s",
+				net_data["net_id"].(int), net_data["net_type"].(string), d.Id(), err)
 			apiErrCount++
 			lastSavedError = err
 		}
 	}
-	
+
 	if apiErrCount > 0 {
-		log.Errorf("utilityComputeNetworksConfigure: there were %d error(s) when managing networks of Compute ID %s. Last error was: %s", 
-				   apiErrCount, d.Id(), lastSavedError)
+		log.Errorf("utilityComputeNetworksConfigure: there were %d error(s) when managing networks of Compute ID %s. Last error was: %s",
+			apiErrCount, d.Id(), lastSavedError)
 		return lastSavedError
 	}
 
@@ -262,7 +262,7 @@ func utilityComputeCheckPresence(d *schema.ResourceData, m interface{}) (string,
 	if !argSet {
 		return "", fmt.Errorf("Cannot locate compute by name %s if no resource group ID is set", computeName.(string))
 	}
-	
+
 	urlValues.Add("rgId", fmt.Sprintf("%d", rgId))
 	apiResp, err := controller.decortAPICall("POST", RgListComputesAPI, urlValues)
 	if err != nil {

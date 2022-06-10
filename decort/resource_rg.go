@@ -39,10 +39,6 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 
 	// Valid account ID is required to create new resource group
 	// obtain Account ID by account name - it should not be zero on success
-	validated_account_id, err := utilityGetAccountIdBySchema(d, m)
-	if err != nil {
-		return err
-	}
 
 	rg_name, arg_set := d.GetOk("name")
 	if !arg_set {
@@ -62,7 +58,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 
 	// all required parameters are set in the schema - we can continue with RG creation
 	log.Debugf("resourceResgroupCreate: called for RG name %s, account ID %d",
-		rg_name.(string), validated_account_id)
+		rg_name.(string), d.Get("account_id").(int))
 
 	// quota settings are optional
 	set_quota := false
@@ -70,17 +66,17 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 	arg_value, arg_set := d.GetOk("quota")
 	if arg_set {
 		log.Debugf("resourceResgroupCreate: setting Quota on RG requested")
-		quota_record, _ = makeQuotaRecord(arg_value.([]interface{}))
+		quota_record = makeQuotaRecord(arg_value.([]interface{}))
 		set_quota = true
 	}
 
 	controller := m.(*ControllerCfg)
 	log.Debugf("resourceResgroupCreate: called by user %q for RG name %s, account ID %d",
 		controller.getDecortUsername(),
-		rg_name.(string), validated_account_id)
+		rg_name.(string), d.Get("account_id").(int))
 
 	url_values := &url.Values{}
-	url_values.Add("accountId", fmt.Sprintf("%d", validated_account_id))
+	url_values.Add("accountId", fmt.Sprintf("%d", d.Get("account_id").(int)))
 	url_values.Add("name", rg_name.(string))
 	url_values.Add("gid", fmt.Sprintf("%d", DefaultGridID)) // use default Grid ID, similar to disk resource mgmt convention
 	url_values.Add("owner", controller.getDecortUsername())
@@ -142,7 +138,7 @@ func resourceResgroupCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceResgroupRead(d *schema.ResourceData, m interface{}) error {
-	log.Debugf("resourceResgroupRead: called for RG name %s, account ID %s",
+	log.Debugf("resourceResgroupRead: called for RG name %s, account ID %d",
 		d.Get("name").(string), d.Get("account_id").(int))
 
 	rg_facts, err := utilityResgroupCheckPresence(d, m)
@@ -199,9 +195,9 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 	quota_value, quota_set := d.GetOk("quota")
 	if quota_set {
 		log.Debugf("resourceResgroupUpdate: quota specified - looking for deltas from the old quota.")
-		quotarecord_new, _ := makeQuotaRecord(quota_value.([]interface{}))
+		quotarecord_new := makeQuotaRecord(quota_value.([]interface{}))
 		quota_value_old, _ := d.GetChange("quota") // returns old as 1st, new as 2nd return value
-		quotarecord_old, _ := makeQuotaRecord(quota_value_old.([]interface{}))
+		quotarecord_old := makeQuotaRecord(quota_value_old.([]interface{}))
 
 		if quotarecord_new.Cpu != quotarecord_old.Cpu {
 			do_general_update = true
@@ -260,11 +256,14 @@ func resourceResgroupUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceResgroupDelete(d *schema.ResourceData, m interface{}) error {
 	// NOTE: this method forcibly destroys target resource group with flag "permanently", so there is no way to
 	// restore the destroyed resource group as well all Computes & VINSes that existed in it
-	log.Debugf("resourceResgroupDelete: called for RG name %s, account ID %s",
+	log.Debugf("resourceResgroupDelete: called for RG name %s, account ID %d",
 		d.Get("name").(string), d.Get("account_id").(int))
 
 	rg_facts, err := utilityResgroupCheckPresence(d, m)
 	if rg_facts == "" {
+		if err != nil {
+			return err
+		}
 		// the target RG does not exist - in this case according to Terraform best practice
 		// we exit from Destroy method without error
 		return nil

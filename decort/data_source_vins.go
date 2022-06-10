@@ -48,13 +48,13 @@ func flattenVins(d *schema.ResourceData, vins_facts string) error {
 	}
 
 	log.Debugf("flattenVins: decoded ViNS name:ID %s:%d, account ID %d, RG ID %d",
-	vinsRecord.Name, vinsRecord.ID, vinsRecord.AccountID, vinsRecord.RgID)
+		vinsRecord.Name, vinsRecord.ID, vinsRecord.AccountID, vinsRecord.RgID)
 
 	d.SetId(fmt.Sprintf("%d", vinsRecord.ID))
 	d.Set("name", vinsRecord.Name)
 	d.Set("account_id", vinsRecord.AccountID)
 	d.Set("account_name", vinsRecord.AccountName)
-	err = d.Set("rg_id", vinsRecord.RgID)
+	d.Set("rg_id", vinsRecord.RgID)
 	d.Set("description", vinsRecord.Desc)
 	d.Set("ipcidr", vinsRecord.IPCidr)
 
@@ -117,11 +117,11 @@ func dataSourceVins() *schema.Resource {
 			},
 
 			/*
-			"vins_id": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "Unique ID of the ViNS. If ViNS ID is specified, then ViNS name, rg_id and account_id are ignored.",
-			},
+				"vins_id": {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "Unique ID of the ViNS. If ViNS ID is specified, then ViNS name, rg_id and account_id are ignored.",
+				},
 			*/
 
 			"rg_id": {

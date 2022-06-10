@@ -243,8 +243,7 @@ func resourceSepEdit(d *schema.ResourceData, m interface{}) error {
 	}
 
 	urlValues = &url.Values{}
-	err := resourceSepRead(d, m)
-	if err != nil {
+	if err := resourceSepRead(d, m); err != nil {
 		return err
 	}
 
@@ -282,8 +281,6 @@ func resourceSepUpdateNodes(d *schema.ResourceDiff, m interface{}) error {
 	urlValues := &url.Values{}
 
 	t1, t2 := d.GetChange("consumed_by")
-	d1 := t1.([]interface{})
-	d2 := t2.([]interface{})
 
 	urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
 
@@ -291,7 +288,7 @@ func resourceSepUpdateNodes(d *schema.ResourceDiff, m interface{}) error {
 	temp := ""
 	api := ""
 
-	if len(d1) > len(d2) {
+	if d1, d2 := t1.([]interface{}), t2.([]interface{}); len(d1) > len(d2) {
 		for _, n := range d2 {
 			if !findElInt(d1, n) {
 				consumedIds = append(consumedIds, n)
@@ -510,10 +507,7 @@ func resourceSep() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			customdiff.IfValueChange("enable", func(old, new, meta interface{}) bool {
-				if old.(bool) != new.(bool) {
-					return true
-				}
-				return false
+				return old.(bool) != new.(bool)
 			}, resourceSepChangeEnabled),
 			customdiff.IfValueChange("consumed_by", func(old, new, meta interface{}) bool {
 				o := old.([]interface{})
@@ -530,10 +524,7 @@ func resourceSep() *schema.Resource {
 						count++
 					}
 				}
-				if count == 0 {
-					return true
-				}
-				return false
+				return count == 0
 			}, resourceSepUpdateNodes),
 			customdiff.IfValueChange("provided_by", func(old, new, meta interface{}) bool {
 				o := old.([]interface{})
@@ -550,10 +541,7 @@ func resourceSep() *schema.Resource {
 						count++
 					}
 				}
-				if count == 0 {
-					return true
-				}
-				return false
+				return count == 0
 			}, resourceSepUpdateProviders),
 		),
 	}

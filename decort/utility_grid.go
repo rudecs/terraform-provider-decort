@@ -27,7 +27,6 @@ package decort
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/url"
 	"strconv"
 
@@ -44,7 +43,7 @@ func utilityGridCheckPresence(d *schema.ResourceData, m interface{}) (*Grid, err
 	if gridId, ok := d.GetOk("grid_id"); ok {
 		urlValues.Add("gridId", strconv.Itoa(gridId.(int)))
 	} else {
-		return nil, errors.New(fmt.Sprintf("grid_id is required"))
+		return nil, errors.New("grid_id is required")
 	}
 
 	log.Debugf("utilityGridCheckPresence: load grid")

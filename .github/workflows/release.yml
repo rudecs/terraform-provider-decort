@@ -1,4 +1,4 @@
-name: Release to registry
+name: Release
 on:
   push:
     tags:

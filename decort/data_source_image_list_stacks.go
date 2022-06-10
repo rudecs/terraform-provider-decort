@@ -29,7 +29,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func flattenImageListStacks(d *schema.ResourceData, stack ImageListStacks) []map[string]interface{} {
+func flattenImageListStacks(_ *schema.ResourceData, stack ImageListStacks) []map[string]interface{} {
 	temp := make([]map[string]interface{}, 0)
 	for _, item := range stack {
 		t := map[string]interface{}{
