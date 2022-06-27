@@ -27,7 +27,6 @@ package decort
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -379,13 +378,15 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 		req.Header.Set("Authorization", fmt.Sprintf("bearer %s", config.jwt))
 	}
 
+	var resp *http.Response
+	var body []byte
 	for i := 0; i < 5; i++ {
-		resp, err := config.cc_client.Do(req)
+		resp, err = config.cc_client.Do(req)
 		if err != nil {
 			return "", err
 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return "", err
 		}
@@ -405,5 +406,6 @@ func (config *ControllerCfg) decortAPICall(method string, api_name string, url_v
 		}
 	}
 
-	return "", errors.New("number of retries exceeded")
+	return "", fmt.Errorf("decortAPICall: unexpected status code %d when calling API %q with request Body %q. Respone:\n%s",
+		resp.StatusCode, req.URL, params_str, body)
 }
