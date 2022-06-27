@@ -2,6 +2,8 @@
 - changing boot\_disk\_size in kvmvm
 - downsizing CPU and RAM in kvmvm
 - pfw recreation if public\_port\_end unspecified
+- uninformative error message when retrying on 500
+- hardcoded 3 minute timeout
 
 ### New datasources
 - disk\_list
