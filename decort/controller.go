@@ -139,12 +139,9 @@ func ControllerConfigure(d *schema.ResourceData) (*ControllerCfg, error) {
 		transCfg := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}} //nolint:gosec
 		ret_config.cc_client = &http.Client{
 			Transport: transCfg,
-			Timeout:   Timeout180s,
 		}
 	} else {
-		ret_config.cc_client = &http.Client{
-			Timeout: Timeout180s, // time.Second * 30,
-		}
+		ret_config.cc_client = &http.Client{}
 	}
 
 	switch ret_config.auth_mode_code {
