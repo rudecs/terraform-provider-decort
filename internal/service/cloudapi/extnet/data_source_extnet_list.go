@@ -54,7 +54,7 @@ func flattenExtnetList(el ExtnetList) []map[string]interface{} {
 }
 
 func dataSourceExtnetListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	extnetList, err := utilityExtnetListCheckPresence(d, m)
+	extnetList, err := utilityExtnetListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

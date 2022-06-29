@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package rg
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityRgListCheckPresence(d *schema.ResourceData, m interface{}) (ResgroupListResp, error) {
+func utilityRgListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (ResgroupListResp, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
@@ -59,7 +60,7 @@ func utilityRgListCheckPresence(d *schema.ResourceData, m interface{}) (Resgroup
 	}
 
 	log.Debugf("utilityRgListCheckPresence: load rg list")
-	rgListRaw, err := c.DecortAPICall("POST", ResgroupListAPI, urlValues)
+	rgListRaw, err := c.DecortAPICall(ctx, "POST", ResgroupListAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

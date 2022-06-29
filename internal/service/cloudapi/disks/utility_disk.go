@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package disks
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -43,7 +44,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
+func utilityDiskCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
 	// This function tries to locate Disk by one of the following algorithms depending on
 	// the parameters passed:
 	//    - if disk ID is specified -> by disk ID
@@ -81,7 +82,7 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		// disk ID is specified, try to get disk instance straight by this ID
 		log.Debugf("utilityDiskCheckPresence: locating disk by its ID %d", theId)
 		urlValues.Add("diskId", fmt.Sprintf("%d", theId))
-		diskFacts, err := c.DecortAPICall("POST", DisksGetAPI, urlValues)
+		diskFacts, err := c.DecortAPICall(ctx, "POST", DisksGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
@@ -100,7 +101,7 @@ func utilityDiskCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 	// obtain Account ID by account name - it should not be zero on success
 
 	urlValues.Add("accountId", fmt.Sprintf("%d", d.Get("account_id").(int)))
-	diskFacts, err := c.DecortAPICall("POST", DisksListAPI, urlValues)
+	diskFacts, err := c.DecortAPICall(ctx, "POST", DisksListAPI, urlValues)
 	if err != nil {
 		return "", err
 	}

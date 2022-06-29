@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package snapshot
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -40,12 +41,12 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 )
 
-func utilitySnapshotListCheckPresence(d *schema.ResourceData, m interface{}) (SnapshotList, error) {
+func utilitySnapshotListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (SnapshotList, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("computeId", strconv.Itoa(d.Get("compute_id").(int)))
 
-	resp, err := c.DecortAPICall("POST", snapshotListAPI, urlValues)
+	resp, err := c.DecortAPICall(ctx, "POST", snapshotListAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

@@ -57,7 +57,7 @@ func flattenAccountDisksList(adl AccountDisksList) []map[string]interface{} {
 }
 
 func dataSourceAccountDisksListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountDisksList, err := utilityAccountDisksListCheckPresence(d, m)
+	accountDisksList, err := utilityAccountDisksListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

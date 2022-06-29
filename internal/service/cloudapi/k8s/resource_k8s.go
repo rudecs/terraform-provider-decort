@@ -94,7 +94,7 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	//urlValues.Add("desc", desc.(string))
 	//}
 
-	resp, err := c.DecortAPICall("POST", K8sCreateAPI, urlValues)
+	resp, err := c.DecortAPICall(ctx, "POST", K8sCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -103,7 +103,7 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues.Add("auditId", strings.Trim(resp, `"`))
 
 	for {
-		resp, err := c.DecortAPICall("POST", AsyncTaskGetAPI, urlValues)
+		resp, err := c.DecortAPICall(ctx, "POST", AsyncTaskGetAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -126,7 +126,7 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		time.Sleep(time.Second * 10)
 	}
 
-	k8s, err := utilityK8sCheckPresence(d, m)
+	k8s, err := utilityK8sCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -136,7 +136,7 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues = &url.Values{}
 	urlValues.Add("lbId", strconv.Itoa(k8s.LbID))
 
-	resp, err = c.DecortAPICall("POST", LbGetAPI, urlValues)
+	resp, err = c.DecortAPICall(ctx, "POST", LbGetAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,7 +150,7 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 
 	urlValues = &url.Values{}
 	urlValues.Add("k8sId", d.Id())
-	kubeconfig, err := c.DecortAPICall("POST", K8sGetConfigAPI, urlValues)
+	kubeconfig, err := c.DecortAPICall(ctx, "POST", K8sGetConfigAPI, urlValues)
 	if err != nil {
 		log.Warnf("could not get kubeconfig: %v", err)
 	}
@@ -162,7 +162,7 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 func resourceK8sRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceK8sRead: called with id %s, rg %d", d.Id(), d.Get("rg_id").(int))
 
-	k8s, err := utilityK8sCheckPresence(d, m)
+	k8s, err := utilityK8sCheckPresence(ctx, d, m)
 	if k8s == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -180,7 +180,7 @@ func resourceK8sRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	urlValues := &url.Values{}
 	urlValues.Add("lbId", strconv.Itoa(k8s.LbID))
 
-	resp, err := c.DecortAPICall("POST", LbGetAPI, urlValues)
+	resp, err := c.DecortAPICall(ctx, "POST", LbGetAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -194,7 +194,7 @@ func resourceK8sRead(ctx context.Context, d *schema.ResourceData, m interface{})
 
 	urlValues = &url.Values{}
 	urlValues.Add("k8sId", d.Id())
-	kubeconfig, err := c.DecortAPICall("POST", K8sGetConfigAPI, urlValues)
+	kubeconfig, err := c.DecortAPICall(ctx, "POST", K8sGetConfigAPI, urlValues)
 	if err != nil {
 		log.Warnf("could not get kubeconfig: %v", err)
 	}
@@ -213,14 +213,14 @@ func resourceK8sUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 		urlValues.Add("k8sId", d.Id())
 		urlValues.Add("name", d.Get("name").(string))
 
-		_, err := c.DecortAPICall("POST", K8sUpdateAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", K8sUpdateAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
 	if d.HasChange("workers") {
-		k8s, err := utilityK8sCheckPresence(d, m)
+		k8s, err := utilityK8sCheckPresence(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -234,13 +234,13 @@ func resourceK8sUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 
 		if newWorkers.Num > wg.Num {
 			urlValues.Add("num", strconv.Itoa(newWorkers.Num-wg.Num))
-			if _, err := c.DecortAPICall("POST", K8sWorkerAddAPI, urlValues); err != nil {
+			if _, err := c.DecortAPICall(ctx, "POST", K8sWorkerAddAPI, urlValues); err != nil {
 				return diag.FromErr(err)
 			}
 		} else {
 			for i := wg.Num - 1; i >= newWorkers.Num; i-- {
 				urlValues.Set("workerId", strconv.Itoa(wg.DetailedInfo[i].ID))
-				if _, err := c.DecortAPICall("POST", K8sWorkerDeleteAPI, urlValues); err != nil {
+				if _, err := c.DecortAPICall(ctx, "POST", K8sWorkerDeleteAPI, urlValues); err != nil {
 					return diag.FromErr(err)
 				}
 			}
@@ -253,7 +253,7 @@ func resourceK8sUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 func resourceK8sDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceK8sDelete: called with id %s, rg %d", d.Id(), d.Get("rg_id").(int))
 
-	k8s, err := utilityK8sCheckPresence(d, m)
+	k8s, err := utilityK8sCheckPresence(ctx, d, m)
 	if k8s == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -266,7 +266,7 @@ func resourceK8sDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues.Add("k8sId", d.Id())
 	urlValues.Add("permanently", "true")
 
-	_, err = c.DecortAPICall("POST", K8sDeleteAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", K8sDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -274,10 +274,10 @@ func resourceK8sDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	return nil
 }
 
-func resourceK8sExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceK8sExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourceK8sExists: called with id %s, rg %d", d.Id(), d.Get("rg_id").(int))
 
-	k8s, err := utilityK8sCheckPresence(d, m)
+	k8s, err := utilityK8sCheckPresence(ctx, d, m)
 	if k8s == nil {
 		return false, err
 	}
@@ -385,7 +385,6 @@ func ResourceK8s() *schema.Resource {
 		ReadContext:   resourceK8sRead,
 		UpdateContext: resourceK8sUpdate,
 		DeleteContext: resourceK8sDelete,
-		Exists:        resourceK8sExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

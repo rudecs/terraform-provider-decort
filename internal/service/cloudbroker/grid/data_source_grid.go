@@ -50,7 +50,7 @@ func flattenGrid(d *schema.ResourceData, grid *Grid) {
 }
 
 func dataSourceGridRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	grid, err := utilityGridCheckPresence(d, m)
+	grid, err := utilityGridCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

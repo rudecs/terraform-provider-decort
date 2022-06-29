@@ -51,7 +51,7 @@ func resourceSepCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	log.Debugf("resourceSepCreate: called for sep %s", d.Get("name").(string))
 
 	if sepId, ok := d.GetOk("sep_id"); ok {
-		if exists, err := resourceSepExists(d, m); exists {
+		if exists, err := resourceSepExists(ctx, d, m); exists {
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -109,7 +109,7 @@ func resourceSepCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	temp = "[" + temp + "]"
 	urlValues.Add("provider_nids", temp)
 
-	sepId, err := c.DecortAPICall("POST", sepCreateAPI, urlValues)
+	sepId, err := c.DecortAPICall(ctx, "POST", sepCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -131,7 +131,7 @@ func resourceSepCreate(ctx context.Context, d *schema.ResourceData, m interface{
 func resourceSepRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceSepRead: called for %s id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 
-	sep, err := utilitySepCheckPresence(d, m)
+	sep, err := utilitySepCheckPresence(ctx, d, m)
 	if sep == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -159,7 +159,7 @@ func resourceSepRead(ctx context.Context, d *schema.ResourceData, m interface{})
 func resourceSepDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceSepDelete: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 
-	sepDes, err := utilitySepCheckPresence(d, m)
+	sepDes, err := utilitySepCheckPresence(ctx, d, m)
 	if sepDes == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -171,7 +171,7 @@ func resourceSepDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues := &url.Values{}
 	urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
 
-	_, err = c.DecortAPICall("POST", sepDeleteAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", sepDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -180,10 +180,10 @@ func resourceSepDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	return nil
 }
 
-func resourceSepExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceSepExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourceSepExists: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 
-	sepDes, err := utilitySepCheckPresence(d, m)
+	sepDes, err := utilitySepCheckPresence(ctx, d, m)
 	if sepDes == nil {
 		if err != nil {
 			return false, err
@@ -204,7 +204,7 @@ func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{})
 		if decommission {
 			urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
 			urlValues.Add("clear_physically", strconv.FormatBool(d.Get("clear_physically").(bool)))
-			_, err := c.DecortAPICall("POST", sepDecommissionAPI, urlValues)
+			_, err := c.DecortAPICall(ctx, "POST", sepDecommissionAPI, urlValues)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -216,7 +216,7 @@ func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{})
 		updCapacityLimit := d.Get("upd_capacity_limit").(bool)
 		if updCapacityLimit {
 			urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
-			_, err := c.DecortAPICall("POST", sepUpdateCapacityLimitAPI, urlValues)
+			_, err := c.DecortAPICall(ctx, "POST", sepUpdateCapacityLimitAPI, urlValues)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -227,11 +227,11 @@ func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{})
 	if d.HasChange("config") {
 		urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
 		urlValues.Add("config", d.Get("config").(string))
-		_, err := c.DecortAPICall("POST", sepConfigValidateAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", sepConfigValidateAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		_, err = c.DecortAPICall("POST", sepConfigInsertAPI, urlValues)
+		_, err = c.DecortAPICall(ctx, "POST", sepConfigInsertAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -247,7 +247,7 @@ func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{})
 		urlValues.Add("field_value", field["field_value"].(string))
 		urlValues.Add("field_type", field["field_type"].(string))
 
-		_, err := c.DecortAPICall("POST", sepConfigFieldEditAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", sepConfigFieldEditAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -255,7 +255,7 @@ func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{})
 
 	urlValues = &url.Values{}
 	if d.HasChange("enable") {
-		err := resourceSepChangeEnabled(d, m)
+		err := resourceSepChangeEnabled(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -263,7 +263,7 @@ func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{})
 
 	urlValues = &url.Values{}
 	if d.HasChange("consumed_by") {
-		err := resourceSepUpdateNodes(d, m)
+		err := resourceSepUpdateNodes(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -271,7 +271,7 @@ func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{})
 
 	urlValues = &url.Values{}
 	if d.HasChange("provided_by") {
-		err := resourceSepUpdateProviders(d, m)
+		err := resourceSepUpdateProviders(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -285,7 +285,7 @@ func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{})
 	return nil
 }
 
-func resourceSepChangeEnabled(d *schema.ResourceData, m interface{}) error {
+func resourceSepChangeEnabled(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	var api string
 
 	c := m.(*controller.ControllerCfg)
@@ -296,7 +296,7 @@ func resourceSepChangeEnabled(d *schema.ResourceData, m interface{}) error {
 	} else {
 		api = sepDisableAPI
 	}
-	resp, err := c.DecortAPICall("POST", api, urlValues)
+	resp, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 	if err != nil {
 		return err
 	}
@@ -310,7 +310,7 @@ func resourceSepChangeEnabled(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceSepUpdateNodes(d *schema.ResourceData, m interface{}) error {
+func resourceSepUpdateNodes(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceSepUpdateNodes: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -345,7 +345,7 @@ func resourceSepUpdateNodes(d *schema.ResourceData, m interface{}) error {
 	}
 	temp = "[" + temp + "]"
 	urlValues.Add("consumer_nids", temp)
-	_, err := c.DecortAPICall("POST", api, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 	if err != nil {
 		return err
 	}
@@ -362,7 +362,7 @@ func findElInt(sl []interface{}, el interface{}) bool {
 	return false
 }
 
-func resourceSepUpdateProviders(d *schema.ResourceData, m interface{}) error {
+func resourceSepUpdateProviders(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceSepUpdateProviders: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -379,7 +379,7 @@ func resourceSepUpdateProviders(d *schema.ResourceData, m interface{}) error {
 	}
 	temp = "[" + temp + "]"
 	urlValues.Add("provider_nids", temp)
-	_, err := c.DecortAPICall("POST", sepAddProviderNodesAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", sepAddProviderNodesAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -524,7 +524,6 @@ func ResourceSep() *schema.Resource {
 		ReadContext:   resourceSepRead,
 		UpdateContext: resourceSepEdit,
 		DeleteContext: resourceSepDelete,
-		Exists:        resourceSepExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

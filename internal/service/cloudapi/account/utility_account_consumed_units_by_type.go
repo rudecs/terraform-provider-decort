@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package account
 
 import (
+	"context"
 	"net/url"
 	"strconv"
 	"strings"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityAccountConsumedUnitsByTypeCheckPresence(d *schema.ResourceData, m interface{}) (float64, error) {
+func utilityAccountConsumedUnitsByTypeCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (float64, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
@@ -50,7 +51,7 @@ func utilityAccountConsumedUnitsByTypeCheckPresence(d *schema.ResourceData, m in
 	urlValues.Add("cutype", strings.ToUpper(d.Get("cu_type").(string)))
 
 	log.Debugf("utilityAccountConsumedUnitsByTypeCheckPresence")
-	resultRaw, err := c.DecortAPICall("POST", accountGetConsumedUnitsByTypeAPI, urlValues)
+	resultRaw, err := c.DecortAPICall(ctx, "POST", accountGetConsumedUnitsByTypeAPI, urlValues)
 	if err != nil {
 		return 0, err
 	}

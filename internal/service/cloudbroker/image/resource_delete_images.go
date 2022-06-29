@@ -74,7 +74,7 @@ func resourceDeleteListImages(ctx context.Context, d *schema.ResourceData, m int
 	urlValues.Add("permanently", strconv.FormatBool(d.Get("permanently").(bool)))
 	urlValues.Add("imageIds", temp)
 
-	_, err := c.DecortAPICall("POST", imageDeleteImagesAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", imageDeleteImagesAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}

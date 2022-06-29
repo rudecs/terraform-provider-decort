@@ -43,7 +43,7 @@ import (
 )
 
 func dataSourceSepRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	desSep, err := utilitySepCheckPresence(d, m)
+	desSep, err := utilitySepCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

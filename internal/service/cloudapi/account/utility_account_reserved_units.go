@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package account
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityAccountReservedUnitsCheckPresence(d *schema.ResourceData, m interface{}) (*ResourceLimits, error) {
+func utilityAccountReservedUnitsCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*ResourceLimits, error) {
 	accountReservedUnits := &ResourceLimits{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -50,7 +51,7 @@ func utilityAccountReservedUnitsCheckPresence(d *schema.ResourceData, m interfac
 	urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 
 	log.Debugf("utilityAccountReservedUnitsCheckPresence: load units")
-	accountReservedUnitsRaw, err := c.DecortAPICall("POST", accountGetReservedUnitsAPI, urlValues)
+	accountReservedUnitsRaw, err := c.DecortAPICall(ctx, "POST", accountGetReservedUnitsAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

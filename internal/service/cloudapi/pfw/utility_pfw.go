@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package pfw
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -41,12 +42,12 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 )
 
-func utilityPfwCheckPresence(d *schema.ResourceData, m interface{}) (*PfwRecord, error) {
+func utilityPfwCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*PfwRecord, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
 	urlValues.Add("computeId", strconv.Itoa(d.Get("compute_id").(int)))
-	resp, err := c.DecortAPICall("POST", ComputePfwListAPI, urlValues)
+	resp, err := c.DecortAPICall(ctx, "POST", ComputePfwListAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

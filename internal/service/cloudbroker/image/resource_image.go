@@ -103,7 +103,7 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	} else {
 		api = imageSyncCreateAPI
 	}
-	imageId, err := c.DecortAPICall("POST", api, urlValues)
+	imageId, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,7 +111,7 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	d.SetId(imageId)
 	d.Set("image_id", imageId)
 
-	image, err := utilityImageCheckPresence(d, m)
+	image, err := utilityImageCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -131,7 +131,7 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, m interfac
 func resourceImageRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceImageRead: called for %s id: %s", d.Get("name").(string), d.Id())
 
-	image, err := utilityImageCheckPresence(d, m)
+	image, err := utilityImageCheckPresence(ctx, d, m)
 	if image == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -182,7 +182,7 @@ func resourceImageRead(ctx context.Context, d *schema.ResourceData, m interface{
 func resourceImageDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceImageDelete: called for %s, id: %s", d.Get("name").(string), d.Id())
 
-	image, err := utilityImageCheckPresence(d, m)
+	image, err := utilityImageCheckPresence(ctx, d, m)
 	if image == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -202,7 +202,7 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, m interfac
 		urlValues.Add("permanently", strconv.FormatBool(permanently.(bool)))
 	}
 
-	_, err = c.DecortAPICall("POST", imageDeleteAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", imageDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -211,10 +211,10 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	return nil
 }
 
-func resourceImageExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceImageExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourceImageExists: called for %s, id: %s", d.Get("name").(string), d.Id())
 
-	image, err := utilityImageCheckPresence(d, m)
+	image, err := utilityImageCheckPresence(ctx, d, m)
 	if image == nil {
 		if err != nil {
 			return false, err
@@ -225,13 +225,13 @@ func resourceImageExists(d *schema.ResourceData, m interface{}) (bool, error) {
 	return true, nil
 }
 
-func resourceImageEditName(d *schema.ResourceData, m interface{}) error {
+func resourceImageEditName(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceImageEditName: called for %s, id: %s", d.Get("name").(string), d.Id())
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("imageId", strconv.Itoa(d.Get("image_id").(int)))
 	urlValues.Add("name", d.Get("name").(string))
-	_, err := c.DecortAPICall("POST", imageEditNameAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", imageEditNameAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func resourceImageEdit(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues := &url.Values{}
 
 	if d.HasChange("enabled") {
-		err := resourceImageChangeEnabled(d, m)
+		err := resourceImageChangeEnabled(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -253,7 +253,7 @@ func resourceImageEdit(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if d.HasChange("name") {
-		err := resourceImageEditName(d, m)
+		err := resourceImageEditName(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -261,14 +261,14 @@ func resourceImageEdit(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if d.HasChange("shared_with") {
-		err := resourceImageShare(d, m)
+		err := resourceImageShare(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		urlValues = &url.Values{}
 	}
 	if d.HasChange("computeci_id") {
-		err := resourceImageChangeComputeci(d, m)
+		err := resourceImageChangeComputeci(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -276,7 +276,7 @@ func resourceImageEdit(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if d.HasChange("enabled_stacks") {
-		err := resourceImageUpdateNodes(d, m)
+		err := resourceImageUpdateNodes(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -284,7 +284,7 @@ func resourceImageEdit(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	if d.HasChange("link_to") {
-		err := resourceImageLink(d, m)
+		err := resourceImageLink(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -302,7 +302,7 @@ func resourceImageEdit(ctx context.Context, d *schema.ResourceData, m interface{
 		urlValues.Add("bootable", strconv.FormatBool(d.Get("bootable").(bool)))
 		urlValues.Add("hotresize", strconv.FormatBool(d.Get("hot_resize").(bool)))
 
-		_, err := c.DecortAPICall("POST", imageEditAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", imageEditAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -311,7 +311,7 @@ func resourceImageEdit(ctx context.Context, d *schema.ResourceData, m interface{
 	return nil
 }
 
-func resourceImageChangeEnabled(d *schema.ResourceData, m interface{}) error {
+func resourceImageChangeEnabled(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	var api string
 
 	c := m.(*controller.ControllerCfg)
@@ -322,7 +322,7 @@ func resourceImageChangeEnabled(d *schema.ResourceData, m interface{}) error {
 	} else {
 		api = imageDisableAPI
 	}
-	resp, err := c.DecortAPICall("POST", api, urlValues)
+	resp, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 	if err != nil {
 		return err
 	}
@@ -336,13 +336,13 @@ func resourceImageChangeEnabled(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceImageLink(d *schema.ResourceData, m interface{}) error {
+func resourceImageLink(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceVirtualImageLink: called for %s, id: %s", d.Get("name").(string), d.Id())
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("imageId", strconv.Itoa(d.Get("image_id").(int)))
 	urlValues.Add("targetId", strconv.Itoa(d.Get("link_to").(int)))
-	_, err := c.DecortAPICall("POST", imageLinkAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", imageLinkAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -350,7 +350,7 @@ func resourceImageLink(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceImageShare(d *schema.ResourceData, m interface{}) error {
+func resourceImageShare(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceImageShare: called for %s, id: %s", d.Get("name").(string), d.Id())
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -369,7 +369,7 @@ func resourceImageShare(d *schema.ResourceData, m interface{}) error {
 	}
 	temp = "[" + temp + "]"
 	urlValues.Add("accounts", temp)
-	_, err := c.DecortAPICall("POST", imageShareAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", imageShareAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -377,7 +377,7 @@ func resourceImageShare(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceImageChangeComputeci(d *schema.ResourceData, m interface{}) error {
+func resourceImageChangeComputeci(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
@@ -393,7 +393,7 @@ func resourceImageChangeComputeci(d *schema.ResourceData, m interface{}) error {
 		api = imageComputeciSetAPI
 	}
 
-	_, err := c.DecortAPICall("POST", api, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 	if err != nil {
 		return err
 	}
@@ -401,7 +401,7 @@ func resourceImageChangeComputeci(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceImageUpdateNodes(d *schema.ResourceData, m interface{}) error {
+func resourceImageUpdateNodes(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceImageUpdateNodes: called for %s, id: %s", d.Get("name").(string), d.Id())
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -418,7 +418,7 @@ func resourceImageUpdateNodes(d *schema.ResourceData, m interface{}) error {
 	}
 	temp = "[" + temp + "]"
 	urlValues.Add("enabledStacks", temp)
-	_, err := c.DecortAPICall("POST", imageUpdateNodesAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", imageUpdateNodesAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -677,7 +677,6 @@ func ResourceImage() *schema.Resource {
 		ReadContext:   resourceImageRead,
 		UpdateContext: resourceImageEdit,
 		DeleteContext: resourceImageDelete,
-		Exists:        resourceImageExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

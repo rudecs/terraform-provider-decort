@@ -58,7 +58,7 @@ func flattenGridList(gl GridList) []map[string]interface{} {
 }
 
 func dataSourceGridListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	gridList, err := utilityGridListCheckPresence(d, m)
+	gridList, err := utilityGridListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -69,7 +69,7 @@ func flattenSepList(sl SepList) []map[string]interface{} {
 }
 
 func dataSourceSepListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	sepList, err := utilitySepListCheckPresence(d, m)
+	sepList, err := utilitySepListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

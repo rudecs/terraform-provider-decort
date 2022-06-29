@@ -50,7 +50,7 @@ func resourceAccountCreate(ctx context.Context, d *schema.ResourceData, m interf
 	log.Debugf("resourceAccountCreate")
 
 	if accountId, ok := d.GetOk("account_id"); ok {
-		if exists, err := resourceAccountExists(d, m); exists {
+		if exists, err := resourceAccountExists(ctx, d, m); exists {
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -133,7 +133,7 @@ func resourceAccountCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
-	accountId, err := c.DecortAPICall("POST", accountCreateAPI, urlValues)
+	accountId, err := c.DecortAPICall(ctx, "POST", accountCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -155,7 +155,7 @@ func resourceAccountCreate(ctx context.Context, d *schema.ResourceData, m interf
 func resourceAccountRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceAccountRead")
 
-	acc, err := utilityAccountCheckPresence(d, m)
+	acc, err := utilityAccountCheckPresence(ctx, d, m)
 	if acc == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -194,7 +194,7 @@ func resourceAccountRead(ctx context.Context, d *schema.ResourceData, m interfac
 func resourceAccountDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceAccountDelete")
 
-	account, err := utilityAccountCheckPresence(d, m)
+	account, err := utilityAccountCheckPresence(ctx, d, m)
 	if account == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -207,7 +207,7 @@ func resourceAccountDelete(ctx context.Context, d *schema.ResourceData, m interf
 	urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 	urlValues.Add("permanently", strconv.FormatBool(d.Get("permanently").(bool)))
 
-	_, err = c.DecortAPICall("POST", accountDeleteAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", accountDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -216,10 +216,10 @@ func resourceAccountDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func resourceAccountExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceAccountExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourceAccountExists")
 
-	account, err := utilityAccountCheckPresence(d, m)
+	account, err := utilityAccountCheckPresence(ctx, d, m)
 	if account == nil {
 		if err != nil {
 			return false, err
@@ -243,7 +243,7 @@ func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 		urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 
-		_, err := c.DecortAPICall("POST", api, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -254,7 +254,7 @@ func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interfac
 	if d.HasChange("account_name") {
 		urlValues.Add("name", d.Get("account_name").(string))
 		urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
-		_, err := c.DecortAPICall("POST", accountUpdateAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", accountUpdateAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -318,7 +318,7 @@ func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 
 		urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
-		_, err := c.DecortAPICall("POST", accountUpdateAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", accountUpdateAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -329,7 +329,7 @@ func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interfac
 	if d.HasChange("send_access_emails") {
 		urlValues.Add("sendAccessEmails", strconv.FormatBool(d.Get("send_access_emails").(bool)))
 		urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
-		_, err := c.DecortAPICall("POST", accountUpdateAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", accountUpdateAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -341,7 +341,7 @@ func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interfac
 		restore := d.Get("restore").(bool)
 		if restore {
 			urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
-			_, err := c.DecortAPICall("POST", accountRestoreAPI, urlValues)
+			_, err := c.DecortAPICall(ctx, "POST", accountRestoreAPI, urlValues)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -379,7 +379,7 @@ func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interfac
 				urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 				urlValues.Add("userId", userConv["user_id"].(string))
 				urlValues.Add("recursivedelete", strconv.FormatBool(userConv["recursive_delete"].(bool)))
-				_, err := c.DecortAPICall("POST", accountDeleteUserAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", accountDeleteUserAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -394,7 +394,7 @@ func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interfac
 				urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 				urlValues.Add("userId", userConv["user_id"].(string))
 				urlValues.Add("accesstype", strings.ToUpper(userConv["access_type"].(string)))
-				_, err := c.DecortAPICall("POST", accountAddUserAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", accountAddUserAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -409,7 +409,7 @@ func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interfac
 				urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 				urlValues.Add("userId", userConv["user_id"].(string))
 				urlValues.Add("accesstype", strings.ToUpper(userConv["access_type"].(string)))
-				_, err := c.DecortAPICall("POST", accountUpdateUserAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", accountUpdateUserAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -786,7 +786,6 @@ func ResourceAccount() *schema.Resource {
 		ReadContext:   resourceAccountRead,
 		UpdateContext: resourceAccountEdit,
 		DeleteContext: resourceAccountDelete,
-		Exists:        resourceAccountExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

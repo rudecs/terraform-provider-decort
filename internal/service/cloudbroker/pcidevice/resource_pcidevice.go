@@ -48,7 +48,7 @@ func resourcePcideviceCreate(ctx context.Context, d *schema.ResourceData, m inte
 	log.Debugf("resourcePcideviceCreate: called for pcidevice %s", d.Get("name").(string))
 
 	if deviceId, ok := d.GetOk("device_id"); ok {
-		if exists, err := resourcePcideviceExists(d, m); exists {
+		if exists, err := resourcePcideviceExists(ctx, d, m); exists {
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -74,7 +74,7 @@ func resourcePcideviceCreate(ctx context.Context, d *schema.ResourceData, m inte
 		urlValues.Add("description", description.(string))
 	}
 
-	pcideviceId, err := c.DecortAPICall("POST", pcideviceCreateAPI, urlValues)
+	pcideviceId, err := c.DecortAPICall(ctx, "POST", pcideviceCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourcePcideviceCreate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourcePcideviceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	pcidevice, err := utilityPcideviceCheckPresence(d, m)
+	pcidevice, err := utilityPcideviceCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -121,7 +121,7 @@ func resourcePcideviceDelete(ctx context.Context, d *schema.ResourceData, m inte
 	urlValues.Add("deviceId", d.Id())
 	urlValues.Add("force", strconv.FormatBool(d.Get("force").(bool)))
 
-	_, err := c.DecortAPICall("POST", pcideviceDeleteAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", pcideviceDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -131,8 +131,8 @@ func resourcePcideviceDelete(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourcePcideviceExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	pcidevice, err := utilityPcideviceCheckPresence(d, m)
+func resourcePcideviceExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
+	pcidevice, err := utilityPcideviceCheckPresence(ctx, d, m)
 	if err != nil {
 		return false, err
 	}
@@ -158,7 +158,7 @@ func resourcePcideviceEdit(ctx context.Context, d *schema.ResourceData, m interf
 			api = pcideviceDisableAPI
 		}
 
-		_, err := c.DecortAPICall("POST", api, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -255,7 +255,6 @@ func ResourcePcidevice() *schema.Resource {
 		ReadContext:   resourcePcideviceRead,
 		UpdateContext: resourcePcideviceEdit,
 		DeleteContext: resourcePcideviceDelete,
-		Exists:        resourcePcideviceExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

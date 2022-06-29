@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package vins
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityVinsListCheckPresence(d *schema.ResourceData, m interface{}) (VinsList, error) {
+func utilityVinsListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (VinsList, error) {
 	vinsList := VinsList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -58,7 +59,7 @@ func utilityVinsListCheckPresence(d *schema.ResourceData, m interface{}) (VinsLi
 	}
 
 	log.Debugf("utilityVinsListCheckPresence")
-	vinsListRaw, err := c.DecortAPICall("POST", VinsListAPI, urlValues)
+	vinsListRaw, err := c.DecortAPICall(ctx, "POST", VinsListAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

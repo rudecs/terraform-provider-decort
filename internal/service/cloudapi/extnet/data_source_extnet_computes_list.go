@@ -72,7 +72,7 @@ func flattenExtnetComputesList(ecl ExtnetComputesList) []map[string]interface{} 
 }
 
 func dataSourceExtnetComputesListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	extnetComputesList, err := utilityExtnetComputesListCheckPresence(d, m)
+	extnetComputesList, err := utilityExtnetComputesListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

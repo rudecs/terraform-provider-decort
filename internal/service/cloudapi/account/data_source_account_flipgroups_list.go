@@ -73,7 +73,7 @@ func flattenAccountFlipGroupsList(afgl AccountFlipGroupsList) []map[string]inter
 }
 
 func dataSourceAccountFlipGroupsListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountFlipGroupsList, err := utilityAccountFlipGroupsListCheckPresence(d, m)
+	accountFlipGroupsList, err := utilityAccountFlipGroupsListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

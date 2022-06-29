@@ -59,14 +59,14 @@ func resourcePfwCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		urlValues.Add("publicPortEnd", strconv.Itoa(portEnd.(int)))
 	}
 
-	pfwId, err := c.DecortAPICall("POST", ComputePfwAddAPI, urlValues)
+	pfwId, err := c.DecortAPICall(ctx, "POST", ComputePfwAddAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(fmt.Sprintf("%d-%s", d.Get("compute_id").(int), pfwId))
 
-	pfw, err := utilityPfwCheckPresence(d, m)
+	pfw, err := utilityPfwCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +82,7 @@ func resourcePfwCreate(ctx context.Context, d *schema.ResourceData, m interface{
 func resourcePfwRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourcePfwRead: called for compute %d, rule %s", d.Get("compute_id").(int), d.Id())
 
-	pfw, err := utilityPfwCheckPresence(d, m)
+	pfw, err := utilityPfwCheckPresence(ctx, d, m)
 	if pfw == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -101,7 +101,7 @@ func resourcePfwRead(ctx context.Context, d *schema.ResourceData, m interface{})
 func resourcePfwDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourcePfwDelete: called for compute %d, rule %s", d.Get("compute_id").(int), d.Id())
 
-	pfw, err := utilityPfwCheckPresence(d, m)
+	pfw, err := utilityPfwCheckPresence(ctx, d, m)
 	if pfw == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -114,7 +114,7 @@ func resourcePfwDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues.Add("computeId", strconv.Itoa(d.Get("compute_id").(int)))
 	urlValues.Add("ruleId", strconv.Itoa(pfw.ID))
 
-	_, err = c.DecortAPICall("POST", ComputePfwDelAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", ComputePfwDelAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -122,10 +122,10 @@ func resourcePfwDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	return nil
 }
 
-func resourcePfwExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourcePfwExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourcePfwExists: called for compute %d, rule %s", d.Get("compute_id").(int), d.Id())
 
-	pfw, err := utilityPfwCheckPresence(d, m)
+	pfw, err := utilityPfwCheckPresence(ctx, d, m)
 	if pfw == nil {
 		if err != nil {
 			return false, err
@@ -193,7 +193,6 @@ func ResourcePfw() *schema.Resource {
 		CreateContext: resourcePfwCreate,
 		ReadContext:   resourcePfwRead,
 		DeleteContext: resourcePfwDelete,
-		Exists:        resourcePfwExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

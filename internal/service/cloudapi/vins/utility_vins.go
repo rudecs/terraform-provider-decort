@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package vins
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -45,7 +46,7 @@ import (
 
 // On success this function returns a string, as returned by API vins/get, which could be unmarshalled
 // into VinsGetResp structure
-func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
+func utilityVinsCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
 	// This function tries to locate ViNS by one of the following algorithms depending
 	// on the parameters passed:
 	//    - if resource group ID is specified -> it looks for a ViNS at the RG level
@@ -80,7 +81,7 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		// ViNS ID is specified, try to get compute instance straight by this ID
 		log.Debugf("utilityVinsCheckPresence: locating ViNS by its ID %d", theId)
 		urlValues.Add("vinsId", fmt.Sprintf("%d", theId))
-		vinsFacts, err := c.DecortAPICall("POST", VinsGetAPI, urlValues)
+		vinsFacts, err := c.DecortAPICall(ctx, "POST", VinsGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
@@ -111,7 +112,7 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 		urlValues.Add("accountId", fmt.Sprintf("%d", accountId.(int)))
 	}
 
-	apiResp, err := c.DecortAPICall("POST", VinsSearchAPI, urlValues)
+	apiResp, err := c.DecortAPICall(ctx, "POST", VinsSearchAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
@@ -140,7 +141,7 @@ func utilityVinsCheckPresence(d *schema.ResourceData, m interface{}) (string, er
 			// manage ViNS, so we have to get detailed info by calling API vins/get
 			rqValues := &url.Values{}
 			rqValues.Add("vinsId", fmt.Sprintf("%d", item.ID))
-			vinsGetResp, err := c.DecortAPICall("POST", VinsGetAPI, rqValues)
+			vinsGetResp, err := c.DecortAPICall(ctx, "POST", VinsGetAPI, rqValues)
 			if err != nil {
 				return "", err
 			}

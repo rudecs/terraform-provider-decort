@@ -55,7 +55,7 @@ func resourceK8sWgCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	urlValues.Add("workerRam", strconv.Itoa(d.Get("ram").(int)))
 	urlValues.Add("workerDisk", strconv.Itoa(d.Get("disk").(int)))
 
-	resp, err := c.DecortAPICall("POST", K8sWgCreateAPI, urlValues)
+	resp, err := c.DecortAPICall(ctx, "POST", K8sWgCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -97,7 +97,7 @@ func resourceK8sWgCreate(ctx context.Context, d *schema.ResourceData, m interfac
 func resourceK8sWgRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceK8sWgRead: called with k8s id %d", d.Get("k8s_id").(int))
 
-	wg, err := utilityK8sWgCheckPresence(d, m)
+	wg, err := utilityK8sWgCheckPresence(ctx, d, m)
 	if wg == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -117,7 +117,7 @@ func resourceK8sWgUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 
 	c := m.(*controller.ControllerCfg)
 
-	wg, err := utilityK8sWgCheckPresence(d, m)
+	wg, err := utilityK8sWgCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -128,14 +128,14 @@ func resourceK8sWgUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 
 	if newNum := d.Get("num").(int); newNum > wg.Num {
 		urlValues.Add("num", strconv.Itoa(newNum-wg.Num))
-		_, err := c.DecortAPICall("POST", K8sWorkerAddAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", K8sWorkerAddAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	} else {
 		for i := wg.Num - 1; i >= newNum; i-- {
 			urlValues.Set("workerId", strconv.Itoa(wg.DetailedInfo[i].ID))
-			_, err := c.DecortAPICall("POST", K8sWorkerDeleteAPI, urlValues)
+			_, err := c.DecortAPICall(ctx, "POST", K8sWorkerDeleteAPI, urlValues)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -148,7 +148,7 @@ func resourceK8sWgUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 func resourceK8sWgDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceK8sWgDelete: called with k8s id %d", d.Get("k8s_id").(int))
 
-	wg, err := utilityK8sWgCheckPresence(d, m)
+	wg, err := utilityK8sWgCheckPresence(ctx, d, m)
 	if wg == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -161,7 +161,7 @@ func resourceK8sWgDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
 	urlValues.Add("workersGroupId", strconv.Itoa(wg.ID))
 
-	_, err = c.DecortAPICall("POST", K8sWgDeleteAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", K8sWgDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -169,10 +169,10 @@ func resourceK8sWgDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	return nil
 }
 
-func resourceK8sWgExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceK8sWgExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourceK8sWgExists: called with k8s id %d", d.Get("k8s_id").(int))
 
-	wg, err := utilityK8sWgCheckPresence(d, m)
+	wg, err := utilityK8sWgCheckPresence(ctx, d, m)
 	if wg == nil {
 		if err != nil {
 			return false, err
@@ -240,7 +240,6 @@ func ResourceK8sWg() *schema.Resource {
 		ReadContext:   resourceK8sWgRead,
 		UpdateContext: resourceK8sWgUpdate,
 		DeleteContext: resourceK8sWgDelete,
-		Exists:        resourceK8sWgExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

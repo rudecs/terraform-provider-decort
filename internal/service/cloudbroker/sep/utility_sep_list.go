@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package sep
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilitySepListCheckPresence(d *schema.ResourceData, m interface{}) (SepList, error) {
+func utilitySepListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (SepList, error) {
 	sepList := SepList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -55,7 +56,7 @@ func utilitySepListCheckPresence(d *schema.ResourceData, m interface{}) (SepList
 	}
 
 	log.Debugf("utilitySepListCheckPresence: load image list")
-	sepListRaw, err := c.DecortAPICall("POST", sepListAPI, urlValues)
+	sepListRaw, err := c.DecortAPICall(ctx, "POST", sepListAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

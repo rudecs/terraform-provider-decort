@@ -32,13 +32,14 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package snapshot
 
 import (
+	"context"
 	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilitySnapshotCheckPresence(d *schema.ResourceData, m interface{}) (*Snapshot, error) {
-	snapShotList, err := utilitySnapshotListCheckPresence(d, m)
+func utilitySnapshotCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*Snapshot, error) {
+	snapShotList, err := utilitySnapshotListCheckPresence(ctx, d, m)
 	if err != nil {
 		return nil, err
 	}

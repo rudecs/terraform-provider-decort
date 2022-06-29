@@ -115,7 +115,7 @@ func resourceVinsCreate(ctx context.Context, d *schema.ResourceData, m interface
 		urlValues.Add("desc", argVal.(string))
 	}
 
-	apiResp, err := c.DecortAPICall("POST", apiToCall, urlValues)
+	apiResp, err := c.DecortAPICall(ctx, "POST", apiToCall, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,7 +133,7 @@ func resourceVinsCreate(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceVinsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	vinsFacts, err := utilityVinsCheckPresence(d, m)
+	vinsFacts, err := utilityVinsCheckPresence(ctx, d, m)
 	if vinsFacts == "" {
 		// if empty string is returned from utilityVinsCheckPresence then there is no
 		// such ViNS and err tells so - just return it to the calling party
@@ -161,7 +161,7 @@ func resourceVinsUpdate(ctx context.Context, d *schema.ResourceData, m interface
 
 		if oldExtNetId.(int) > 0 {
 			// there was preexisting external net connection - disconnect ViNS
-			_, err := c.DecortAPICall("POST", VinsExtNetDisconnectAPI, extnetParams)
+			_, err := c.DecortAPICall(ctx, "POST", VinsExtNetDisconnectAPI, extnetParams)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -170,7 +170,7 @@ func resourceVinsUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		if newExtNedId.(int) > 0 {
 			// new external network connection requested - connect ViNS
 			extnetParams.Add("netId", fmt.Sprintf("%d", newExtNedId.(int)))
-			_, err := c.DecortAPICall("POST", VinsExtNetConnectAPI, extnetParams)
+			_, err := c.DecortAPICall(ctx, "POST", VinsExtNetConnectAPI, extnetParams)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -186,7 +186,7 @@ func resourceVinsDelete(ctx context.Context, d *schema.ResourceData, m interface
 	log.Debugf("resourceVinsDelete: called for ViNS ID / name %s / %s, Account ID %d, RG ID %d",
 		d.Id(), d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
 
-	vinsFacts, err := utilityVinsCheckPresence(d, m)
+	vinsFacts, err := utilityVinsCheckPresence(ctx, d, m)
 	if vinsFacts == "" {
 		if err != nil {
 			return diag.FromErr(err)
@@ -202,7 +202,7 @@ func resourceVinsDelete(ctx context.Context, d *schema.ResourceData, m interface
 	params.Add("permanently", "1") // delete ViNS immediately bypassing recycle bin
 
 	c := m.(*controller.ControllerCfg)
-	_, err = c.DecortAPICall("POST", VinsDeleteAPI, params)
+	_, err = c.DecortAPICall(ctx, "POST", VinsDeleteAPI, params)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -210,12 +210,12 @@ func resourceVinsDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceVinsExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceVinsExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
 	log.Debugf("resourceVinsExists: called for ViNS name %s, Account ID %d, RG ID %d",
 		d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
 
-	vinsFacts, err := utilityVinsCheckPresence(d, m)
+	vinsFacts, err := utilityVinsCheckPresence(ctx, d, m)
 	if vinsFacts == "" {
 		if err != nil {
 			return false, err
@@ -305,7 +305,6 @@ func ResourceVins() *schema.Resource {
 		ReadContext:   resourceVinsRead,
 		UpdateContext: resourceVinsUpdate,
 		DeleteContext: resourceVinsDelete,
-		Exists:        resourceVinsExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

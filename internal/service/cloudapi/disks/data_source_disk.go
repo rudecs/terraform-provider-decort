@@ -82,7 +82,7 @@ func flattenDisk(d *schema.ResourceData, disk_facts string) error {
 }
 
 func dataSourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	disk_facts, err := utilityDiskCheckPresence(d, m)
+	disk_facts, err := utilityDiskCheckPresence(ctx, d, m)
 	if disk_facts == "" {
 		// if empty string is returned from utilityDiskCheckPresence then there is no
 		// such Disk and err tells so - just return it to the calling party

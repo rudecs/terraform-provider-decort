@@ -97,7 +97,7 @@ func flattenVins(d *schema.ResourceData, vins_facts string) diag.Diagnostics {
 }
 
 func dataSourceVinsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	vinsFacts, err := utilityVinsCheckPresence(d, m)
+	vinsFacts, err := utilityVinsCheckPresence(ctx, d, m)
 	if vinsFacts == "" {
 		// if empty string is returned from utilityVinsCheckPresence then there is no
 		// such ViNS and err tells so - just return it to the calling party

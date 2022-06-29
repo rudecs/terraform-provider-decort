@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package sep
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilitySepCheckPresence(d *schema.ResourceData, m interface{}) (*Sep, error) {
+func utilitySepCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*Sep, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
@@ -55,7 +56,7 @@ func utilitySepCheckPresence(d *schema.ResourceData, m interface{}) (*Sep, error
 	}
 
 	log.Debugf("utilitySepCheckPresence: load sep")
-	sepRaw, err := c.DecortAPICall("POST", sepGetAPI, urlValues)
+	sepRaw, err := c.DecortAPICall(ctx, "POST", sepGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceSepConsumptionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	sepCons, err := utilitySepConsumptionCheckPresence(d, m)
+	sepCons, err := utilitySepConsumptionCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -40,7 +40,7 @@ import (
 )
 
 func dataSourceVGPURead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	vgpu, err := utilityVGPUCheckPresence(d, m)
+	vgpu, err := utilityVGPUCheckPresence(ctx, d, m)
 	if vgpu == nil {
 		d.SetId("")
 		return diag.FromErr(err)

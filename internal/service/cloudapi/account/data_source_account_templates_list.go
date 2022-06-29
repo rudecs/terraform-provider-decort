@@ -62,7 +62,7 @@ func flattenAccountTemplatesList(atl AccountTemplatesList) []map[string]interfac
 }
 
 func dataSourceAccountTemplatesListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountTemplatesList, err := utilityAccountTemplatesListCheckPresence(d, m)
+	accountTemplatesList, err := utilityAccountTemplatesListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

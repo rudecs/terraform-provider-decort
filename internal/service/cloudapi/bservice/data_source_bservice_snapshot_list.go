@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceBasicServiceSnapshotListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	basicServiceSnapshotList, err := utilityBasicServiceSnapshotListCheckPresence(d, m)
+	basicServiceSnapshotList, err := utilityBasicServiceSnapshotListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

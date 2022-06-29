@@ -42,7 +42,7 @@ import (
 )
 
 func dataSourcePcideviceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	pcidevice, err := utilityPcideviceCheckPresence(d, m)
+	pcidevice, err := utilityPcideviceCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

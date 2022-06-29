@@ -108,7 +108,7 @@ func flattenRgResourceLimits(rl ResourceLimits) []map[string]interface{} {
 }
 
 func dataSourceRgListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	rgList, err := utilityRgListCheckPresence(d, m)
+	rgList, err := utilityRgListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

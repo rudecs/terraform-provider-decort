@@ -51,7 +51,7 @@ func resourceVirtualImageCreate(ctx context.Context, d *schema.ResourceData, m i
 	urlValues.Add("name", d.Get("name").(string))
 	urlValues.Add("targetId", strconv.Itoa(d.Get("target_id").(int)))
 
-	imageId, err := c.DecortAPICall("POST", imageCreateVirtualAPI, urlValues)
+	imageId, err := c.DecortAPICall(ctx, "POST", imageCreateVirtualAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -59,7 +59,7 @@ func resourceVirtualImageCreate(ctx context.Context, d *schema.ResourceData, m i
 	d.SetId(imageId)
 	d.Set("image_id", imageId)
 
-	image, err := utilityImageCheckPresence(d, m)
+	image, err := utilityImageCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -326,7 +326,6 @@ func ResourceVirtualImage() *schema.Resource {
 		ReadContext:   resourceImageRead,
 		UpdateContext: resourceImageEdit,
 		DeleteContext: resourceImageDelete,
-		Exists:        resourceImageExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

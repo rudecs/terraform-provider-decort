@@ -73,7 +73,7 @@ func resourceDiskCreate(ctx context.Context, d *schema.ResourceData, m interface
 		urlValues.Add("description", argVal.(string))
 	}
 
-	apiResp, err := c.DecortAPICall("POST", DisksCreateAPI, urlValues)
+	apiResp, err := c.DecortAPICall(ctx, "POST", DisksCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -91,7 +91,7 @@ func resourceDiskCreate(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	diskFacts, err := utilityDiskCheckPresence(d, m)
+	diskFacts, err := utilityDiskCheckPresence(ctx, d, m)
 	if diskFacts == "" {
 		// if empty string is returned from utilityDiskCheckPresence then there is no
 		// such Disk and err tells so - just return it to the calling party
@@ -121,7 +121,7 @@ func resourceDiskUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		sizeParams := &url.Values{}
 		sizeParams.Add("diskId", d.Id())
 		sizeParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
-		_, err := c.DecortAPICall("POST", DisksResizeAPI, sizeParams)
+		_, err := c.DecortAPICall(ctx, "POST", DisksResizeAPI, sizeParams)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -137,7 +137,7 @@ func resourceDiskUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		renameParams := &url.Values{}
 		renameParams.Add("diskId", d.Id())
 		renameParams.Add("name", newName.(string))
-		_, err := c.DecortAPICall("POST", DisksRenameAPI, renameParams)
+		_, err := c.DecortAPICall(ctx, "POST", DisksRenameAPI, renameParams)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -165,7 +165,7 @@ func resourceDiskDelete(ctx context.Context, d *schema.ResourceData, m interface
 	log.Debugf("resourceDiskDelete: called for Disk ID / name %d / %s, Account ID %d",
 		d.Get("disk_id").(int), d.Get("name").(string), d.Get("account_id").(int))
 
-	diskFacts, err := utilityDiskCheckPresence(d, m)
+	diskFacts, err := utilityDiskCheckPresence(ctx, d, m)
 	if diskFacts == "" {
 		if err != nil {
 			return diag.FromErr(err)
@@ -187,7 +187,7 @@ func resourceDiskDelete(ctx context.Context, d *schema.ResourceData, m interface
 	params.Add("permanently", "1")
 
 	c := m.(*controller.ControllerCfg)
-	_, err = c.DecortAPICall("POST", DisksDeleteAPI, params)
+	_, err = c.DecortAPICall(ctx, "POST", DisksDeleteAPI, params)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -195,12 +195,12 @@ func resourceDiskDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceDiskExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceDiskExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
 	log.Debugf("resourceDiskExists: called for Disk ID / name %d / %s, Account ID %d",
 		d.Get("disk_id").(int), d.Get("name").(string), d.Get("account_id").(int))
 
-	diskFacts, err := utilityDiskCheckPresence(d, m)
+	diskFacts, err := utilityDiskCheckPresence(ctx, d, m)
 	if diskFacts == "" {
 		if err != nil {
 			return false, err
@@ -320,7 +320,6 @@ func ResourceDisk() *schema.Resource {
 		ReadContext:   resourceDiskRead,
 		UpdateContext: resourceDiskUpdate,
 		DeleteContext: resourceDiskDelete,
-		Exists:        resourceDiskExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

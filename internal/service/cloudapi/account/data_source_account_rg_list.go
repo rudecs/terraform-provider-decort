@@ -86,7 +86,7 @@ func flattenAccRGResources(argr AccountRGResources) []map[string]interface{} {
 }
 
 func dataSourceAccountRGListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountRGList, err := utilityAccountRGListCheckPresence(d, m)
+	accountRGList, err := utilityAccountRGListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -42,7 +42,7 @@ import (
 )
 
 func dataSourceAccountRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	acc, err := utilityAccountCheckPresence(d, m)
+	acc, err := utilityAccountCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

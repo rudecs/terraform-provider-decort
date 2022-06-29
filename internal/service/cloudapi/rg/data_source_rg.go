@@ -83,7 +83,7 @@ func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
 }
 
 func dataSourceResgroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	rg_facts, err := utilityResgroupCheckPresence(d, m)
+	rg_facts, err := utilityResgroupCheckPresence(ctx, d, m)
 	if rg_facts == "" {
 		// if empty string is returned from utilityResgroupCheckPresence then there is no
 		// such resource group and err tells so - just return it to the calling party

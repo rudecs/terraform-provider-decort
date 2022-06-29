@@ -73,7 +73,7 @@ func flattenBasicServiceList(bsl BasicServiceList) []map[string]interface{} {
 }
 
 func dataSourceBasicServiceListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	basicServiceList, err := utilityBasicServiceListCheckPresence(d, m)
+	basicServiceList, err := utilityBasicServiceListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

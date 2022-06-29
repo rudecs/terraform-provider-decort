@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package extnet
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
@@ -40,12 +41,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityExtnetDefaultCheckPresence(_ *schema.ResourceData, m interface{}) (string, error) {
+func utilityExtnetDefaultCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
 	log.Debugf("utilityExtnetDefaultCheckPresence")
-	res, err := c.DecortAPICall("POST", extnetGetDefaultAPI, urlValues)
+	res, err := c.DecortAPICall(ctx, "POST", extnetGetDefaultAPI, urlValues)
 	if err != nil {
 		return "", err
 	}

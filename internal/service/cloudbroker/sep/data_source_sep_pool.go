@@ -42,7 +42,7 @@ import (
 )
 
 func dataSourceSepPoolRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	sepPool, err := utilitySepPoolCheckPresence(d, m)
+	sepPool, err := utilitySepPoolCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

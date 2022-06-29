@@ -67,7 +67,7 @@ func flattenVinsList(vl VinsList) []map[string]interface{} {
 }
 
 func dataSourceVinsListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	vinsList, err := utilityVinsListCheckPresence(d, m)
+	vinsList, err := utilityVinsListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

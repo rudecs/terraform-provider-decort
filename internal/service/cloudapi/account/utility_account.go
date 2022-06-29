@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package account
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (*AccountWithResources, error) {
+func utilityAccountCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*AccountWithResources, error) {
 	account := &AccountWithResources{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -54,7 +55,7 @@ func utilityAccountCheckPresence(d *schema.ResourceData, m interface{}) (*Accoun
 	}
 
 	log.Debugf("utilityAccountCheckPresence: load account")
-	accountRaw, err := c.DecortAPICall("POST", accountGetAPI, urlValues)
+	accountRaw, err := c.DecortAPICall(ctx, "POST", accountGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

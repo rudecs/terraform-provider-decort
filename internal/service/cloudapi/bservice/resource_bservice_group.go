@@ -51,7 +51,7 @@ func resourceBasicServiceGroupCreate(ctx context.Context, d *schema.ResourceData
 
 	if compgroupId, ok := d.GetOk("compgroup_id"); ok {
 		if _, ok := d.GetOk("service_id"); ok {
-			if exists, err := resourceBasicServiceGroupExists(d, m); exists {
+			if exists, err := resourceBasicServiceGroupExists(ctx, d, m); exists {
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -119,7 +119,7 @@ func resourceBasicServiceGroupCreate(ctx context.Context, d *schema.ResourceData
 		urlValues.Add("extnets", temp)
 	}
 
-	compgroupId, err := c.DecortAPICall("POST", bserviceGroupAddAPI, urlValues)
+	compgroupId, err := c.DecortAPICall(ctx, "POST", bserviceGroupAddAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -141,7 +141,7 @@ func resourceBasicServiceGroupCreate(ctx context.Context, d *schema.ResourceData
 func resourceBasicServiceGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceBasicServiceGroupRead")
 
-	bsg, err := utilityBasicServiceGroupCheckPresence(d, m)
+	bsg, err := utilityBasicServiceGroupCheckPresence(ctx, d, m)
 	if bsg == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -185,7 +185,7 @@ func resourceBasicServiceGroupRead(ctx context.Context, d *schema.ResourceData, 
 func resourceBasicServiceGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceBasicServiceGroupDelete")
 
-	bsg, err := utilityBasicServiceGroupCheckPresence(d, m)
+	bsg, err := utilityBasicServiceGroupCheckPresence(ctx, d, m)
 	if bsg == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -198,7 +198,7 @@ func resourceBasicServiceGroupDelete(ctx context.Context, d *schema.ResourceData
 	urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 	urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 
-	_, err = c.DecortAPICall("POST", bserviceGroupRemoveAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", bserviceGroupRemoveAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -207,10 +207,10 @@ func resourceBasicServiceGroupDelete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceBasicServiceGroupExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceBasicServiceGroupExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourceBasicServiceGroupExists")
 
-	bserviceGroup, err := utilityBasicServiceGroupCheckPresence(d, m)
+	bserviceGroup, err := utilityBasicServiceGroupCheckPresence(ctx, d, m)
 	if bserviceGroup == nil {
 		if err != nil {
 			return false, err
@@ -232,7 +232,7 @@ func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, 
 		urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 		urlValues.Add("count", strconv.Itoa(d.Get("comp_count").(int)))
 		urlValues.Add("mode", strings.ToUpper(d.Get("mode").(string)))
-		_, err := c.DecortAPICall("POST", bserviceGroupResizeAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", bserviceGroupResizeAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -251,7 +251,7 @@ func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, 
 		urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 		urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 
-		_, err := c.DecortAPICall("POST", api, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -270,7 +270,7 @@ func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, 
 		urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 		urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 
-		_, err := c.DecortAPICall("POST", bserviceGroupUpdateAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", bserviceGroupUpdateAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -296,7 +296,7 @@ func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, 
 		urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 		urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 		urlValues.Add("extnets", temp)
-		_, err := c.DecortAPICall("POST", bserviceGroupUpdateExtnetAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", bserviceGroupUpdateExtnetAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -322,7 +322,7 @@ func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, 
 		urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 		urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 		urlValues.Add("vinses", temp)
-		_, err := c.DecortAPICall("POST", bserviceGroupUpdateVinsAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", bserviceGroupUpdateVinsAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -356,7 +356,7 @@ func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, 
 				urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 				urlValues.Add("parentId", strconv.Itoa(parentConv))
 
-				_, err := c.DecortAPICall("POST", bserviceGroupParentRemoveAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", bserviceGroupParentRemoveAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -371,7 +371,7 @@ func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, 
 				urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 				urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 				urlValues.Add("parentId", strconv.Itoa(parentConv))
-				_, err := c.DecortAPICall("POST", bserviceGroupParentAddAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", bserviceGroupParentAddAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -389,7 +389,7 @@ func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, 
 				urlValues.Add("compgroupId", strconv.Itoa(d.Get("compgroup_id").(int)))
 				urlValues.Add("computeId", strconv.Itoa(rc.(int)))
 
-				_, err := c.DecortAPICall("POST", bserviceGroupComputeRemoveAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", bserviceGroupComputeRemoveAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -652,7 +652,6 @@ func ResourceBasicServiceGroup() *schema.Resource {
 		ReadContext:   resourceBasicServiceGroupRead,
 		UpdateContext: resourceBasicServiceGroupEdit,
 		DeleteContext: resourceBasicServiceGroupDelete,
-		Exists:        resourceBasicServiceGroupExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

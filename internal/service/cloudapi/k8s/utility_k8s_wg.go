@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package k8s
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -40,12 +41,12 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 )
 
-func utilityK8sWgCheckPresence(d *schema.ResourceData, m interface{}) (*K8sNodeRecord, error) {
+func utilityK8sWgCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*K8sNodeRecord, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
 
-	resp, err := c.DecortAPICall("POST", K8sGetAPI, urlValues)
+	resp, err := c.DecortAPICall(ctx, "POST", K8sGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

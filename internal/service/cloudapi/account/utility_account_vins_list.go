@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package account
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityAccountVinsListCheckPresence(d *schema.ResourceData, m interface{}) (AccountVinsList, error) {
+func utilityAccountVinsListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (AccountVinsList, error) {
 	accountVinsList := AccountVinsList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -50,7 +51,7 @@ func utilityAccountVinsListCheckPresence(d *schema.ResourceData, m interface{}) 
 	urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 
 	log.Debugf("utilityAccountVinsListCheckPresence: load account list")
-	accountVinsListRaw, err := c.DecortAPICall("POST", accountListVinsAPI, urlValues)
+	accountVinsListRaw, err := c.DecortAPICall(ctx, "POST", accountListVinsAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

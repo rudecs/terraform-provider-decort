@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package account
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityAccountFlipGroupsListCheckPresence(d *schema.ResourceData, m interface{}) (AccountFlipGroupsList, error) {
+func utilityAccountFlipGroupsListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (AccountFlipGroupsList, error) {
 	accountFlipGroupsList := AccountFlipGroupsList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -50,7 +51,7 @@ func utilityAccountFlipGroupsListCheckPresence(d *schema.ResourceData, m interfa
 	urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 
 	log.Debugf("utilityAccountFlipGroupsListCheckPresence")
-	accountFlipGroupsListRaw, err := c.DecortAPICall("POST", accountListFlipGroupsAPI, urlValues)
+	accountFlipGroupsListRaw, err := c.DecortAPICall(ctx, "POST", accountListFlipGroupsAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

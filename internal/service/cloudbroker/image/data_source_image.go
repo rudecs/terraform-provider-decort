@@ -83,7 +83,7 @@ func flattenImage(d *schema.ResourceData, image *Image) {
 }
 
 func dataSourceImageRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	image, err := utilityImageCheckPresence(d, m)
+	image, err := utilityImageCheckPresence(ctx, d, m)
 	if err != nil {
 
 		return diag.FromErr(err)

@@ -25,6 +25,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"golang.org/x/net/context"
 
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 	"github.com/rudecs/terraform-provider-decort/internal/location"
@@ -122,7 +123,9 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		return nil, err
 	}
 
-	gridId, err := location.UtilityLocationGetDefaultGridID(decsController)
+	ctx := context.Background()
+
+	gridId, err := location.UtilityLocationGetDefaultGridID(ctx, decsController)
 	if err != nil {
 		return nil, err
 	}

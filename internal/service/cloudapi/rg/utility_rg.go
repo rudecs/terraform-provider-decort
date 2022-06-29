@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package rg
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -45,7 +46,7 @@ import (
 
 // On success this function returns a string, as returned by API rg/get, which could be unmarshalled
 // into ResgroupGetResp structure
-func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string, error) {
+func utilityResgroupCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
 	// This function tries to locate resource group by one of the following algorithms depending
 	// on the parameters passed:
 	//    - if resource group ID is specified -> by RG ID
@@ -84,7 +85,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 		// go straight for the RG by its ID
 		log.Debugf("utilityResgroupCheckPresence: locating RG by its ID %d", theId)
 		urlValues.Add("rgId", fmt.Sprintf("%d", theId))
-		rgFacts, err := c.DecortAPICall("POST", ResgroupGetAPI, urlValues)
+		rgFacts, err := c.DecortAPICall(ctx, "POST", ResgroupGetAPI, urlValues)
 		if err != nil {
 			return "", err
 		}
@@ -101,7 +102,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 	// obtain Account ID by account name - it should not be zero on success
 
 	urlValues.Add("includedeleted", "false")
-	apiResp, err := c.DecortAPICall("POST", ResgroupListAPI, urlValues)
+	apiResp, err := c.DecortAPICall(ctx, "POST", ResgroupListAPI, urlValues)
 	if err != nil {
 		return "", err
 	}
@@ -125,7 +126,7 @@ func utilityResgroupCheckPresence(d *schema.ResourceData, m interface{}) (string
 			// Namely, we need resource quota settings
 			reqValues := &url.Values{}
 			reqValues.Add("rgId", fmt.Sprintf("%d", item.ID))
-			apiResp, err := c.DecortAPICall("POST", ResgroupGetAPI, reqValues)
+			apiResp, err := c.DecortAPICall(ctx, "POST", ResgroupGetAPI, reqValues)
 			if err != nil {
 				return "", err
 			}

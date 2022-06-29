@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package vgpu
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -40,7 +41,7 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 )
 
-func utilityVGPUCheckPresence(d *schema.ResourceData, m interface{}) (*VGPU, error) {
+func utilityVGPUCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*VGPU, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("size", "50")
@@ -59,7 +60,7 @@ func utilityVGPUCheckPresence(d *schema.ResourceData, m interface{}) (*VGPU, err
 
 	for page := 1; ; page++ {
 		urlValues.Set("page", strconv.Itoa(page))
-		resp, err := c.DecortAPICall("POST", vgpuListAPI, urlValues)
+		resp, err := c.DecortAPICall(ctx, "POST", vgpuListAPI, urlValues)
 		if err != nil {
 			return nil, err
 		}

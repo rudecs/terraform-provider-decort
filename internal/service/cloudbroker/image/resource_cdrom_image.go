@@ -90,7 +90,7 @@ func resourceCDROMImageCreate(ctx context.Context, d *schema.ResourceData, m int
 		urlValues.Add("architecture", architecture.(string))
 	}
 
-	imageId, err := c.DecortAPICall("POST", imageCreateCDROMAPI, urlValues)
+	imageId, err := c.DecortAPICall(ctx, "POST", imageCreateCDROMAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -98,7 +98,7 @@ func resourceCDROMImageCreate(ctx context.Context, d *schema.ResourceData, m int
 	d.SetId(imageId)
 	d.Set("image_id", imageId)
 
-	image, err := utilityImageCheckPresence(d, m)
+	image, err := utilityImageCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -118,7 +118,7 @@ func resourceCDROMImageCreate(ctx context.Context, d *schema.ResourceData, m int
 func resourceCDROMImageDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceCDROMImageDelete: called for %s, id: %s", d.Get("name").(string), d.Id())
 
-	image, err := utilityImageCheckPresence(d, m)
+	image, err := utilityImageCheckPresence(ctx, d, m)
 	if image == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -134,7 +134,7 @@ func resourceCDROMImageDelete(ctx context.Context, d *schema.ResourceData, m int
 		urlValues.Add("permanently", strconv.FormatBool(permanently.(bool)))
 	}
 
-	_, err = c.DecortAPICall("POST", imageDeleteCDROMAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", imageDeleteCDROMAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -379,7 +379,6 @@ func ResourceCDROMImage() *schema.Resource {
 		ReadContext:   resourceImageRead,
 		UpdateContext: resourceImageEdit,
 		DeleteContext: resourceCDROMImageDelete,
-		Exists:        resourceImageExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

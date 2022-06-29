@@ -52,7 +52,7 @@ func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m inter
 	urlValues.Add("label", d.Get("label").(string))
 	urlValues.Add("computeId", strconv.Itoa(d.Get("compute_id").(int)))
 
-	snapshotId, err := c.DecortAPICall("POST", snapshotCreateAPI, urlValues)
+	snapshotId, err := c.DecortAPICall(ctx, "POST", snapshotCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,7 +71,7 @@ func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	snapshot, err := utilitySnapshotCheckPresence(d, m)
+	snapshot, err := utilitySnapshotCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -92,7 +92,7 @@ func resourceSnapshotDelete(ctx context.Context, d *schema.ResourceData, m inter
 	urlValues.Add("computeId", strconv.Itoa(d.Get("compute_id").(int)))
 	urlValues.Add("label", d.Get("label").(string))
 
-	_, err := c.DecortAPICall("POST", snapshotDeleteAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", snapshotDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,8 +101,8 @@ func resourceSnapshotDelete(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceSnapshotExists(d *schema.ResourceData, m interface{}) (bool, error) {
-	snapshot, err := utilitySnapshotCheckPresence(d, m)
+func resourceSnapshotExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
+	snapshot, err := utilitySnapshotCheckPresence(ctx, d, m)
 	if err != nil {
 		return false, err
 	}
@@ -116,7 +116,7 @@ func resourceSnapshotExists(d *schema.ResourceData, m interface{}) (bool, error)
 func resourceSnapshotEdit(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	if d.HasChange("rollback") {
 		if d.Get("rollback").(bool) {
-			err := resourceSnapshotRollback(d, m)
+			err := resourceSnapshotRollback(ctx, d, m)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -126,14 +126,14 @@ func resourceSnapshotEdit(ctx context.Context, d *schema.ResourceData, m interfa
 	return nil
 }
 
-func resourceSnapshotRollback(d *schema.ResourceData, m interface{}) error {
+func resourceSnapshotRollback(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
 	urlValues.Add("computeId", strconv.Itoa(d.Get("compute_id").(int)))
 	urlValues.Add("label", d.Get("label").(string))
 
-	_, err := c.DecortAPICall("POST", snapshotRollbackAPI, urlValues)
+	_, err := c.DecortAPICall(ctx, "POST", snapshotRollbackAPI, urlValues)
 	if err != nil {
 		return err
 	}
@@ -188,7 +188,6 @@ func ResourceSnapshot() *schema.Resource {
 		ReadContext:   resourceSnapshotRead,
 		UpdateContext: resourceSnapshotEdit,
 		DeleteContext: resourceSnapshotDelete,
-		Exists:        resourceSnapshotExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

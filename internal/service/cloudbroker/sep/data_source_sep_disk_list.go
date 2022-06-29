@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceSepDiskListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	sepDiskList, err := utilitySepDiskListCheckPresence(d, m)
+	sepDiskList, err := utilitySepDiskListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

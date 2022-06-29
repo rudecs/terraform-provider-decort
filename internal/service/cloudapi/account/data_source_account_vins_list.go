@@ -69,7 +69,7 @@ func flattenAccountVinsList(avl AccountVinsList) []map[string]interface{} {
 }
 
 func dataSourceAccountVinsListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountVinsList, err := utilityAccountVinsListCheckPresence(d, m)
+	accountVinsList, err := utilityAccountVinsListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceBasicServiceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	bs, err := utilityBasicServiceCheckPresence(d, m)
+	bs, err := utilityBasicServiceCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

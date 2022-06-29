@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceBasicServiceGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	bsg, err := utilityBasicServiceGroupCheckPresence(d, m)
+	bsg, err := utilityBasicServiceGroupCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

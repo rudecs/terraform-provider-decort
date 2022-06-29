@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package bservice
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityBasicServiceDeletedListCheckPresence(d *schema.ResourceData, m interface{}) (BasicServiceList, error) {
+func utilityBasicServiceDeletedListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (BasicServiceList, error) {
 	basicServiceDeletedList := BasicServiceList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -61,7 +62,7 @@ func utilityBasicServiceDeletedListCheckPresence(d *schema.ResourceData, m inter
 	}
 
 	log.Debugf("utilityBasicServiceDeletedListCheckPresence")
-	basicServiceDeletedListRaw, err := c.DecortAPICall("POST", bserviceListDeletedAPI, urlValues)
+	basicServiceDeletedListRaw, err := c.DecortAPICall(ctx, "POST", bserviceListDeletedAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

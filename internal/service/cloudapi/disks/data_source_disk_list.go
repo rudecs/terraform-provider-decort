@@ -120,7 +120,7 @@ func flattendDiskSnapshotList(sl SnapshotRecordList) []interface{} {
 }
 
 func dataSourceDiskListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	diskList, err := utilityDiskListCheckPresence(d, m)
+	diskList, err := utilityDiskListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

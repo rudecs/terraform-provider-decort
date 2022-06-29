@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package disks
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -43,7 +44,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityDiskListCheckPresence(d *schema.ResourceData, m interface{}) (DisksListResp, error) {
+func utilityDiskListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (DisksListResp, error) {
 	diskList := DisksListResp{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -62,7 +63,7 @@ func utilityDiskListCheckPresence(d *schema.ResourceData, m interface{}) (DisksL
 	}
 
 	log.Debugf("utilityDiskListCheckPresence: load grid list")
-	diskListRaw, err := c.DecortAPICall("POST", DisksListAPI, urlValues)
+	diskListRaw, err := c.DecortAPICall(ctx, "POST", DisksListAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

@@ -42,7 +42,7 @@ import (
 )
 
 func dataSourceSepConfigRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	sepConfig, err := utilitySepConfigCheckPresence(d, m)
+	sepConfig, err := utilitySepConfigCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

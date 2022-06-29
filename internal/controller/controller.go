@@ -21,6 +21,7 @@ package controller
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
@@ -325,7 +326,7 @@ func (config *ControllerCfg) validateLegacyUser() (bool, error) {
 	return true, nil
 }
 
-func (config *ControllerCfg) DecortAPICall(method string, api_name string, url_values *url.Values) (json_resp string, err error) { //nolint:unparam
+func (config *ControllerCfg) DecortAPICall(ctx context.Context, method string, api_name string, url_values *url.Values) (json_resp string, err error) { //nolint:unparam
 	// This is a convenience wrapper around standard HTTP request methods that is aware of the
 	// authorization mode for which the provider was initialized and compiles request accordingly.
 

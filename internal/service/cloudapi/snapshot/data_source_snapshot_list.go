@@ -56,7 +56,7 @@ func flattenSnapshotList(gl SnapshotList) []map[string]interface{} {
 }
 
 func dataSourceSnapshotListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	snapshotList, err := utilitySnapshotListCheckPresence(d, m)
+	snapshotList, err := utilitySnapshotListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -32,13 +32,14 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package pcidevice
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityPcideviceCheckPresence(d *schema.ResourceData, m interface{}) (*Pcidevice, error) {
-	pcideviceList, err := utilityPcideviceListCheckPresence(d, m)
+func utilityPcideviceCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*Pcidevice, error) {
+	pcideviceList, err := utilityPcideviceListCheckPresence(ctx, d, m)
 	if err != nil {
 		return nil, err
 	}

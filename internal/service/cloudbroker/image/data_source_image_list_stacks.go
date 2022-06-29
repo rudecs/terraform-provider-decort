@@ -67,7 +67,7 @@ func flattenImageListStacks(_ *schema.ResourceData, stack ImageListStacks) []map
 }
 
 func dataSourceImageListStacksRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	imageListStacks, err := utilityImageListStacksCheckPresence(d, m)
+	imageListStacks, err := utilityImageListStacksCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

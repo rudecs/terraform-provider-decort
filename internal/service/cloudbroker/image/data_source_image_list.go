@@ -89,7 +89,7 @@ func flattenImageList(il ImageList) []map[string]interface{} {
 }
 
 func dataSourceImageListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	imageList, err := utilityImageListCheckPresence(d, m)
+	imageList, err := utilityImageListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

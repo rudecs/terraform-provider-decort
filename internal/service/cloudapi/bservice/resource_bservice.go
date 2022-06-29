@@ -48,7 +48,7 @@ func resourceBasicServiceCreate(ctx context.Context, d *schema.ResourceData, m i
 	log.Debugf("resourceBasicServiceCreate")
 
 	if serviceId, ok := d.GetOk("service_id"); ok {
-		if exists, err := resourceBasicServiceExists(d, m); exists {
+		if exists, err := resourceBasicServiceExists(ctx, d, m); exists {
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -78,7 +78,7 @@ func resourceBasicServiceCreate(ctx context.Context, d *schema.ResourceData, m i
 		urlValues.Add("sshUser", sshUser.(string))
 	}
 
-	serviceId, err := c.DecortAPICall("POST", bserviceCreateAPI, urlValues)
+	serviceId, err := c.DecortAPICall(ctx, "POST", bserviceCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -100,7 +100,7 @@ func resourceBasicServiceCreate(ctx context.Context, d *schema.ResourceData, m i
 func resourceBasicServiceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceBasicServiceRead")
 
-	bs, err := utilityBasicServiceCheckPresence(d, m)
+	bs, err := utilityBasicServiceCheckPresence(ctx, d, m)
 	if bs == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -143,7 +143,7 @@ func resourceBasicServiceRead(ctx context.Context, d *schema.ResourceData, m int
 func resourceBasicServiceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceBasicServiceDelete")
 
-	bs, err := utilityBasicServiceCheckPresence(d, m)
+	bs, err := utilityBasicServiceCheckPresence(ctx, d, m)
 	if bs == nil {
 		if err != nil {
 			return diag.FromErr(err)
@@ -156,7 +156,7 @@ func resourceBasicServiceDelete(ctx context.Context, d *schema.ResourceData, m i
 	urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 	urlValues.Add("permanently", strconv.FormatBool(d.Get("permanently").(bool)))
 
-	_, err = c.DecortAPICall("POST", bserviceDeleteAPI, urlValues)
+	_, err = c.DecortAPICall(ctx, "POST", bserviceDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -165,10 +165,10 @@ func resourceBasicServiceDelete(ctx context.Context, d *schema.ResourceData, m i
 	return nil
 }
 
-func resourceBasicServiceExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceBasicServiceExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourceBasicServiceExists")
 
-	bservice, err := utilityBasicServiceCheckPresence(d, m)
+	bservice, err := utilityBasicServiceCheckPresence(ctx, d, m)
 	if bservice == nil {
 		if err != nil {
 			return false, err
@@ -192,7 +192,7 @@ func resourceBasicServiceEdit(ctx context.Context, d *schema.ResourceData, m int
 		}
 		urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 
-		_, err := c.DecortAPICall("POST", api, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -204,7 +204,7 @@ func resourceBasicServiceEdit(ctx context.Context, d *schema.ResourceData, m int
 		restore := d.Get("restore").(bool)
 		if restore {
 			urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
-			_, err := c.DecortAPICall("POST", bserviceRestoreAPI, urlValues)
+			_, err := c.DecortAPICall(ctx, "POST", bserviceRestoreAPI, urlValues)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -221,7 +221,7 @@ func resourceBasicServiceEdit(ctx context.Context, d *schema.ResourceData, m int
 		}
 		urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 
-		_, err := c.DecortAPICall("POST", api, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", api, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -257,7 +257,7 @@ func resourceBasicServiceEdit(ctx context.Context, d *schema.ResourceData, m int
 				snapshotConv := snapshot.(map[string]interface{})
 				urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 				urlValues.Add("label", snapshotConv["label"].(string))
-				_, err := c.DecortAPICall("POST", bserviceSnapshotDeleteAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", bserviceSnapshotDeleteAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -271,7 +271,7 @@ func resourceBasicServiceEdit(ctx context.Context, d *schema.ResourceData, m int
 				snapshotConv := snapshot.(map[string]interface{})
 				urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 				urlValues.Add("label", snapshotConv["label"].(string))
-				_, err := c.DecortAPICall("POST", bserviceSnapshotCreateAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", bserviceSnapshotCreateAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -285,7 +285,7 @@ func resourceBasicServiceEdit(ctx context.Context, d *schema.ResourceData, m int
 				snapshotConv := snapshot.(map[string]interface{})
 				urlValues.Add("serviceId", strconv.Itoa(d.Get("service_id").(int)))
 				urlValues.Add("label", snapshotConv["label"].(string))
-				_, err := c.DecortAPICall("POST", bserviceSnapshotRollbackAPI, urlValues)
+				_, err := c.DecortAPICall(ctx, "POST", bserviceSnapshotRollbackAPI, urlValues)
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -545,7 +545,6 @@ func ResourceBasicService() *schema.Resource {
 		ReadContext:   resourceBasicServiceRead,
 		UpdateContext: resourceBasicServiceEdit,
 		DeleteContext: resourceBasicServiceDelete,
-		Exists:        resourceBasicServiceExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

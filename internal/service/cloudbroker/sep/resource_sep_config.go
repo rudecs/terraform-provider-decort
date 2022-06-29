@@ -49,7 +49,7 @@ func resourceSepConfigCreate(ctx context.Context, d *schema.ResourceData, m inte
 	log.Debugf("resourceSepConfigCreate: called for sep id %d", d.Get("sep_id").(int))
 
 	if _, ok := d.GetOk("sep_id"); ok {
-		if exists, err := resourceSepConfigExists(d, m); exists {
+		if exists, err := resourceSepConfigExists(ctx, d, m); exists {
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -71,7 +71,7 @@ func resourceSepConfigCreate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceSepConfigRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceSepConfigRead: called for sep id: %d", d.Get("sep_id").(int))
 
-	sepConfig, err := utilitySepConfigCheckPresence(d, m)
+	sepConfig, err := utilitySepConfigCheckPresence(ctx, d, m)
 	if sepConfig == nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -86,10 +86,10 @@ func resourceSepConfigDelete(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourceSepConfigExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceSepConfigExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	log.Debugf("resourceSepConfigExists: called for sep id: %d", d.Get("sep_id").(int))
 
-	sepDesConfig, err := utilitySepConfigCheckPresence(d, m)
+	sepDesConfig, err := utilitySepConfigCheckPresence(ctx, d, m)
 	if sepDesConfig == nil {
 		if err != nil {
 			return false, err
@@ -108,11 +108,11 @@ func resourceSepConfigEdit(ctx context.Context, d *schema.ResourceData, m interf
 	if d.HasChange("config") {
 		urlValues.Add("sep_id", strconv.Itoa(d.Get("sep_id").(int)))
 		urlValues.Add("config", d.Get("config").(string))
-		_, err := c.DecortAPICall("POST", sepConfigValidateAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", sepConfigValidateAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		_, err = c.DecortAPICall("POST", sepConfigInsertAPI, urlValues)
+		_, err = c.DecortAPICall(ctx, "POST", sepConfigInsertAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -128,7 +128,7 @@ func resourceSepConfigEdit(ctx context.Context, d *schema.ResourceData, m interf
 		urlValues.Add("field_value", field["field_value"].(string))
 		urlValues.Add("field_type", field["field_type"].(string))
 
-		_, err := c.DecortAPICall("POST", sepConfigFieldEditAPI, urlValues)
+		_, err := c.DecortAPICall(ctx, "POST", sepConfigFieldEditAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -186,7 +186,6 @@ func ResourceSepConfig() *schema.Resource {
 		ReadContext:   resourceSepConfigRead,
 		UpdateContext: resourceSepConfigEdit,
 		DeleteContext: resourceSepConfigDelete,
-		Exists:        resourceSepConfigExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

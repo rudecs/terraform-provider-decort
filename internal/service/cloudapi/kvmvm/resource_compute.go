@@ -112,7 +112,7 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
-	apiResp, err := c.DecortAPICall("POST", computeCreateAPI, urlValues)
+	apiResp, err := c.DecortAPICall(ctx, "POST", computeCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -124,40 +124,25 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	log.Debugf("resourceComputeCreate: new simple Compute ID %d, name %s created", compId, d.Get("name").(string))
 
 	// Configure data disks if any
-	extraDisksOk := true
 	argVal, argSet = d.GetOk("extra_disks")
 	if argSet && argVal.(*schema.Set).Len() > 0 {
 		// urlValues.Add("desc", argVal.(string))
 		log.Debugf("resourceComputeCreate: calling utilityComputeExtraDisksConfigure to attach %d extra disk(s)", argVal.(*schema.Set).Len())
-		err = utilityComputeExtraDisksConfigure(d, m, false) // do_delta=false, as we are working on a new compute
+		err = utilityComputeExtraDisksConfigure(ctx, d, m, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
 			log.Errorf("resourceComputeCreate: error when attaching extra disk(s) to a new Compute ID %d: %v", compId, err)
-			extraDisksOk = false
+			return diag.FromErr(err)
 		}
 	}
-	if extraDisksOk {
-		d.SetPartial("extra_disks")
-	}
-
 	// Configure external networks if any
-	netsOk := true
 	argVal, argSet = d.GetOk("network")
 	if argSet && argVal.(*schema.Set).Len() > 0 {
 		log.Debugf("resourceComputeCreate: calling utilityComputeNetworksConfigure to attach %d network(s)", argVal.(*schema.Set).Len())
-		err = utilityComputeNetworksConfigure(d, m, false) // do_delta=false, as we are working on a new compute
+		err = utilityComputeNetworksConfigure(ctx, d, m, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
 			log.Errorf("resourceComputeCreate: error when attaching networks to a new Compute ID %d: %s", compId, err)
-			netsOk = false
+			return diag.FromErr(err)
 		}
-	}
-	if netsOk {
-		// there were no errors reported when configuring networks
-		d.SetPartial("network")
-	}
-
-	if extraDisksOk && netsOk {
-		// if there were no errors in setting any of the subresources, we may leave Partial mode
-		d.Partial(false)
 	}
 
 	// Note bene: we created compute in a STOPPED state (this is required to properly attach 1st network interface),
@@ -166,7 +151,7 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		reqValues := &url.Values{}
 		reqValues.Add("computeId", fmt.Sprintf("%d", compId))
 		log.Debugf("resourceComputeCreate: starting Compute ID %d after completing its resource configuration", compId)
-		if _, err := c.DecortAPICall("POST", ComputeStartAPI, reqValues); err != nil {
+		if _, err := c.DecortAPICall(ctx, "POST", ComputeStartAPI, reqValues); err != nil {
 			return diag.FromErr(err)
 		}
 	}
@@ -184,7 +169,7 @@ func resourceComputeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	log.Debugf("resourceComputeRead: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
-	compFacts, err := utilityComputeCheckPresence(d, m)
+	compFacts, err := utilityComputeCheckPresence(ctx, d, m)
 	if compFacts == "" {
 		if err != nil {
 			return diag.FromErr(err)
@@ -222,8 +207,6 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	doUpdate := false
 	params.Add("computeId", d.Id())
 
-	d.Partial(true)
-
 	oldCpu, newCpu := d.GetChange("cpu")
 	if oldCpu.(int) != newCpu.(int) {
 		params.Add("cpu", fmt.Sprintf("%d", newCpu.(int)))
@@ -245,13 +228,10 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 			oldCpu.(int), newCpu.(int),
 			oldRam.(int), newRam.(int))
 		params.Add("force", "true")
-		_, err := c.DecortAPICall("POST", ComputeResizeAPI, params)
+		_, err := c.DecortAPICall(ctx, "POST", ComputeResizeAPI, params)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
-		d.SetPartial("cpu")
-		d.SetPartial("ram")
 	}
 
 	// 2. Resize (grow) Boot disk
@@ -262,23 +242,22 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		bdsParams.Add("size", fmt.Sprintf("%d", newSize.(int)))
 		log.Debugf("resourceComputeUpdate: compute ID %s, boot disk ID %d resize %d -> %d",
 			d.Id(), d.Get("boot_disk_id").(int), oldSize.(int), newSize.(int))
-		_, err := c.DecortAPICall("POST", DisksResizeAPI, bdsParams)
+		_, err := c.DecortAPICall(ctx, "POST", DisksResizeAPI, bdsParams)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		d.SetPartial("boot_disk_size")
 	} else if oldSize.(int) > newSize.(int) {
 		log.Warnf("resourceComputeUpdate: compute ID %s - shrinking boot disk is not allowed", d.Id())
 	}
 
 	// 3. Calculate and apply changes to data disks
-	err := utilityComputeExtraDisksConfigure(d, m, true) // pass do_delta = true to apply changes, if any
+	err := utilityComputeExtraDisksConfigure(ctx, d, m, true) // pass do_delta = true to apply changes, if any
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// 4. Calculate and apply changes to network connections
-	err = utilityComputeNetworksConfigure(d, m, true) // pass do_delta = true to apply changes, if any
+	err = utilityComputeNetworksConfigure(ctx, d, m, true) // pass do_delta = true to apply changes, if any
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -287,11 +266,11 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		params := &url.Values{}
 		params.Add("computeId", d.Id())
 		if d.Get("started").(bool) {
-			if _, err := c.DecortAPICall("POST", ComputeStartAPI, params); err != nil {
+			if _, err := c.DecortAPICall(ctx, "POST", ComputeStartAPI, params); err != nil {
 				return diag.FromErr(err)
 			}
 		} else {
-			if _, err := c.DecortAPICall("POST", ComputeStopAPI, params); err != nil {
+			if _, err := c.DecortAPICall(ctx, "POST", ComputeStopAPI, params); err != nil {
 				return diag.FromErr(err)
 			}
 		}
@@ -310,7 +289,7 @@ func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interf
 	log.Debugf("resourceComputeDelete: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
-	compFacts, err := utilityComputeCheckPresence(d, m)
+	compFacts, err := utilityComputeCheckPresence(ctx, d, m)
 	if compFacts == "" {
 		if err != nil {
 			return diag.FromErr(err)
@@ -340,7 +319,7 @@ func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interf
 			detachParams.Add("computeId", d.Id())
 			detachParams.Add("diskId", fmt.Sprintf("%d", diskFacts.ID))
 
-			_, err = c.DecortAPICall("POST", ComputeDiskDetachAPI, detachParams)
+			_, err = c.DecortAPICall(ctx, "POST", ComputeDiskDetachAPI, detachParams)
 			if err != nil {
 				// We do not fail compute deletion on data disk detach errors
 				log.Errorf("resourceComputeDelete: error when detaching Disk ID %d: %s", diskFacts.ID, err)
@@ -353,7 +332,7 @@ func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interf
 	params.Add("permanently", "1")
 	// TODO: this is for the upcoming API update - params.Add("detachdisks", "1")
 
-	_, err = c.DecortAPICall("POST", ComputeDeleteAPI, params)
+	_, err = c.DecortAPICall(ctx, "POST", ComputeDeleteAPI, params)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -361,12 +340,12 @@ func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func resourceComputeExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceComputeExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
 	log.Debugf("resourceComputeExist: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
-	compFacts, err := utilityComputeCheckPresence(d, m)
+	compFacts, err := utilityComputeCheckPresence(ctx, d, m)
 	if compFacts == "" {
 		if err != nil {
 			return false, err
@@ -384,7 +363,6 @@ func ResourceCompute() *schema.Resource {
 		ReadContext:   resourceComputeRead,
 		UpdateContext: resourceComputeUpdate,
 		DeleteContext: resourceComputeDelete,
-		Exists:        resourceComputeExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,

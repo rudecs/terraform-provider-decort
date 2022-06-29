@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceBasicServiceDeletedListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	basicServiceDeletedList, err := utilityBasicServiceDeletedListCheckPresence(d, m)
+	basicServiceDeletedList, err := utilityBasicServiceDeletedListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

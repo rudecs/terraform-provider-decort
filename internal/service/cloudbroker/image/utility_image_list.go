@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package image
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityImageListCheckPresence(d *schema.ResourceData, m interface{}) (ImageList, error) {
+func utilityImageListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (ImageList, error) {
 	imageList := ImageList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -62,7 +63,7 @@ func utilityImageListCheckPresence(d *schema.ResourceData, m interface{}) (Image
 	}
 
 	log.Debugf("utilityImageListCheckPresence: load image list")
-	imageListRaw, err := c.DecortAPICall("POST", imageListGetAPI, urlValues)
+	imageListRaw, err := c.DecortAPICall(ctx, "POST", imageListGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

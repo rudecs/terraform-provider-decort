@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceAccountConsumedUnitsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountConsumedUnits, err := utilityAccountConsumedUnitsCheckPresence(d, m)
+	accountConsumedUnits, err := utilityAccountConsumedUnitsCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

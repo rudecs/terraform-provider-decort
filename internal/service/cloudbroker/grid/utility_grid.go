@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package grid
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/url"
@@ -43,7 +44,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityGridCheckPresence(d *schema.ResourceData, m interface{}) (*Grid, error) {
+func utilityGridCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*Grid, error) {
 	grid := &Grid{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -55,7 +56,7 @@ func utilityGridCheckPresence(d *schema.ResourceData, m interface{}) (*Grid, err
 	}
 
 	log.Debugf("utilityGridCheckPresence: load grid")
-	gridRaw, err := c.DecortAPICall("POST", GridGetAPI, urlValues)
+	gridRaw, err := c.DecortAPICall(ctx, "POST", GridGetAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

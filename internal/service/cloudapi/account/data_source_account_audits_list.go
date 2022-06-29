@@ -57,7 +57,7 @@ func flattenAccountAuditsList(aal AccountAuditsList) []map[string]interface{} {
 }
 
 func dataSourceAccountAuditsListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountAuditsList, err := utilityAccountAuditsListCheckPresence(d, m)
+	accountAuditsList, err := utilityAccountAuditsListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

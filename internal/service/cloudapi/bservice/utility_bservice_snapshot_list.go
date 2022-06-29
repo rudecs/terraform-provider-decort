@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package bservice
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityBasicServiceSnapshotListCheckPresence(d *schema.ResourceData, m interface{}) (BasicServiceSnapshots, error) {
+func utilityBasicServiceSnapshotListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (BasicServiceSnapshots, error) {
 	basicServiceSnapshotList := BasicServiceSnapshots{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -52,7 +53,7 @@ func utilityBasicServiceSnapshotListCheckPresence(d *schema.ResourceData, m inte
 	}
 
 	log.Debugf("utilityBasicServiceSnapshotListCheckPresence")
-	basicServiceSnapshotListRaw, err := c.DecortAPICall("POST", bserviceSnapshotListAPI, urlValues)
+	basicServiceSnapshotListRaw, err := c.DecortAPICall(ctx, "POST", bserviceSnapshotListAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

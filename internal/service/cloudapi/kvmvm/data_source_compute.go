@@ -196,7 +196,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 }
 
 func dataSourceComputeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	compFacts, err := utilityComputeCheckPresence(d, m)
+	compFacts, err := utilityComputeCheckPresence(ctx, d, m)
 	if compFacts == "" {
 		// if empty string is returned from utilityComputeCheckPresence then there is no
 		// such Compute and err tells so - just return it to the calling party

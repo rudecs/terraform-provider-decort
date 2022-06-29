@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package extnet
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 	"strconv"
@@ -42,7 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityExtnetComputesListCheckPresence(d *schema.ResourceData, m interface{}) (ExtnetComputesList, error) {
+func utilityExtnetComputesListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (ExtnetComputesList, error) {
 	extnetComputesList := ExtnetComputesList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -50,7 +51,7 @@ func utilityExtnetComputesListCheckPresence(d *schema.ResourceData, m interface{
 	urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
 
 	log.Debugf("utilityExtnetComputesListCheckPresence")
-	extnetComputesListRaw, err := c.DecortAPICall("POST", extnetListComputesAPI, urlValues)
+	extnetComputesListRaw, err := c.DecortAPICall(ctx, "POST", extnetListComputesAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

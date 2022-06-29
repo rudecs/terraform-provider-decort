@@ -20,6 +20,7 @@ limitations under the License.
 package location
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -30,13 +31,13 @@ import (
 
 var DefaultGridID int
 
-func UtilityLocationGetDefaultGridID(m interface{}) (int, error) {
+func UtilityLocationGetDefaultGridID(ctx context.Context, m interface{}) (int, error) {
 	c := m.(*controller.ControllerCfg)
 
 	urlValues := &url.Values{}
 
 	log.Debug("utilityLocationGetDefaultGridID: retrieving locations list")
-	apiResp, err := c.DecortAPICall("POST", LocationsListAPI, urlValues)
+	apiResp, err := c.DecortAPICall(ctx, "POST", LocationsListAPI, urlValues)
 	if err != nil {
 		return 0, err
 	}

@@ -32,6 +32,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 package pcidevice
 
 import (
+	"context"
 	"encoding/json"
 	"net/url"
 
@@ -39,12 +40,12 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 )
 
-func utilityPcideviceListCheckPresence(_ *schema.ResourceData, m interface{}) (PcideviceList, error) {
+func utilityPcideviceListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (PcideviceList, error) {
 	pcideviceList := PcideviceList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
-	pcideviceListRaw, err := c.DecortAPICall("POST", pcideviceListAPI, urlValues)
+	pcideviceListRaw, err := c.DecortAPICall(ctx, "POST", pcideviceListAPI, urlValues)
 	if err != nil {
 		return nil, err
 	}

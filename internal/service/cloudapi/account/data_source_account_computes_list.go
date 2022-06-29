@@ -72,7 +72,7 @@ func flattenAccountComputesList(acl AccountComputesList) []map[string]interface{
 }
 
 func dataSourceAccountComputesListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountComputesList, err := utilityAccountComputesListCheckPresence(d, m)
+	accountComputesList, err := utilityAccountComputesListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

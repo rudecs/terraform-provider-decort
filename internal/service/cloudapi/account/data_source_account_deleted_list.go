@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceAccountDeletedListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountDeletedList, err := utilityAccountDeletedListCheckPresence(d, m)
+	accountDeletedList, err := utilityAccountDeletedListCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

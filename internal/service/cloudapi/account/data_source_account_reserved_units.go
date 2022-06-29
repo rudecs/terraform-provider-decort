@@ -41,7 +41,7 @@ import (
 )
 
 func dataSourceAccountReservedUnitsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	accountReservedUnits, err := utilityAccountReservedUnitsCheckPresence(d, m)
+	accountReservedUnits, err := utilityAccountReservedUnitsCheckPresence(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

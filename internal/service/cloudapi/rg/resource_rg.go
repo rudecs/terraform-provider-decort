@@ -125,7 +125,7 @@ func resourceResgroupCreate(ctx context.Context, d *schema.ResourceData, m inter
 		url_values.Add("extIp", ext_ip.(string))
 	}
 
-	api_resp, err := c.DecortAPICall("POST", ResgroupCreateAPI, url_values)
+	api_resp, err := c.DecortAPICall(ctx, "POST", ResgroupCreateAPI, url_values)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,7 +133,7 @@ func resourceResgroupCreate(ctx context.Context, d *schema.ResourceData, m inter
 	d.SetId(api_resp) // rg/create API returns ID of the newly creted resource group on success
 	// rg.ID, _ = strconv.Atoi(api_resp)
 	if !set_quota {
-		resp, err := utilityResgroupCheckPresence(d, m)
+		resp, err := utilityResgroupCheckPresence(ctx, d, m)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -154,7 +154,7 @@ func resourceResgroupRead(ctx context.Context, d *schema.ResourceData, m interfa
 	log.Debugf("resourceResgroupRead: called for RG name %s, account ID %d",
 		d.Get("name").(string), d.Get("account_id").(int))
 
-	rg_facts, err := utilityResgroupCheckPresence(d, m)
+	rg_facts, err := utilityResgroupCheckPresence(ctx, d, m)
 	if rg_facts == "" {
 		// if empty string is returned from utilityResgroupCheckPresence then there is no
 		// such resource group and err tells so - just return it to the calling party
@@ -255,7 +255,7 @@ func resourceResgroupUpdate(ctx context.Context, d *schema.ResourceData, m inter
 
 	if do_general_update {
 		log.Debugf("resourceResgroupUpdate: detected delta between new and old RG specs - updating the RG")
-		_, err := c.DecortAPICall("POST", ResgroupUpdateAPI, url_values)
+		_, err := c.DecortAPICall(ctx, "POST", ResgroupUpdateAPI, url_values)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -272,7 +272,7 @@ func resourceResgroupDelete(ctx context.Context, d *schema.ResourceData, m inter
 	log.Debugf("resourceResgroupDelete: called for RG name %s, account ID %d",
 		d.Get("name").(string), d.Get("account_id").(int))
 
-	rg_facts, err := utilityResgroupCheckPresence(d, m)
+	rg_facts, err := utilityResgroupCheckPresence(ctx, d, m)
 	if rg_facts == "" {
 		if err != nil {
 			return diag.FromErr(err)
@@ -289,7 +289,7 @@ func resourceResgroupDelete(ctx context.Context, d *schema.ResourceData, m inter
 	url_values.Add("reason", "Destroyed by DECORT Terraform provider")
 
 	c := m.(*controller.ControllerCfg)
-	_, err = c.DecortAPICall("POST", ResgroupDeleteAPI, url_values)
+	_, err = c.DecortAPICall(ctx, "POST", ResgroupDeleteAPI, url_values)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -297,9 +297,9 @@ func resourceResgroupDelete(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceResgroupExists(d *schema.ResourceData, m interface{}) (bool, error) {
+func resourceResgroupExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
 	// Reminder: according to Terraform rules, this function should NOT modify ResourceData argument
-	rg_facts, err := utilityResgroupCheckPresence(d, m)
+	rg_facts, err := utilityResgroupCheckPresence(ctx, d, m)
 	if rg_facts == "" {
 		if err != nil {
 			return false, err
@@ -317,7 +317,6 @@ func ResourceResgroup() *schema.Resource {
 		ReadContext:   resourceResgroupRead,
 		UpdateContext: resourceResgroupUpdate,
 		DeleteContext: resourceResgroupDelete,
-		Exists:        resourceResgroupExists,
 
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
