@@ -1,0 +1,211 @@
+/*
+Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Authors:
+Petr Krutov, <petr.krutov@digitalenergy.online>
+Stanislav Solovev, <spsolovev@digitalenergy.online>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/*
+Terraform DECORT provider - manage resources provided by DECORT (Digital Energy Cloud
+Orchestration Technology) with Terraform by Hashicorp.
+
+Source code: https://github.com/rudecs/terraform-provider-decort
+
+Please see README.md to learn where to place source code so that it
+builds seamlessly.
+
+Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
+*/
+
+package disks
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	// "net/url"
+
+	"github.com/rudecs/terraform-provider-decort/internal/constants"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+func flattenDisk(d *schema.ResourceData, disk_facts string) error {
+	// This function expects disk_facts string to contain a response from disks/get API
+	//
+	// NOTE: this function modifies ResourceData argument - as such it should never be called
+	// from resourceDiskExists(...) method. Use utilityDiskCheckPresence instead.
+
+	log.Debugf("flattenDisk: ready to unmarshal string %s", disk_facts)
+
+	model := DiskRecord{}
+
+	err := json.Unmarshal([]byte(disk_facts), &model)
+	if err != nil {
+		return err
+	}
+
+	log.Debugf("flattenDisk: disk ID %d, disk AccountID %d", model.ID, model.AccountID)
+
+	d.SetId(fmt.Sprintf("%d", model.ID))
+	// d.Set("disk_id", model.ID) - we should NOT update disk_id in the schema. If it was set - it is already set, if it wasn't - we shouldn't
+	d.Set("name", model.Name)
+	d.Set("account_id", model.AccountID)
+	d.Set("account_name", model.AccountName)
+	d.Set("size", model.SizeMax)
+	// d.Set("sizeUsed", model.SizeUsed)
+	d.Set("type", model.Type)
+	d.Set("image_id", model.ImageID)
+	d.Set("sep_id", model.SepID)
+	d.Set("sep_type", model.SepType)
+	d.Set("pool", model.Pool)
+	// d.Set("compute_id", model.ComputeID)
+
+	d.Set("description", model.Desc)
+
+	return nil
+}
+
+func dataSourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	disk_facts, err := utilityDiskCheckPresence(d, m)
+	if disk_facts == "" {
+		// if empty string is returned from utilityDiskCheckPresence then there is no
+		// such Disk and err tells so - just return it to the calling party
+		d.SetId("") // ensure ID is empty
+		return diag.FromErr(err)
+	}
+
+	return diag.FromErr(flattenDisk(d, disk_facts))
+}
+
+func dataSourceDiskSchemaMake() map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
+		"name": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Name of this disk. NOTE: disk names are NOT unique within an account. If disk ID is specified, disk name is ignored.",
+		},
+
+		"disk_id": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "ID of the disk to get. If disk ID is specified, then disk name and account ID are ignored.",
+		},
+
+		"account_id": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "ID of the account this disk belongs to. If disk ID is specified, then account ID is ignored.",
+		},
+
+		// The rest of the data source Disk schema are all computed
+		"sep_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Storage end-point provider serving this disk.",
+		},
+
+		"pool": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Pool where this disk is located.",
+		},
+
+		"size": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Size of the disk in GB.",
+		},
+
+		"type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Type of this disk. E.g. D for data disks, B for boot.",
+		},
+
+		"description": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "User-defined text description of this disk.",
+		},
+
+		"account_name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the account this disk belongs to. If account ID is specified, account name is ignored.",
+		},
+
+		"image_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of the image, which this disk was cloned from (valid for disk clones only).",
+		},
+
+		"sep_type": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Type of the storage end-point provider serving this disk.",
+		},
+
+		/*
+				"snapshots": {
+					Type:        schema.TypeList,
+					Computed:    true,
+					Elem:          &schema.Resource {
+						Schema:    snapshotSubresourceSchemaMake(),
+					},
+					Description: "List of user-created snapshots for this disk."
+				},
+
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Current model status of this disk.",
+			},
+
+			"tech_status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Current technical status of this disk.",
+			},
+
+			"compute_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "ID of the compute instance where this disk is attached to, or 0 for unattached disk.",
+			},
+		*/
+	}
+
+	return rets
+}
+
+func DataSourceDisk() *schema.Resource {
+	return &schema.Resource{
+		SchemaVersion: 1,
+
+		ReadContext: dataSourceDiskRead,
+
+		Timeouts: &schema.ResourceTimeout{
+			Read:    &constants.Timeout30s,
+			Default: &constants.Timeout60s,
+		},
+
+		Schema: dataSourceDiskSchemaMake(),
+	}
+}

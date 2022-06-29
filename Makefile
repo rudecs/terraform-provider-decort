@@ -4,6 +4,7 @@ NAMESPACE=decort
 NAME=terraform-provider-decort
 #BINARY=terraform-provider-${NAME}
 BINARY=${NAME}.exe
+MAINPATH = ./cmd/decort/
 VERSION=0.2
 #OS_ARCH=darwin_amd64
 OS_ARCH=windows_amd64
@@ -11,8 +12,7 @@ OS_ARCH=windows_amd64
 default: install
 
 build:
-	go build -o ${BINARY}
-
+	go build -o ${BINARY} ${MAINPATH}
 release:
 	GOOS=darwin GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
 	GOOS=freebsd GOARCH=386 go build -o ./bin/${BINARY}_${VERSION}_freebsd_386
