@@ -26,6 +26,7 @@ package decort
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	// "net/url"
@@ -96,6 +97,16 @@ func parseBootDiskId(disks []DiskRecord) uint {
 	return 0
 }
 
+func findBootDisk(disks []DiskRecord) (*DiskRecord, error) {
+	for _, d := range disks {
+		if d.Type == "B" {
+			return &d, nil
+		}
+	}
+
+	return nil, errors.New("boot disk not found")
+}
+
 // Parse the list of interfaces from compute/get response into a list of networks
 // attached to this compute
 func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
@@ -148,8 +159,6 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("cpu", model.Cpu)
 	d.Set("ram", model.Ram)
 	// d.Set("boot_disk_size", model.BootDiskSize) - bootdiskSize key in API compute/get is always zero, so we set boot_disk_size in another way
-	d.Set("boot_disk_size", parseBootDiskSize(model.Disks))
-	d.Set("boot_disk_id", parseBootDiskId(model.Disks)) // we may need boot disk ID in resize operations
 	d.Set("image_id", model.ImageID)
 	d.Set("description", model.Desc)
 	d.Set("cloud_init", "applied") // NOTE: for existing compute we hard-code this value as an indicator for DiffSuppress fucntion
@@ -161,6 +170,16 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	} else {
 		d.Set("started", false)
 	}
+
+	bootDisk, err := findBootDisk(model.Disks)
+	if err != nil {
+		return err
+	}
+
+	d.Set("boot_disk_size", bootDisk.SizeMax)
+	d.Set("boot_disk_id", bootDisk.ID) // we may need boot disk ID in resize operations
+	d.Set("sep_id", bootDisk.SepID)
+	d.Set("pool", bootDisk.Pool)
 
 	if len(model.Disks) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeDisksToExtraDisks for %d disks", len(model.Disks))
