@@ -242,7 +242,6 @@ func dataSourceRgListSchemaMake() map[string]*schema.Schema {
 					"resource_limits": {
 						Type:     schema.TypeList,
 						Computed: true,
-						MaxItems: 1,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"cu_c": {

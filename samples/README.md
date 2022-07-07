@@ -42,6 +42,8 @@
   - extnet
   - extnet_computes_list
   - vins_list
+  - locations_list
+  - location_url
 - resources:
   - image
   - virtual_image

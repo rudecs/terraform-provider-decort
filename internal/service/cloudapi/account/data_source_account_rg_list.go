@@ -113,7 +113,6 @@ func dataSourceAccountRGListSchemaMake() map[string]*schema.Schema {
 				Schema: map[string]*schema.Schema{
 					"computes": {
 						Type:     schema.TypeList,
-						MaxItems: 1,
 						Computed: true,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
@@ -131,13 +130,11 @@ func dataSourceAccountRGListSchemaMake() map[string]*schema.Schema {
 					"resources": {
 						Type:     schema.TypeList,
 						Computed: true,
-						MaxItems: 1,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"consumed": {
 									Type:     schema.TypeList,
 									Computed: true,
-									MaxItems: 1,
 									Elem: &schema.Resource{
 										Schema: map[string]*schema.Schema{
 											"cpu": {
@@ -171,7 +168,6 @@ func dataSourceAccountRGListSchemaMake() map[string]*schema.Schema {
 								"limits": {
 									Type:     schema.TypeList,
 									Computed: true,
-									MaxItems: 1,
 									Elem: &schema.Resource{
 										Schema: map[string]*schema.Schema{
 											"cpu": {
@@ -204,7 +200,6 @@ func dataSourceAccountRGListSchemaMake() map[string]*schema.Schema {
 								"reserved": {
 									Type:     schema.TypeList,
 									Computed: true,
-									MaxItems: 1,
 									Elem: &schema.Resource{
 										Schema: map[string]*schema.Schema{
 											"cpu": {

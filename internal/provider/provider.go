@@ -21,7 +21,6 @@ package provider
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -29,6 +28,7 @@ import (
 
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 	"github.com/rudecs/terraform-provider-decort/internal/location"
+	"github.com/rudecs/terraform-provider-decort/internal/statefuncs"
 )
 
 func Provider() *schema.Provider {
@@ -37,7 +37,7 @@ func Provider() *schema.Provider {
 			"authenticator": {
 				Type:         schema.TypeString,
 				Required:     true,
-				StateFunc:    StateFuncToLower,
+				StateFunc:    statefuncs.StateFuncToLower,
 				ValidateFunc: validation.StringInSlice([]string{"oauth2", "legacy", "jwt"}, true), // ignore case while validating
 				Description:  "Authentication mode to use when connecting to DECORT cloud API. Should be one of 'oauth2', 'legacy' or 'jwt'.",
 			},
@@ -45,7 +45,7 @@ func Provider() *schema.Provider {
 			"oauth2_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				StateFunc:   StateFuncToLower,
+				StateFunc:   statefuncs.StateFuncToLower,
 				DefaultFunc: schema.EnvDefaultFunc("DECORT_OAUTH2_URL", nil),
 				Description: "OAuth2 application URL in 'oauth2' authentication mode.",
 			},
@@ -54,7 +54,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				StateFunc:   StateFuncToLower,
+				StateFunc:   statefuncs.StateFuncToLower,
 				Description: "URL of DECORT Cloud controller to use. API calls will be directed to this URL.",
 			},
 
@@ -107,14 +107,6 @@ func Provider() *schema.Provider {
 
 		ConfigureFunc: providerConfigure,
 	}
-}
-
-func StateFuncToLower(argval interface{}) string {
-	return strings.ToLower(argval.(string))
-}
-
-func StateFuncToUpper(argval interface{}) string {
-	return strings.ToUpper(argval.(string))
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {

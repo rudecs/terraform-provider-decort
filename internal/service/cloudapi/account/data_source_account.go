@@ -168,13 +168,11 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 		"resources": {
 			Type:     schema.TypeList,
 			Computed: true,
-			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"current": {
 						Type:     schema.TypeList,
 						Computed: true,
-						MaxItems: 1,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"cpu": {
@@ -207,7 +205,6 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 					"reserved": {
 						Type:     schema.TypeList,
 						Computed: true,
-						MaxItems: 1,
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"cpu": {
@@ -330,7 +327,6 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 		"resource_limits": {
 			Type:     schema.TypeList,
 			Computed: true,
-			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"cu_c": {
@@ -390,7 +386,6 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 		"computes": {
 			Type:     schema.TypeList,
 			Computed: true,
-			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"started": {
@@ -407,7 +402,6 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 		"machines": {
 			Type:     schema.TypeList,
 			Computed: true,
-			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"halted": {
