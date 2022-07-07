@@ -40,7 +40,7 @@ import (
 
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
-	"github.com/rudecs/terraform-provider-decort/internal/provider"
+	"github.com/rudecs/terraform-provider-decort/internal/statefuncs"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -394,7 +394,7 @@ func ResourceCompute() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				StateFunc:    provider.StateFuncToUpper,
+				StateFunc:    statefuncs.StateFuncToUpper,
 				ValidateFunc: validation.StringInSlice([]string{"KVM_X86", "KVM_PPC"}, false), // observe case while validating
 				Description:  "Hardware architecture of this compute instance.",
 			},

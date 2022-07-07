@@ -156,7 +156,6 @@ func dataSourceExtnetSchemaMake() map[string]*schema.Schema {
 		},
 		"default_qos": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
@@ -302,7 +301,6 @@ func dataSourceExtnetSchemaMake() map[string]*schema.Schema {
 		},
 		"vnfs": {
 			Type:     schema.TypeList,
-			MaxItems: 1,
 			Computed: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{

@@ -207,7 +207,7 @@ func dataSourceComputeRead(ctx context.Context, d *schema.ResourceData, m interf
 	return diag.FromErr(flattenCompute(d, compFacts))
 }
 
-func dataSourceCompute() *schema.Resource {
+func DataSourceCompute() *schema.Resource {
 	return &schema.Resource{
 		SchemaVersion: 1,
 
@@ -302,7 +302,6 @@ func dataSourceCompute() *schema.Resource {
 			"extra_disks": {
 				Type:     schema.TypeSet,
 				Computed: true,
-				MaxItems: constants.MaxExtraDisksPerCompute,
 				Elem: &schema.Schema{
 					Type: schema.TypeInt,
 				},

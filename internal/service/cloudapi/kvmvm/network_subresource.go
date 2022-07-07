@@ -35,7 +35,7 @@ import (
 	"bytes"
 	"hash/fnv"
 
-	"github.com/rudecs/terraform-provider-decort/internal/provider"
+	"github.com/rudecs/terraform-provider-decort/internal/statefuncs"
 	log "github.com/sirupsen/logrus"
 
 	"sort"
@@ -125,7 +125,7 @@ func networkSubresourceSchemaMake() map[string]*schema.Schema {
 		"net_type": {
 			Type:         schema.TypeString,
 			Required:     true,
-			StateFunc:    provider.StateFuncToUpper,
+			StateFunc:    statefuncs.StateFuncToUpper,
 			ValidateFunc: validation.StringInSlice([]string{"EXTNET", "VINS"}, false), // observe case while validating
 			Description:  "Type of the network for this connection, either EXTNET or VINS.",
 		},

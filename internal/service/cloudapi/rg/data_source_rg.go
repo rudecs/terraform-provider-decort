@@ -147,7 +147,6 @@ func DataSourceResgroup() *schema.Resource {
 			"quota": {
 				Type:     schema.TypeList,
 				Computed: true,
-				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: quotaRgSubresourceSchemaMake(), // this is a dictionary
 				},
