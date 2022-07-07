@@ -75,6 +75,13 @@ func resourceComputeCreate(d *schema.ResourceData, m interface{}) error {
 		urlValues.Add("desc", argVal.(string))
 	}
 
+	if sepID, ok := d.GetOk("sep_id"); ok {
+		urlValues.Add("sepId", strconv.Itoa(sepID.(int)))
+	}
+
+	if pool, ok := d.GetOk("pool"); ok {
+		urlValues.Add("pool", pool.(string))
+	}
 	/*
 		sshKeysVal, sshKeysSet := d.GetOk("ssh_keys")
 		if sshKeysSet {
@@ -454,6 +461,22 @@ func resourceCompute() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "This compute instance boot disk size in GB. Make sure it is large enough to accomodate selected OS image.",
+			},
+
+			"sep_id": {
+				Type: schema.TypeInt,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+				Description: "ID of SEP to create bootDisk on. Uses image's sepId if not set.",
+			},
+
+			"pool": {
+				Type: schema.TypeString,
+				Optional: true,
+				Computed: true,
+				ForceNew: true,
+				Description: "Pool to use if sepId is set, can be also empty if needed to be chosen by system.",
 			},
 
 			"extra_disks": {
