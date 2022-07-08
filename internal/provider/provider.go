@@ -101,9 +101,9 @@ func Provider() *schema.Provider {
 			},
 		},
 
-		ResourcesMap: NewRersourcesMap(),
+		ResourcesMap: selectSchema(false),
 
-		DataSourcesMap: NewDataSourcesMap(),
+		DataSourcesMap: selectSchema(true),
 
 		ConfigureFunc: providerConfigure,
 	}

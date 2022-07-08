@@ -5,7 +5,7 @@ NAME=terraform-provider-decort
 #BINARY=terraform-provider-${NAME}
 BINARY=${NAME}.exe
 MAINPATH = ./cmd/decort/
-VERSION=0.2
+VERSION=1.1
 #OS_ARCH=darwin_amd64
 OS_ARCH=windows_amd64
 
