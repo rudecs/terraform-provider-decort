@@ -143,7 +143,7 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 	return result
 }
 
-func flattenCompute(d *schema.ResourceData, compFacts string) diag.Diagnostics {
+func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	// This function expects that compFacts string contains response from API compute/get,
 	// i.e. detailed information about compute instance.
 	//
@@ -153,7 +153,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) diag.Diagnostics {
 	log.Debugf("flattenCompute: ready to unmarshal string %s", compFacts)
 	err := json.Unmarshal([]byte(compFacts), &model)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 
 	log.Debugf("flattenCompute: ID %d, RG ID %d", model.ID, model.RgID)
@@ -183,7 +183,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) diag.Diagnostics {
 
 	bootDisk, err := findBootDisk(model.Disks)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
 
 	d.Set("boot_disk_size", bootDisk.SizeMax)
@@ -194,21 +194,21 @@ func flattenCompute(d *schema.ResourceData, compFacts string) diag.Diagnostics {
 	if len(model.Disks) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeDisksToExtraDisks for %d disks", len(model.Disks))
 		if err = d.Set("extra_disks", parseComputeDisksToExtraDisks(model.Disks)); err != nil {
-			return diag.FromErr(err)
+			return err
 		}
 	}
 
 	if len(model.Interfaces) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeInterfacesToNetworks for %d interfaces", len(model.Interfaces))
 		if err = d.Set("network", parseComputeInterfacesToNetworks(model.Interfaces)); err != nil {
-			return diag.FromErr(err)
+			return err
 		}
 	}
 
 	if len(model.OsUsers) > 0 {
 		log.Debugf("flattenCompute: calling parseOsUsers for %d logins", len(model.OsUsers))
 		if err = d.Set("os_users", parseOsUsers(model.OsUsers)); err != nil {
-			return diag.FromErr(err)
+			return err
 		}
 	}
 
@@ -224,7 +224,11 @@ func dataSourceComputeRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	return flattenCompute(d, compFacts)
+	if err = flattenCompute(d, compFacts); err != nil {
+		return diag.FromErr(err)
+	}
+
+	return nil
 }
 
 func DataSourceCompute() *schema.Resource {

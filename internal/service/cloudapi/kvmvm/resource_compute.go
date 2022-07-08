@@ -186,8 +186,8 @@ func resourceComputeRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return nil
 	}
 
-	if diagnostic := flattenCompute(d, compFacts); diagnostic != nil {
-		return diagnostic
+	if err = flattenCompute(d, compFacts); err != nil {
+		return diag.FromErr(err)
 	}
 
 	log.Debugf("resourceComputeRead: after flattenCompute: Compute ID %s, name %q, RG ID %d",
