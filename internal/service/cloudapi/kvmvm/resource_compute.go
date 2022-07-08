@@ -85,6 +85,14 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		urlValues.Add("desc", argVal.(string))
 	}
 
+	if sepID, ok := d.GetOk("sep_id"); ok {
+		urlValues.Add("sepId", strconv.Itoa(sepID.(int)))
+	}
+
+	if pool, ok := d.GetOk("pool"); ok {
+		urlValues.Add("pool", pool.(string))
+	}
+
 	/*
 		sshKeysVal, sshKeysSet := d.GetOk("ssh_keys")
 		if sshKeysSet {
@@ -178,8 +186,8 @@ func resourceComputeRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return nil
 	}
 
-	if err = flattenCompute(d, compFacts); err != nil {
-		return diag.FromErr(err)
+	if diagnostic := flattenCompute(d, compFacts); diagnostic != nil {
+		return diagnostic
 	}
 
 	log.Debugf("resourceComputeRead: after flattenCompute: Compute ID %s, name %q, RG ID %d",
@@ -425,6 +433,22 @@ func ResourceCompute() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "This compute instance boot disk size in GB. Make sure it is large enough to accomodate selected OS image.",
+			},
+
+			"sep_id": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "ID of SEP to create bootDisk on. Uses image's sepId if not set.",
+			},
+
+			"pool": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "Pool to use if sepId is set, can be also empty if needed to be chosen by system.",
 			},
 
 			"extra_disks": {

@@ -34,6 +34,7 @@ package kvmvm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	// "net/url"
@@ -43,6 +44,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 // Parse list of all disks from API compute/get into a list of "extra disks" attached to this compute
@@ -105,6 +107,16 @@ func parseBootDiskId(disks []DiskRecord) uint {
 	return 0
 }
 
+func findBootDisk(disks []DiskRecord) (*DiskRecord, error) {
+	for _, d := range disks {
+		if d.Type == "B" {
+			return &d, nil
+		}
+	}
+
+	return nil, errors.New("boot disk not found")
+}
+
 // Parse the list of interfaces from compute/get response into a list of networks
 // attached to this compute
 func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
@@ -131,7 +143,7 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 	return result
 }
 
-func flattenCompute(d *schema.ResourceData, compFacts string) error {
+func flattenCompute(d *schema.ResourceData, compFacts string) diag.Diagnostics {
 	// This function expects that compFacts string contains response from API compute/get,
 	// i.e. detailed information about compute instance.
 	//
@@ -141,7 +153,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	log.Debugf("flattenCompute: ready to unmarshal string %s", compFacts)
 	err := json.Unmarshal([]byte(compFacts), &model)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	log.Debugf("flattenCompute: ID %d, RG ID %d", model.ID, model.RgID)
@@ -157,8 +169,6 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("cpu", model.Cpu)
 	d.Set("ram", model.Ram)
 	// d.Set("boot_disk_size", model.BootDiskSize) - bootdiskSize key in API compute/get is always zero, so we set boot_disk_size in another way
-	d.Set("boot_disk_size", parseBootDiskSize(model.Disks))
-	d.Set("boot_disk_id", parseBootDiskId(model.Disks)) // we may need boot disk ID in resize operations
 	d.Set("image_id", model.ImageID)
 	d.Set("description", model.Desc)
 	d.Set("cloud_init", "applied") // NOTE: for existing compute we hard-code this value as an indicator for DiffSuppress fucntion
@@ -171,24 +181,34 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 		d.Set("started", false)
 	}
 
+	bootDisk, err := findBootDisk(model.Disks)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.Set("boot_disk_size", bootDisk.SizeMax)
+	d.Set("boot_disk_id", bootDisk.ID) // we may need boot disk ID in resize operations
+	d.Set("sep_id", bootDisk.SepID)
+	d.Set("pool", bootDisk.Pool)
+
 	if len(model.Disks) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeDisksToExtraDisks for %d disks", len(model.Disks))
 		if err = d.Set("extra_disks", parseComputeDisksToExtraDisks(model.Disks)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	if len(model.Interfaces) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeInterfacesToNetworks for %d interfaces", len(model.Interfaces))
 		if err = d.Set("network", parseComputeInterfacesToNetworks(model.Interfaces)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
 	if len(model.OsUsers) > 0 {
 		log.Debugf("flattenCompute: calling parseOsUsers for %d logins", len(model.OsUsers))
 		if err = d.Set("os_users", parseOsUsers(model.OsUsers)); err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
@@ -204,7 +224,7 @@ func dataSourceComputeRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(flattenCompute(d, compFacts))
+	return flattenCompute(d, compFacts)
 }
 
 func DataSourceCompute() *schema.Resource {
