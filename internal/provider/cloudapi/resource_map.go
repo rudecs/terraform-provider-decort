@@ -24,6 +24,7 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/account"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/bservice"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/disks"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/image"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/k8s"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/kvmvm"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/pfw"
@@ -45,5 +46,7 @@ func NewRersourcesMap() map[string]*schema.Resource {
 		"decort_account":        account.ResourceAccount(),
 		"decort_bservice":       bservice.ResourceBasicService(),
 		"decort_bservice_group": bservice.ResourceBasicServiceGroup(),
+		"decort_image":          image.ResourceImage(),
+		"decort_image_virtual":  image.ResourceImageVirtual(),
 	}
 }

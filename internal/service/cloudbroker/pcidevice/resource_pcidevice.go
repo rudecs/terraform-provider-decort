@@ -47,22 +47,6 @@ import (
 func resourcePcideviceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourcePcideviceCreate: called for pcidevice %s", d.Get("name").(string))
 
-	if deviceId, ok := d.GetOk("device_id"); ok {
-		if exists, err := resourcePcideviceExists(ctx, d, m); exists {
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			d.SetId(strconv.Itoa(deviceId.(int)))
-			diagnostics := resourcePcideviceRead(ctx, d, m)
-			if diagnostics != nil {
-				return diagnostics
-			}
-
-			return nil
-		}
-		return diag.Errorf("provided device id does not exist")
-	}
-
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("name", d.Get("name").(string))

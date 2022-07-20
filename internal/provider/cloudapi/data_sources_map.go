@@ -25,6 +25,7 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/bservice"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/disks"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/extnet"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/image"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/kvmvm"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/locations"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/rg"
@@ -41,6 +42,7 @@ func NewDataSourcesMap() map[string]*schema.Resource {
 		"decort_vins":                           vins.DataSourceVins(),
 		"decort_snapshot_list":                  snapshot.DataSourceSnapshotList(),
 		"decort_vgpu":                           vgpu.DataSourceVGPU(),
+		"decort_disk":                           disks.DataSourceDisk(),
 		"decort_disk_list":                      disks.DataSourceDiskList(),
 		"decort_rg_list":                        rg.DataSourceRgList(),
 		"decort_account_list":                   account.DataSourceAccountList(),
@@ -67,6 +69,8 @@ func NewDataSourcesMap() map[string]*schema.Resource {
 		"decort_vins_list":                      vins.DataSourceVinsList(),
 		"decort_locations_list":                 locations.DataSourceLocationsList(),
 		"decort_location_url":                   locations.DataSourceLocationUrl(),
+		"decort_image_list":                     image.DataSourceImageList(),
+		"decort_image":                          image.DataSourceImage(),
 		// "decort_pfw": dataSourcePfw(),
 	}
 

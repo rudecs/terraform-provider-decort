@@ -38,7 +38,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
@@ -49,22 +48,6 @@ import (
 
 func resourceSepCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceSepCreate: called for sep %s", d.Get("name").(string))
-
-	if sepId, ok := d.GetOk("sep_id"); ok {
-		if exists, err := resourceSepExists(ctx, d, m); exists {
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			d.SetId(strconv.Itoa(sepId.(int)))
-			diagnostics := resourceSepRead(ctx, d, m)
-			if diagnostics != nil {
-				return diagnostics
-			}
-
-			return nil
-		}
-		return diag.Errorf("provided sep id does not exist")
-	}
 
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -114,7 +97,6 @@ func resourceSepCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	id := uuid.New()
 	d.SetId(sepId)
 	d.Set("sep_id", sepId)
 
@@ -122,8 +104,6 @@ func resourceSepCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	if diagnostics != nil {
 		return diagnostics
 	}
-
-	d.SetId(id.String())
 
 	return nil
 }

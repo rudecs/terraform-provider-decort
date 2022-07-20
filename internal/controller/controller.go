@@ -362,6 +362,9 @@ func (config *ControllerCfg) DecortAPICall(ctx context.Context, method string, a
 	if err != nil {
 		return "", err
 	}
+
+	req = req.WithContext(ctx)
+
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Content-Length", strconv.Itoa(len(params_str)))
 	req.Header.Set("Accept", "application/json")
