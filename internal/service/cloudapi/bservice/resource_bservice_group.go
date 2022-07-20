@@ -37,7 +37,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -48,26 +47,6 @@ import (
 
 func resourceBasicServiceGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceBasicServiceGroupCreate")
-
-	if compgroupId, ok := d.GetOk("compgroup_id"); ok {
-		if _, ok := d.GetOk("service_id"); ok {
-			if exists, err := resourceBasicServiceGroupExists(ctx, d, m); exists {
-				if err != nil {
-					return diag.FromErr(err)
-				}
-				id := uuid.New()
-				d.SetId(strconv.Itoa(compgroupId.(int)))
-				d.Set("compgroup_id", strconv.Itoa(compgroupId.(int)))
-				diagnostics := resourceBasicServiceGroupRead(ctx, d, m)
-				if diagnostics != nil {
-					return diagnostics
-				}
-				d.SetId(id.String())
-				return nil
-			}
-			return diag.Errorf("provided compgroup id does not exist")
-		}
-	}
 
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -124,7 +103,6 @@ func resourceBasicServiceGroupCreate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	id := uuid.New()
 	d.SetId(compgroupId)
 	d.Set("compgroup_id", compgroupId)
 
@@ -132,8 +110,6 @@ func resourceBasicServiceGroupCreate(ctx context.Context, d *schema.ResourceData
 	if diagnostics != nil {
 		return diagnostics
 	}
-
-	d.SetId(id.String())
 
 	return nil
 }

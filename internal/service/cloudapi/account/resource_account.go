@@ -37,7 +37,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
@@ -48,22 +47,6 @@ import (
 
 func resourceAccountCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceAccountCreate")
-
-	if accountId, ok := d.GetOk("account_id"); ok {
-		if exists, err := resourceAccountExists(ctx, d, m); exists {
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			d.SetId(strconv.Itoa(accountId.(int)))
-			diagnostics := resourceAccountRead(ctx, d, m)
-			if diagnostics != nil {
-				return diagnostics
-			}
-
-			return nil
-		}
-		return diag.Errorf("provided account id does not exist")
-	}
 
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -138,7 +121,6 @@ func resourceAccountCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	id := uuid.New()
 	d.SetId(accountId)
 	d.Set("account_id", accountId)
 
@@ -147,7 +129,42 @@ func resourceAccountCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diagnostics
 	}
 
-	d.SetId(id.String())
+	urlValues = &url.Values{}
+
+	if enable, ok := d.GetOk("enable"); ok {
+		api := accountDisableAPI
+		enable := enable.(bool)
+		if enable {
+			api = accountEnableAPI
+		}
+		urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
+
+		_, err := c.DecortAPICall(ctx, "POST", api, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		urlValues = &url.Values{}
+	}
+
+	if users, ok := d.GetOk("users"); ok {
+		addedUsers := users.([]interface{})
+
+		if len(addedUsers) > 0 {
+			for _, user := range addedUsers {
+				userConv := user.(map[string]interface{})
+				urlValues.Add("accountId", strconv.Itoa(d.Get("account_id").(int)))
+				urlValues.Add("userId", userConv["user_id"].(string))
+				urlValues.Add("accesstype", strings.ToUpper(userConv["access_type"].(string)))
+				_, err := c.DecortAPICall(ctx, "POST", accountAddUserAPI, urlValues)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				urlValues = &url.Values{}
+			}
+		}
+	}
 
 	return nil
 }

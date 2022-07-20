@@ -36,7 +36,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
@@ -46,24 +45,6 @@ import (
 
 func resourceBasicServiceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceBasicServiceCreate")
-
-	if serviceId, ok := d.GetOk("service_id"); ok {
-		if exists, err := resourceBasicServiceExists(ctx, d, m); exists {
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			id := uuid.New()
-			d.SetId(strconv.Itoa(serviceId.(int)))
-			d.Set("service_id", strconv.Itoa(serviceId.(int)))
-			diagnostics := resourceBasicServiceRead(ctx, d, m)
-			if diagnostics != nil {
-				return diagnostics
-			}
-			d.SetId(id.String())
-			return nil
-		}
-		return diag.Errorf("provided service id does not exist")
-	}
 
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
@@ -83,7 +64,6 @@ func resourceBasicServiceCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
-	id := uuid.New()
 	d.SetId(serviceId)
 	d.Set("service_id", serviceId)
 
@@ -91,8 +71,6 @@ func resourceBasicServiceCreate(ctx context.Context, d *schema.ResourceData, m i
 	if diagnostics != nil {
 		return diagnostics
 	}
-
-	d.SetId(id.String())
 
 	return nil
 }

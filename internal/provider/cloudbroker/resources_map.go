@@ -21,13 +21,23 @@ package cloudbroker
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/account"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/disks"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/image"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/k8s"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/kvmvm"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/pcidevice"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/pfw"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/rg"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/sep"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/snapshot"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/vins"
 )
 
 func NewRersourcesMap() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
+		"decort_account":       account.ResourceAccount(),
+		"decort_disk":          disks.ResourceDisk(),
 		"decort_image":         image.ResourceImage(),
 		"decort_virtual_image": image.ResourceVirtualImage(),
 		"decort_cdrom_image":   image.ResourceCDROMImage(),
@@ -35,5 +45,12 @@ func NewRersourcesMap() map[string]*schema.Resource {
 		"decort_pcidevice":     pcidevice.ResourcePcidevice(),
 		"decort_sep":           sep.ResourceSep(),
 		"decort_sep_config":    sep.ResourceSepConfig(),
+		"decort_resgroup":      rg.ResourceResgroup(),
+		"decort_kvmvm":         kvmvm.ResourceCompute(),
+		"decort_vins":          vins.ResourceVins(),
+		"decort_pfw":           pfw.ResourcePfw(),
+		"decort_k8s":           k8s.ResourceK8s(),
+		"decort_k8s_wg":        k8s.ResourceK8sWg(),
+		"decort_snapshot":      snapshot.ResourceSnapshot(),
 	}
 }

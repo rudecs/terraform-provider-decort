@@ -21,7 +21,8 @@ package cloudbroker
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/disks"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/account"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/disks"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/grid"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/image"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/pcidevice"
@@ -30,20 +31,30 @@ import (
 
 func NewDataSourcesMap() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"decort_image":             image.DataSourceImage(),
-		"decort_disk":              disks.DataSourceDisk(),
-		"decort_grid":              grid.DataSourceGrid(),
-		"decort_grid_list":         grid.DataSourceGridList(),
-		"decort_image_list":        image.DataSourceImageList(),
-		"decort_image_list_stacks": image.DataSourceImageListStacks(),
-		"decort_pcidevice":         pcidevice.DataSourcePcidevice(),
-		"decort_pcidevice_list":    pcidevice.DataSourcePcideviceList(),
-		"decort_sep_list":          sep.DataSourceSepList(),
-		"decort_sep":               sep.DataSourceSep(),
-		"decort_sep_consumption":   sep.DataSourceSepConsumption(),
-		"decort_sep_disk_list":     sep.DataSourceSepDiskList(),
-		"decort_sep_config":        sep.DataSourceSepConfig(),
-		"decort_sep_pool":          sep.DataSourceSepPool(),
+		"decort_account":                 account.DataSourceAccount(),
+		"decort_account_list":            account.DataSourceAccountList(),
+		"decort_account_computes_list":   account.DataSourceAccountComputesList(),
+		"decort_account_deleted_list":    account.DataSourceAccountDeletedList(),
+		"decort_account_disks_list":      account.DataSourceAccountDisksList(),
+		"decort_account_flipgroups_list": account.DataSourceAccountFlipGroupsList(),
+		"decort_account_rg_list":         account.DataSourceAccountRGList(),
+		"decort_account_vins_list":       account.DataSourceAccountVinsList(),
+		"decort_account_audits_list":     account.DataSourceAccountAuditsList(),
+		"decort_disk":                    disks.DataSourceDisk(),
+		"decort_disk_list":               disks.DataSourceDiskList(),
+		"decort_image":                   image.DataSourceImage(),
+		"decort_grid":                    grid.DataSourceGrid(),
+		"decort_grid_list":               grid.DataSourceGridList(),
+		"decort_image_list":              image.DataSourceImageList(),
+		"decort_image_list_stacks":       image.DataSourceImageListStacks(),
+		"decort_pcidevice":               pcidevice.DataSourcePcidevice(),
+		"decort_pcidevice_list":          pcidevice.DataSourcePcideviceList(),
+		"decort_sep_list":                sep.DataSourceSepList(),
+		"decort_sep":                     sep.DataSourceSep(),
+		"decort_sep_consumption":         sep.DataSourceSepConsumption(),
+		"decort_sep_disk_list":           sep.DataSourceSepDiskList(),
+		"decort_sep_config":              sep.DataSourceSepConfig(),
+		"decort_sep_pool":                sep.DataSourceSepPool(),
 		// "decort_pfw": dataSourcePfw(),
 	}
 

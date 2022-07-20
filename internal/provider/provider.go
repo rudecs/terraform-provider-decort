@@ -22,6 +22,7 @@ package provider
 import (
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"golang.org/x/net/context"
@@ -105,24 +106,22 @@ func Provider() *schema.Provider {
 
 		DataSourcesMap: selectSchema(true),
 
-		ConfigureFunc: providerConfigure,
+		ConfigureContextFunc: providerConfigure,
 	}
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	decsController, err := controller.ControllerConfigure(d)
 	if err != nil {
-		return nil, err
+		return nil, diag.FromErr(err)
 	}
-
-	ctx := context.Background()
 
 	gridId, err := location.UtilityLocationGetDefaultGridID(ctx, decsController)
 	if err != nil {
-		return nil, err
+		return nil, diag.FromErr(err)
 	}
 	if gridId == 0 {
-		return nil, fmt.Errorf("providerConfigure: invalid default Grid ID = 0")
+		return nil, diag.FromErr(fmt.Errorf("providerConfigure: invalid default Grid ID = 0"))
 	}
 
 	return decsController, nil

@@ -31,9 +31,11 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 
 package disks
 
-const DisksCreateAPI = "/restmachine/cloudapi/disks/create"
-const DisksGetAPI = "/restmachine/cloudapi/disks/get"   // Returns single DiskRecord on success
-const DisksListAPI = "/restmachine/cloudapi/disks/list" // Returns list of DiskRecord on success
-const DisksResizeAPI = "/restmachine/cloudapi/disks/resize2"
-const DisksRenameAPI = "/restmachine/cloudapi/disks/rename"
-const DisksDeleteAPI = "/restmachine/cloudapi/disks/delete"
+const disksCreateAPI = "/restmachine/cloudapi/disks/create"
+const disksGetAPI = "/restmachine/cloudapi/disks/get"
+const disksListAPI = "/restmachine/cloudapi/disks/list"
+const disksResizeAPI = "/restmachine/cloudapi/disks/resize2"
+const disksRenameAPI = "/restmachine/cloudapi/disks/rename"
+const disksDeleteAPI = "/restmachine/cloudapi/disks/delete"
+const disksIOLimitAPI = "/restmachine/cloudapi/disks/limitIO"
+const disksRestoreAPI = "/restmachine/cloudapi/disks/restore"
