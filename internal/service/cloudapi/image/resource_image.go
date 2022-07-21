@@ -192,20 +192,6 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	return nil
 }
 
-func resourceImageExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	log.Debugf("resourceImageExists: called for %s, id: %s", d.Get("name").(string), d.Id())
-
-	image, err := utilityImageCheckPresence(ctx, d, m)
-	if image == nil {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func resourceImageEditName(ctx context.Context, d *schema.ResourceData, m interface{}) error {
 	log.Debugf("resourceImageEditName: called for %s, id: %s", d.Get("name").(string), d.Id())
 	c := m.(*controller.ControllerCfg)

@@ -36,11 +36,10 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 )
 
-func utilityPcideviceListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (PcideviceList, error) {
+func utilityPcideviceListCheckPresence(ctx context.Context, m interface{}) (PcideviceList, error) {
 	pcideviceList := PcideviceList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}

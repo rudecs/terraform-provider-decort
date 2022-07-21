@@ -34,7 +34,6 @@ package kvmvm
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	// "net/url"
@@ -77,44 +76,15 @@ func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 	return result
 }
 
-func parseBootDiskSize(disks []DiskRecord) int {
-	// this return value will be used to d.Set("boot_disk_size",) item of dataSourceCompute schema
-	if len(disks) == 0 {
-		return 0
-	}
-
-	for _, value := range disks {
-		if value.Type == "B" {
-			return value.SizeMax
-		}
-	}
-
-	return 0
-}
-
-func parseBootDiskId(disks []DiskRecord) uint {
-	// this return value will be used to d.Set("boot_disk_id",) item of dataSourceCompute schema
-	if len(disks) == 0 {
-		return 0
-	}
-
-	for _, value := range disks {
-		if value.Type == "B" {
-			return value.ID
-		}
-	}
-
-	return 0
-}
-
-func findBootDisk(disks []DiskRecord) (*DiskRecord, error) {
+func findBootDisk(disks []DiskRecord) *DiskRecord {
 	for _, d := range disks {
 		if d.Type == "B" {
-			return &d, nil
+			return &d
 		}
 	}
 
-	return nil, errors.New("boot disk not found")
+	// some computes don't have a boot disk, so...
+	return &DiskRecord{}
 }
 
 // Parse the list of interfaces from compute/get response into a list of networks
@@ -181,10 +151,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 		d.Set("started", false)
 	}
 
-	bootDisk, err := findBootDisk(model.Disks)
-	if err != nil {
-		return err
-	}
+	bootDisk := findBootDisk(model.Disks)
 
 	d.Set("boot_disk_size", bootDisk.SizeMax)
 	d.Set("boot_disk_id", bootDisk.ID) // we may need boot disk ID in resize operations

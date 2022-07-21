@@ -49,6 +49,8 @@ const accountListVinsAPI = "/restmachine/cloudbroker/account/listVins"
 const accountRestoreAPI = "/restmachine/cloudbroker/account/restore"
 const accountUpdateAPI = "/restmachine/cloudbroker/account/update"
 const accountUpdateUserAPI = "/restmachine/cloudbroker/account/updateUser"
-const accountsEnableAPI = "/restmachine/cloudbroker/account/enableAccounts"
-const accountsDisableAPI = "/restmachine/cloudbroker/account/disableAccounts"
-const accountsDeleteAPI = "/restmachine/cloudbroker/account/deleteAccounts"
+
+//currently unused
+//const accountsEnableAPI = "/restmachine/cloudbroker/account/enableAccounts"
+//const accountsDisableAPI = "/restmachine/cloudbroker/account/disableAccounts"
+//const accountsDeleteAPI = "/restmachine/cloudbroker/account/deleteAccounts"

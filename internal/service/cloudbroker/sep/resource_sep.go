@@ -160,20 +160,6 @@ func resourceSepDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	return nil
 }
 
-func resourceSepExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	log.Debugf("resourceSepExists: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
-
-	sepDes, err := utilitySepCheckPresence(ctx, d, m)
-	if sepDes == nil {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func resourceSepEdit(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceSepEdit: called for %s, id: %d", d.Get("name").(string), d.Get("sep_id").(int))
 	c := m.(*controller.ControllerCfg)

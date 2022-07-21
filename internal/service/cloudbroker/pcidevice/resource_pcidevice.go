@@ -115,18 +115,6 @@ func resourcePcideviceDelete(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourcePcideviceExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	pcidevice, err := utilityPcideviceCheckPresence(ctx, d, m)
-	if err != nil {
-		return false, err
-	}
-	if pcidevice == nil {
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func resourcePcideviceEdit(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	if d.HasChange("enable") {
 		state := d.Get("enable").(bool)

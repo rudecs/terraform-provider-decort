@@ -143,20 +143,6 @@ func resourceBasicServiceDelete(ctx context.Context, d *schema.ResourceData, m i
 	return nil
 }
 
-func resourceBasicServiceExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	log.Debugf("resourceBasicServiceExists")
-
-	bservice, err := utilityBasicServiceCheckPresence(ctx, d, m)
-	if bservice == nil {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func resourceBasicServiceEdit(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceBasicServiceEdit")
 	c := m.(*controller.ControllerCfg)

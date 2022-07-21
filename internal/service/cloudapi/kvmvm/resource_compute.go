@@ -131,14 +131,15 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	cleanup := false
 	defer func() {
 		if cleanup {
-			utilityComputeDetachDisks(ctx, d, m)
 			urlValues := &url.Values{}
 			urlValues.Add("computeId", d.Id())
 			urlValues.Add("permanently", "1")
+			urlValues.Add("detachDisks", "1")
 
 			if _, err := c.DecortAPICall(ctx, "POST", ComputeDeleteAPI, urlValues); err != nil {
 				log.Errorf("resourceComputeCreate: could not delete compute after failed creation: %v", err)
 			}
+			d.SetId("")
 		}
 	}()
 
@@ -313,37 +314,18 @@ func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interf
 	log.Debugf("resourceComputeDelete: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
-	if err := utilityComputeDetachDisks(ctx, d, m); err != nil {
-		return diag.FromErr(err)
-	}
-
 	c := m.(*controller.ControllerCfg)
 
 	params := &url.Values{}
 	params.Add("computeId", d.Id())
 	params.Add("permanently", "1")
-	// TODO: this is for the upcoming API update - params.Add("detachdisks", "1")
+	params.Add("detachDisks", "1")
 
 	if _, err := c.DecortAPICall(ctx, "POST", ComputeDeleteAPI, params); err != nil {
 		return diag.FromErr(err)
 	}
 
 	return nil
-}
-
-func resourceComputeExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
-	log.Debugf("resourceComputeExist: called for Compute name %s, RG ID %d",
-		d.Get("name").(string), d.Get("rg_id").(int))
-
-	compFacts, err := utilityComputeCheckPresence(ctx, d, m)
-	if compFacts == "" {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-	return true, nil
 }
 
 func ResourceCompute() *schema.Resource {

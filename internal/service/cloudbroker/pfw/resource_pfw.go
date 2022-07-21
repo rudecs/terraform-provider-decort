@@ -122,20 +122,6 @@ func resourcePfwDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	return nil
 }
 
-func resourcePfwExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	log.Debugf("resourcePfwExists: called for compute %d, rule %s", d.Get("compute_id").(int), d.Id())
-
-	pfw, err := utilityPfwCheckPresence(ctx, d, m)
-	if pfw == nil {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func resourcePfwSchemaMake() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"compute_id": {

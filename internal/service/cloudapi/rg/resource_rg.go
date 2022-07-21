@@ -297,18 +297,6 @@ func resourceResgroupDelete(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceResgroupExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	// Reminder: according to Terraform rules, this function should NOT modify ResourceData argument
-	rg_facts, err := utilityResgroupCheckPresence(ctx, d, m)
-	if rg_facts == "" {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-	return true, nil
-}
-
 func ResourceResgroup() *schema.Resource {
 	return &schema.Resource{
 		SchemaVersion: 1,
