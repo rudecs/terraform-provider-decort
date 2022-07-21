@@ -41,9 +41,8 @@ import (
 )
 
 func dataSourceLocationUrlRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	url, err := utilityLocationUrlCheckPresence(ctx, d, m)
+	url, err := utilityLocationUrlCheckPresence(ctx, m)
 	if err != nil {
-
 		return diag.FromErr(err)
 	}
 

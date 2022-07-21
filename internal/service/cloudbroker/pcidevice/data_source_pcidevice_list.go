@@ -64,7 +64,7 @@ func flattenPcideviceList(pl PcideviceList) []map[string]interface{} {
 }
 
 func dataSourcePcideviceListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	pcideviceList, err := utilityPcideviceListCheckPresence(ctx, d, m)
+	pcideviceList, err := utilityPcideviceListCheckPresence(ctx, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

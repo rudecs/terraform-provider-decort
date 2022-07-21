@@ -76,36 +76,6 @@ func parseComputeDisksToExtraDisks(disks []DiskRecord) []interface{} {
 	return result
 }
 
-func parseBootDiskSize(disks []DiskRecord) int {
-	// this return value will be used to d.Set("boot_disk_size",) item of dataSourceCompute schema
-	if len(disks) == 0 {
-		return 0
-	}
-
-	for _, value := range disks {
-		if value.Type == "B" {
-			return value.SizeMax
-		}
-	}
-
-	return 0
-}
-
-func parseBootDiskId(disks []DiskRecord) uint {
-	// this return value will be used to d.Set("boot_disk_id",) item of dataSourceCompute schema
-	if len(disks) == 0 {
-		return 0
-	}
-
-	for _, value := range disks {
-		if value.Type == "B" {
-			return value.ID
-		}
-	}
-
-	return 0
-}
-
 func findBootDisk(disks []DiskRecord) *DiskRecord {
 	for _, d := range disks {
 		if d.Type == "B" {

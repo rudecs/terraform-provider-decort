@@ -183,20 +183,6 @@ func resourceBasicServiceGroupDelete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceBasicServiceGroupExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	log.Debugf("resourceBasicServiceGroupExists")
-
-	bserviceGroup, err := utilityBasicServiceGroupCheckPresence(ctx, d, m)
-	if bserviceGroup == nil {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func resourceBasicServiceGroupEdit(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceBasicServiceGroupEdit")
 	c := m.(*controller.ControllerCfg)

@@ -101,18 +101,6 @@ func resourceSnapshotDelete(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceSnapshotExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	snapshot, err := utilitySnapshotCheckPresence(ctx, d, m)
-	if err != nil {
-		return false, err
-	}
-	if snapshot == nil {
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func resourceSnapshotEdit(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	if d.HasChange("rollback") {
 		if d.Get("rollback").(bool) {

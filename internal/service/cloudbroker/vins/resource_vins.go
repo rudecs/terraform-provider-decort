@@ -210,21 +210,6 @@ func resourceVinsDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceVinsExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	// Reminder: according to Terraform rules, this function should not modify its ResourceData argument
-	log.Debugf("resourceVinsExists: called for ViNS name %s, Account ID %d, RG ID %d",
-		d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
-
-	vinsFacts, err := utilityVinsCheckPresence(ctx, d, m)
-	if vinsFacts == "" {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-	return true, nil
-}
-
 func resourceVinsSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"name": {

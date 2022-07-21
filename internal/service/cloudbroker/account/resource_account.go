@@ -228,20 +228,6 @@ func resourceAccountDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func resourceAccountExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	log.Debugf("resourceAccountExists")
-
-	account, err := utilityAccountCheckPresence(ctx, d, m)
-	if account == nil {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func resourceAccountEdit(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Debugf("resourceAccountEdit")
 	c := m.(*controller.ControllerCfg)

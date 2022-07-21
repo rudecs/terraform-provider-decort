@@ -42,7 +42,7 @@ import (
 )
 
 func dataSourceExtnetDefaultRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	extnetId, err := utilityExtnetDefaultCheckPresence(ctx, d, m)
+	extnetId, err := utilityExtnetDefaultCheckPresence(ctx, m)
 	if err != nil {
 		return diag.FromErr(err)
 	}

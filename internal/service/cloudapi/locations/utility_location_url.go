@@ -38,11 +38,9 @@ import (
 
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityLocationUrlCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
+func utilityLocationUrlCheckPresence(ctx context.Context, m interface{}) (string, error) {
 	c := m.(*controller.ControllerCfg)
 
 	log.Debugf("utilityLocationUrlCheckPresence: load locations list")
@@ -54,7 +52,7 @@ func utilityLocationUrlCheckPresence(ctx context.Context, d *schema.ResourceData
 	location := new(string)
 	err = json.Unmarshal([]byte(locationUrl), location)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	return *location, nil

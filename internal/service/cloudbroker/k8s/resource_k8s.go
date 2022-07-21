@@ -274,17 +274,6 @@ func resourceK8sDelete(ctx context.Context, d *schema.ResourceData, m interface{
 	return nil
 }
 
-func resourceK8sExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-	log.Debugf("resourceK8sExists: called with id %s, rg %d", d.Id(), d.Get("rg_id").(int))
-
-	k8s, err := utilityK8sCheckPresence(ctx, d, m)
-	if k8s == nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
 func resourceK8sSchemaMake() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"name": {

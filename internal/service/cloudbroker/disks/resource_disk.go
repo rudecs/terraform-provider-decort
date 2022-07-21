@@ -281,18 +281,6 @@ func resourceDiskDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceDiskExists(ctx context.Context, d *schema.ResourceData, m interface{}) (bool, error) {
-
-	diskFacts, err := utilityDiskCheckPresence(ctx, d, m)
-	if diskFacts == nil {
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
-	return true, nil
-}
-
 func resourceDiskSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"account_id": {

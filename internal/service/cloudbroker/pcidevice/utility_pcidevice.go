@@ -39,7 +39,7 @@ import (
 )
 
 func utilityPcideviceCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*Pcidevice, error) {
-	pcideviceList, err := utilityPcideviceListCheckPresence(ctx, d, m)
+	pcideviceList, err := utilityPcideviceListCheckPresence(ctx, m)
 	if err != nil {
 		return nil, err
 	}

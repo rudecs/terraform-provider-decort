@@ -37,11 +37,9 @@ import (
 
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityExtnetDefaultCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (string, error) {
+func utilityExtnetDefaultCheckPresence(ctx context.Context, m interface{}) (string, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
