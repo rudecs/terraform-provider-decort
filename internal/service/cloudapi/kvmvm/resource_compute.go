@@ -33,7 +33,6 @@ package kvmvm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -129,6 +128,20 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	d.SetId(apiResp) // update ID of the resource to tell Terraform that the resource exists, albeit partially
 	compId, _ := strconv.Atoi(apiResp)
 
+	cleanup := false
+	defer func() {
+		if cleanup {
+			utilityComputeDetachDisks(ctx, d, m)
+			urlValues := &url.Values{}
+			urlValues.Add("computeId", d.Id())
+			urlValues.Add("permanently", "1")
+
+			if _, err := c.DecortAPICall(ctx, "POST", ComputeDeleteAPI, urlValues); err != nil {
+				log.Errorf("resourceComputeCreate: could not delete compute after failed creation: %v", err)
+			}
+		}
+	}()
+
 	log.Debugf("resourceComputeCreate: new simple Compute ID %d, name %s created", compId, d.Get("name").(string))
 
 	// Configure data disks if any
@@ -139,6 +152,7 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		err = utilityComputeExtraDisksConfigure(ctx, d, m, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
 			log.Errorf("resourceComputeCreate: error when attaching extra disk(s) to a new Compute ID %d: %v", compId, err)
+			cleanup = true
 			return diag.FromErr(err)
 		}
 	}
@@ -149,6 +163,7 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		err = utilityComputeNetworksConfigure(ctx, d, m, false) // do_delta=false, as we are working on a new compute
 		if err != nil {
 			log.Errorf("resourceComputeCreate: error when attaching networks to a new Compute ID %d: %s", compId, err)
+			cleanup = true
 			return diag.FromErr(err)
 		}
 	}
@@ -160,6 +175,7 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		reqValues.Add("computeId", fmt.Sprintf("%d", compId))
 		log.Debugf("resourceComputeCreate: starting Compute ID %d after completing its resource configuration", compId)
 		if _, err := c.DecortAPICall(ctx, "POST", ComputeStartAPI, reqValues); err != nil {
+			cleanup = true
 			return diag.FromErr(err)
 		}
 	}
@@ -297,51 +313,18 @@ func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interf
 	log.Debugf("resourceComputeDelete: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
-	compFacts, err := utilityComputeCheckPresence(ctx, d, m)
-	if compFacts == "" {
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		// the target Compute does not exist - in this case according to Terraform best practice
-		// we exit from Destroy method without error
-		return nil
+	if err := utilityComputeDetachDisks(ctx, d, m); err != nil {
+		return diag.FromErr(err)
 	}
 
 	c := m.(*controller.ControllerCfg)
-
-	model := ComputeGetResp{}
-	log.Debugf("resourceComputeDelete: ready to unmarshal string %s", compFacts)
-	err = json.Unmarshal([]byte(compFacts), &model)
-	if err == nil && len(model.Disks) > 0 {
-		// prepare to detach data disks from compute - do it only if compFacts unmarshalled
-		// properly and the resulting model contains non-empty Disks list
-		for _, diskFacts := range model.Disks {
-			if diskFacts.Type == "B" {
-				// boot disk is never detached on compute delete
-				continue
-			}
-
-			log.Debugf("resourceComputeDelete: ready to detach data disk ID %d from compute ID %s", diskFacts.ID, d.Id())
-
-			detachParams := &url.Values{}
-			detachParams.Add("computeId", d.Id())
-			detachParams.Add("diskId", fmt.Sprintf("%d", diskFacts.ID))
-
-			_, err = c.DecortAPICall(ctx, "POST", ComputeDiskDetachAPI, detachParams)
-			if err != nil {
-				// We do not fail compute deletion on data disk detach errors
-				log.Errorf("resourceComputeDelete: error when detaching Disk ID %d: %s", diskFacts.ID, err)
-			}
-		}
-	}
 
 	params := &url.Values{}
 	params.Add("computeId", d.Id())
 	params.Add("permanently", "1")
 	// TODO: this is for the upcoming API update - params.Add("detachdisks", "1")
 
-	_, err = c.DecortAPICall(ctx, "POST", ComputeDeleteAPI, params)
-	if err != nil {
+	if _, err := c.DecortAPICall(ctx, "POST", ComputeDeleteAPI, params); err != nil {
 		return diag.FromErr(err)
 	}
 
