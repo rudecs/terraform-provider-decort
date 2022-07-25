@@ -30,7 +30,6 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/locations"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/rg"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/snapshot"
-	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/vgpu"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/vins"
 )
 
@@ -41,7 +40,6 @@ func NewDataSourcesMap() map[string]*schema.Resource {
 		"decort_kvmvm":                          kvmvm.DataSourceCompute(),
 		"decort_vins":                           vins.DataSourceVins(),
 		"decort_snapshot_list":                  snapshot.DataSourceSnapshotList(),
-		"decort_vgpu":                           vgpu.DataSourceVGPU(),
 		"decort_disk":                           disks.DataSourceDisk(),
 		"decort_disk_list":                      disks.DataSourceDiskList(),
 		"decort_rg_list":                        rg.DataSourceRgList(),

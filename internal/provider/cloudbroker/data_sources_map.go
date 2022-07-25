@@ -26,7 +26,9 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/grid"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/image"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/pcidevice"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/rg"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/sep"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudbroker/vgpu"
 )
 
 func NewDataSourcesMap() map[string]*schema.Resource {
@@ -55,6 +57,8 @@ func NewDataSourcesMap() map[string]*schema.Resource {
 		"decort_sep_disk_list":           sep.DataSourceSepDiskList(),
 		"decort_sep_config":              sep.DataSourceSepConfig(),
 		"decort_sep_pool":                sep.DataSourceSepPool(),
+		"decort_vgpu":                    vgpu.DataSourceVGPU(),
+		"decort_rg_list":                 rg.DataSourceRgList(),
 		// "decort_pfw": dataSourcePfw(),
 	}
 
