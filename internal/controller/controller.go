@@ -35,7 +35,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
