@@ -1,10 +1,18 @@
 # terraform-provider-decort
 Terraform provider для платформы Digital Energy Cloud Orchestration Technology (DECORT)
 
-Внимание: провайдер версии rc-1.25 разработан для DECORT API 3.7.x.  
+Внимание: провайдер версии 3.x разработан для DECORT API 3.8.x.  
 Для более старых версий можно использовать:
+- DECORT API 3.7.x - версия провайдера rc-1.25
 - DECORT API 3.6.x - версия провайдера rc-1.10
 - DECORT API до 3.6.0 - terraform DECS provider (https://github.com/rudecs/terraform-provider-decs)
+
+## Режимы работы
+Провайдер позволяет работать в двух режимах:
+- Режим пользователя,
+- Режим администратора.
+Для переключения между режимами используйте флаг DECORT_ADMIN_MODE.
+Вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
 
 ## Возможности провайдера
 - Работа с Compute instances, 
@@ -20,7 +28,8 @@ Terraform provider для платформы Digital Energy Cloud Orchestration 
 - Работа с sep,
 - Работа с vgpu,
 - Работа с bservice,
-- Работа с extnets.
+- Работа с extnets,
+- Работа с locations.
 
 Вики проекта: https://github.com/rudecs/terraform-provider-decort/wiki
 

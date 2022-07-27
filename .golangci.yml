@@ -5,7 +5,7 @@ linters:
     - dogsled
     - errorlint
     - exportloopref
-    - gocognit
+    #- gocognit - disabled till better times
     - goconst
     - gocyclo
     - gosec
@@ -20,7 +20,7 @@ linters:
 linters-settings:
   errcheck:
     exclude-functions:
-      - (*github.com/hashicorp/terraform-plugin-sdk/helper/schema.ResourceData).Set
+      - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceData).Set
   staticcheck:
     go: "1.18"
     checks:
@@ -28,6 +28,8 @@ linters-settings:
       - -SA1019
   nestif:
     min-complexity: 7
+  gocyclo:
+    min-complexity: 40
 
 issues:
   max-same-issues: 0

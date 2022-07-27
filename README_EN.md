@@ -1,9 +1,18 @@
 # terraform-provider-decort
 Terraform provider for Digital Energy Cloud Orchestration Technology (DECORT) platform
 
-NOTE: provider rc-1.25 is designed for DECORT API 3.7.x. For older API versions please use:
+NOTE: provider 3.x is designed for DECORT API 3.8.x. For older API versions please use:
+- DECORT API 3.7.x versions - provider verion rc-1.25
 - DECORT API 3.6.x versions - provider version rc-1.10
 - DECORT API versions prior to 3.6.0 - Terraform DECS provider (https://github.com/rudecs/terraform-provider-decs)
+
+## Working modes
+The provider support two working modes:
+- User mode,
+- Administator mode.
+Use flag DECORT_ADMIN_MODE for swithcing beetwen modes.
+See user guide at https://github.com/rudecs/terraform-provider-decort/wiki
+
 
 ## Features
 - Work with Compute instances, 
@@ -19,7 +28,8 @@ NOTE: provider rc-1.25 is designed for DECORT API 3.7.x. For older API versions 
 - Work with sep,
 - Work with vgpu,
 - Work with bservice,
-- Work with extnets.
+- Work with extnets,
+- Work with locations.
 
 This provider supports Import operations on pre-existing resources.
 
