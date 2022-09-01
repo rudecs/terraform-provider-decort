@@ -387,11 +387,10 @@ func ResourceCompute() *schema.Resource {
 			},
 
 			"image_id": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validation.IntAtLeast(1),
-				Description:  "ID of the OS image to base this compute instance on.",
+				Type:        schema.TypeInt,
+				Required:    true,
+				ForceNew:    true,
+				Description: "ID of the OS image to base this compute instance on.",
 			},
 
 			"boot_disk_size": {
