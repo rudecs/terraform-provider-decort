@@ -11,6 +11,9 @@ OS_ARCH=windows_amd64
 
 default: install
 
+lint:
+	golangci-lint run --timeout 600s
+
 build:
 	go build -o ${BINARY} ${MAINPATH}
 release:

@@ -52,7 +52,7 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	urlValues.Add("url", d.Get("url").(string))
 	urlValues.Add("gid", strconv.Itoa(d.Get("gid").(int)))
 	urlValues.Add("boottype", d.Get("boot_type").(string))
-	urlValues.Add("imagetype", d.Get("image_type").(string))
+	urlValues.Add("imagetype", d.Get("type").(string))
 
 	tstr := d.Get("drivers").([]interface{})
 	temp := ""
