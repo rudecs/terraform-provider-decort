@@ -139,7 +139,11 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("cpu", model.Cpu)
 	d.Set("ram", model.Ram)
 	// d.Set("boot_disk_size", model.BootDiskSize) - bootdiskSize key in API compute/get is always zero, so we set boot_disk_size in another way
-	d.Set("image_id", model.ImageID)
+	if model.VirtualImageID != 0 {
+		d.Set("image_id", model.VirtualImageID)
+	} else {
+		d.Set("image_id", model.ImageID)
+	}
 	d.Set("description", model.Desc)
 	d.Set("cloud_init", "applied") // NOTE: for existing compute we hard-code this value as an indicator for DiffSuppress fucntion
 	// d.Set("status", model.Status)
