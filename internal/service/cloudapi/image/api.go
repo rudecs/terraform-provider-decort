@@ -31,7 +31,7 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 
 package image
 
-const imageCreateAPI = "/restmachine/cloudapi/image/createImage"
+const imageCreateAPI = "/restmachine/cloudapi/image/create"
 const imageCreateVirtualAPI = "/restmachine/cloudapi/image/createVirtual"
 const imageGetAPI = "/restmachine/cloudapi/image/get"
 const imageListGetAPI = "/restmachine/cloudapi/image/list"
