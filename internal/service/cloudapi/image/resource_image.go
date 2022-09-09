@@ -33,6 +33,7 @@ package image
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"strconv"
 
@@ -94,11 +95,25 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	if architecture, ok := d.GetOk("architecture"); ok {
 		urlValues.Add("architecture", architecture.(string))
 	}
-
+	/* uncomment then OK
 	imageId, err := c.DecortAPICall(ctx, "POST", imageCreateAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	*/
+	//innovation
+	res, err := c.DecortAPICall(ctx, "POST", imageCreateAPI, urlValues)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	i := make([]interface{}, 0)
+	err = json.Unmarshal([]byte(res), &i)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	imageId := strconv.Itoa(int(i[1].(float64)))
+	// end innovation
 
 	d.SetId(imageId)
 	d.Set("image_id", imageId)
