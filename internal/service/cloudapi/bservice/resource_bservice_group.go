@@ -616,7 +616,7 @@ func ResourceBasicServiceGroup() *schema.Resource {
 		DeleteContext: resourceBasicServiceGroupDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

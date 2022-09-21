@@ -1,22 +1,26 @@
 # terraform-provider-decort
+
 Terraform provider for Digital Energy Cloud Orchestration Technology (DECORT) platform
 
 NOTE: provider 3.x is designed for DECORT API 3.8.x. For older API versions please use:
+
 - DECORT API 3.7.x versions - provider verion rc-1.25
 - DECORT API 3.6.x versions - provider version rc-1.10
 - DECORT API versions prior to 3.6.0 - Terraform DECS provider (https://github.com/rudecs/terraform-provider-decs)
 
 ## Working modes
+
 The provider support two working modes:
+
 - User mode,
 - Administator mode.
-Use flag DECORT_ADMIN_MODE for swithcing beetwen modes.
-See user guide at https://github.com/rudecs/terraform-provider-decort/wiki
-
+  Use flag DECORT_ADMIN_MODE for swithcing beetwen modes.
+  See user guide at https://github.com/rudecs/terraform-provider-decort/wiki
 
 ## Features
-- Work with Compute instances, 
-- Work with disks, 
+
+- Work with Compute instances,
+- Work with disks,
 - Work with k8s,
 - Work with image,
 - Work with reource groups,
@@ -29,21 +33,25 @@ See user guide at https://github.com/rudecs/terraform-provider-decort/wiki
 - Work with vgpu,
 - Work with bservice,
 - Work with extnets,
-- Work with locations.
+- Work with locations,
+- Work with load balancers.
 
 This provider supports Import operations on pre-existing resources.
 
 See user guide at https://github.com/rudecs/terraform-provider-decort/wiki
 
-
 ## Get Started
-Two ways for starting:  
+
+Two ways for starting:
+
 1. Installing via binary packages
 2. Manual installing
 
 ### Installing via binary packages
+
 1. Download and install terraform: https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/aws-get-started
 2. Create a file `main.tf` and add to it next section.
+
 ```terraform
 provider "decort" {
   authenticator = "oauth2"
@@ -54,45 +62,62 @@ provider "decort" {
   allow_unverified_ssl = true
 }
 ```
+
 3. Execute next command
+
 ```
 terraform init
 ```
+
 The Provider will automatically install on your computer from the terrafrom registry.
 
 ### Manual installing
+
 1. Download and install Go Programming Language: https://go.dev/dl/
 2. Download and install terraform: https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/aws-get-started
 3. Clone provider's repo:
+
 ```bash
 git clone https://github.com/rudecs/terraform-provider-decort.git
 ```
+
 4. Change directory to clone provider's and execute next command
+
 ```bash
 go build -o terraform-provider-decort
 ```
+
 If you have experience with _makefile_, you can change `Makefile`'s paramters and execute next command
+
 ```bash
 make build
 ```
+
 5. Now move compilled file to:  
-Linux:
+   Linux:
+
 ```bash
 ~/.terraform.d/plugins/${host_name}/${namespace}/${type}/${version}/${target}
 ```
+
 Windows:
+
 ```powershell
 %APPDATA%\terraform.d\plugins\${host_name}/${namespace}/${type}/${version}/${target}
 ```
+
 NOTE: for Windows OS `%APP_DATA%` is a cataloge, where will place terraform files.
 Example:
+
 - host_name - digitalenergy.online
-- namespace - decort 
+- namespace - decort
 - type - decort
 - version - 1.2
 - target - windows_amd64
+
 6. After all, create a file `main.tf`.
 7. Add to the file next code section
+
 ```terraform
 terraform {
   required_providers {
@@ -103,18 +128,22 @@ terraform {
   }
 }
 ```
+
 `version`- field for provider's version
 Required
 String
 Note: Versions in code section and in a repository must be equal!
 
 `source` - path to repository with provider's version
+
 ```bash
 ${host_name}/${namespace}/${type}
 ```
+
 NOTE: all paramters must be equal to the repository path!
 
-8. Execute command in your terminal 
+8. Execute command in your terminal
+
 ```bash
 terraform init
 ```
@@ -124,10 +153,12 @@ terraform init
 More details about the provider's building process: https://learn.hashicorp.com/tutorials/terraform/provider-use?in=terraform/providers
 
 ## Examples and Samples
+
 - Examples: https://github.com/rudecs/terraform-provider-decort/wiki
-- Samples: see in repository `samples`  
+- Samples: see in repository `samples`
 
 Terraform schemas in:
-- See in repository `docs`  
+
+- See in repository `docs`
 
 Good work!

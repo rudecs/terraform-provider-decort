@@ -229,7 +229,7 @@ func ResourcePcidevice() *schema.Resource {
 		DeleteContext: resourcePcideviceDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

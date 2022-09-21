@@ -786,7 +786,7 @@ func ResourceAccount() *schema.Resource {
 		DeleteContext: resourceAccountDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

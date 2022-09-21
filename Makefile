@@ -4,6 +4,7 @@ NAMESPACE=decort
 NAME=terraform-provider-decort
 #BINARY=terraform-provider-${NAME}
 BINARY=${NAME}.exe
+WORKPATH= ./examples/terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAMESPACE}/${VERSION}/${OS_ARCH} 
 MAINPATH = ./cmd/decort/
 VERSION=1.1
 #OS_ARCH=darwin_amd64
@@ -14,8 +15,14 @@ default: install
 lint:
 	golangci-lint run --timeout 600s
 
+st:
+	go build -o ${BINARY} ${MAINPATH}
+	cp ${BINARY} ${WORKPATH}
+	rm ${BINARY}
+
 build:
 	go build -o ${BINARY} ${MAINPATH}
+
 release:
 	GOOS=darwin GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
 	GOOS=freebsd GOARCH=386 go build -o ./bin/${BINARY}_${VERSION}_freebsd_386

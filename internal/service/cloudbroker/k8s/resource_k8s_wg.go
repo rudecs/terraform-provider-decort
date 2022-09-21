@@ -228,7 +228,7 @@ func ResourceK8sWg() *schema.Resource {
 		DeleteContext: resourceK8sWgDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

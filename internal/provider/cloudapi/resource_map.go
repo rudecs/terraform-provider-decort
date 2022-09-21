@@ -27,6 +27,7 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/image"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/k8s"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/kvmvm"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/lb"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/pfw"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/rg"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/snapshot"
@@ -35,18 +36,23 @@ import (
 
 func NewRersourcesMap() map[string]*schema.Resource {
 	return map[string]*schema.Resource{
-		"decort_resgroup":       rg.ResourceResgroup(),
-		"decort_kvmvm":          kvmvm.ResourceCompute(),
-		"decort_disk":           disks.ResourceDisk(),
-		"decort_vins":           vins.ResourceVins(),
-		"decort_pfw":            pfw.ResourcePfw(),
-		"decort_k8s":            k8s.ResourceK8s(),
-		"decort_k8s_wg":         k8s.ResourceK8sWg(),
-		"decort_snapshot":       snapshot.ResourceSnapshot(),
-		"decort_account":        account.ResourceAccount(),
-		"decort_bservice":       bservice.ResourceBasicService(),
-		"decort_bservice_group": bservice.ResourceBasicServiceGroup(),
-		"decort_image":          image.ResourceImage(),
-		"decort_image_virtual":  image.ResourceImageVirtual(),
+		"decort_resgroup":          rg.ResourceResgroup(),
+		"decort_kvmvm":             kvmvm.ResourceCompute(),
+		"decort_disk":              disks.ResourceDisk(),
+		"decort_vins":              vins.ResourceVins(),
+		"decort_pfw":               pfw.ResourcePfw(),
+		"decort_k8s":               k8s.ResourceK8s(),
+		"decort_k8s_wg":            k8s.ResourceK8sWg(),
+		"decort_snapshot":          snapshot.ResourceSnapshot(),
+		"decort_account":           account.ResourceAccount(),
+		"decort_bservice":          bservice.ResourceBasicService(),
+		"decort_bservice_group":    bservice.ResourceBasicServiceGroup(),
+		"decort_image":             image.ResourceImage(),
+		"decort_image_virtual":     image.ResourceImageVirtual(),
+		"decort_lb":                lb.ResourceLB(),
+		"decort_lb_backend":        lb.ResourceLBBackend(),
+		"decort_lb_backend_server": lb.ResourceLBBackendServer(),
+		"decort_lb_frontend":       lb.ResourceLBFrontend(),
+		"decort_lb_frontend_bind":  lb.ResourceLBFrontendBind(),
 	}
 }

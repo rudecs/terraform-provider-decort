@@ -126,7 +126,7 @@ func ResourceDeleteImages() *schema.Resource {
 		DeleteContext: resourceDeleteListImages,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

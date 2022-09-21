@@ -1,10 +1,21 @@
 ### Bug fixes
-- fatal error when trying to retrieve compute boot disk if former does not have one
-- ignored timeouts
-- wrong handling of errors when attaching network interfaces and disks to kvmvm
+- error when importing kvmvm without image_id
+- state reading for kvmvm created from virtual image
+- type field usage in image
+- wrong API handle for image creation
+- updating description in kvmvm
 
 ### New features
-- parameter iotune in disk
-- migrated to terraform SDKv2
-- admin mode (activated by environment variable DECORT\_ADMIN\_MODE) for resources: account, k8s, image, disk, resgroup, kvmvm, vins
-- parameters sep\_id and pool in kvmvm
+- ipaType and IS parameters in kvmvm
+
+### New datasources
+- lb
+- lb\_list
+- lb\_list\_deleted
+
+### New resources
+- lb
+- lb\_backend
+- lb\_backend\_server
+- lb\_frontend
+- lb\_frontend\_bind

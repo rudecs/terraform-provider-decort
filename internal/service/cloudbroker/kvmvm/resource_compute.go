@@ -338,7 +338,7 @@ func ResourceCompute() *schema.Resource {
 		DeleteContext: resourceComputeDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{
