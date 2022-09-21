@@ -492,7 +492,7 @@ func ResourceSep() *schema.Resource {
 		DeleteContext: resourceSepDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

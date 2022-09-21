@@ -188,7 +188,7 @@ func ResourceSepConfig() *schema.Resource {
 		DeleteContext: resourceSepConfigDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

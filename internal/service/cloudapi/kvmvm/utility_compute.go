@@ -267,12 +267,12 @@ func utilityComputeCheckPresence(ctx context.Context, d *schema.ResourceData, m 
 	// and RG ID
 	computeName, argSet := d.GetOk("name")
 	if !argSet {
-		return "", fmt.Errorf("Cannot locate compute instance if name is empty and no compute ID specified")
+		return "", fmt.Errorf("cannot locate compute instance if name is empty and no compute ID specified")
 	}
 
 	rgId, argSet := d.GetOk("rg_id")
 	if !argSet {
-		return "", fmt.Errorf("Cannot locate compute by name %s if no resource group ID is set", computeName.(string))
+		return "", fmt.Errorf("cannot locate compute by name %s if no resource group ID is set", computeName.(string))
 	}
 
 	urlValues.Add("rgId", fmt.Sprintf("%d", rgId))

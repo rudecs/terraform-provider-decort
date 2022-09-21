@@ -292,7 +292,7 @@ func ResourceVins() *schema.Resource {
 		DeleteContext: resourceVinsDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

@@ -307,7 +307,7 @@ func ResourceResgroup() *schema.Resource {
 		DeleteContext: resourceResgroupDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

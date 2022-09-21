@@ -29,8 +29,12 @@ description: |-
 
 - `cloud_init` (String) Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.
 - `description` (String) Optional text description of this compute instance.
+- `detach_disks` (Boolean)
 - `extra_disks` (Set of Number) Optional list of IDs of extra disks to attach to this compute. You may specify several extra disks.
+- `ipa_type` (String) compute purpose
+- `is` (String) system name
 - `network` (Block Set, Max: 8) Optional network connection(s) for this compute. You may specify several network blocks, one for each connection. (see [below for nested schema](#nestedblock--network))
+- `permanently` (Boolean)
 - `pool` (String) Pool to use if sepId is set, can be also empty if needed to be chosen by system.
 - `sep_id` (Number) ID of SEP to create bootDisk on. Uses image's sepId if not set.
 - `started` (Boolean) Is compute started.

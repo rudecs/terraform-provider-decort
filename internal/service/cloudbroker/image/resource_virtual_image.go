@@ -328,7 +328,7 @@ func ResourceVirtualImage() *schema.Resource {
 		DeleteContext: resourceImageDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

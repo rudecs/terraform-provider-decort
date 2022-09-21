@@ -181,7 +181,7 @@ func ResourcePfw() *schema.Resource {
 		DeleteContext: resourcePfwDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

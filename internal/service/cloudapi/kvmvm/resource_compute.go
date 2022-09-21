@@ -92,6 +92,14 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		urlValues.Add("pool", pool.(string))
 	}
 
+	if ipaType, ok := d.GetOk("ipa_type"); ok {
+		urlValues.Add("ipaType", ipaType.(string))
+	}
+
+	if IS, ok := d.GetOk("is"); ok {
+		urlValues.Add("IS", IS.(string))
+	}
+
 	/*
 		sshKeysVal, sshKeysSet := d.GetOk("ssh_keys")
 		if sshKeysSet {
@@ -287,6 +295,16 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
+	if d.HasChange("description") || d.HasChange("name") {
+		updateParams := &url.Values{}
+		updateParams.Add("computeId", d.Id())
+		updateParams.Add("name", d.Get("name").(string))
+		updateParams.Add("desc", d.Get("description").(string))
+		if _, err := c.DecortAPICall(ctx, "POST", ComputeUpdateAPI, updateParams); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	if d.HasChange("started") {
 		params := &url.Values{}
 		params.Add("computeId", d.Id())
@@ -318,8 +336,8 @@ func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	params := &url.Values{}
 	params.Add("computeId", d.Id())
-	params.Add("permanently", "1")
-	params.Add("detachDisks", "1")
+	params.Add("permanently", strconv.FormatBool(d.Get("permanently").(bool)))
+	params.Add("detachDisks", strconv.FormatBool(d.Get("detach_disks").(bool)))
 
 	if _, err := c.DecortAPICall(ctx, "POST", ComputeDeleteAPI, params); err != nil {
 		return diag.FromErr(err)
@@ -338,7 +356,7 @@ func ResourceCompute() *schema.Resource {
 		DeleteContext: resourceComputeDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{
@@ -500,6 +518,26 @@ func ResourceCompute() *schema.Resource {
 				Optional:    true,
 				Default:     true,
 				Description: "Is compute started.",
+			},
+			"detach_disks": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
+			"permanently": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
+			"is": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "system name",
+			},
+			"ipa_type": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "compute purpose",
 			},
 		},
 	}

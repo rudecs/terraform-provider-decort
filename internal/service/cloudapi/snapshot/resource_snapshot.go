@@ -178,7 +178,7 @@ func ResourceSnapshot() *schema.Resource {
 		DeleteContext: resourceSnapshotDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{

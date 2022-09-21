@@ -1,7 +1,10 @@
 # Примеры применения ресурсов terraform-provider-decort
+
 Каждый файл снабжен комментариями, которые кратко описывают возможности и параметры ресурса.  
 Для успешной работы необходим установленный terraform.
+
 ## Ресурсы в примерах
+
 - cloudapi:
   - data:
     - image
@@ -37,6 +40,9 @@
     - vins_list
     - locations_list
     - location_url
+    - lb
+    - lb_list
+    - lb_list_deleted
   - resources:
     - image
     - virtual_image
@@ -49,6 +55,11 @@
     - account
     - bservice
     - bservice_group
+    - lb
+    - lb_frontend
+    - lb_backend
+    - lb_frontend_bind
+    - lb_backend_server
 - cloudbroker:
   - data:
     - grid
@@ -94,13 +105,14 @@
     - vins
 
 ## Как пользоваться примерами
+
 1. Установить terraform
 2. Установить terraform-provider-decort с помощью команды `terraform init` (выполняется автоматически), либо вручную.
-3. Заменить параметр *controller_url* на ваш.
-4. Заменить параметр *oauth2* на ваш.
-5. Добавить ключи 
-*DECORT_APP_SECRET* и *DECORT_APP_ID* 
-в качестве переменных окружения, либо 
-можно добавить `app_id` и `app_secret` 
-в блок `provider`,что небезопасно, т.к. данные
-могут быть похищены при передачи файла.
+3. Заменить параметр _controller_url_ на ваш.
+4. Заменить параметр _oauth2_ на ваш.
+5. Добавить ключи
+   _DECORT_APP_SECRET_ и _DECORT_APP_ID_
+   в качестве переменных окружения, либо
+   можно добавить `app_id` и `app_secret`
+   в блок `provider`,что небезопасно, т.к. данные
+   могут быть похищены при передачи файла.

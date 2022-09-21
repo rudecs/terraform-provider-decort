@@ -376,7 +376,7 @@ func ResourceK8s() *schema.Resource {
 		DeleteContext: resourceK8sDelete,
 
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 
 		Timeouts: &schema.ResourceTimeout{
