@@ -58,7 +58,7 @@ func resourceLBFrontendCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	d.SetId(strconv.Itoa(d.Get("lb_id").(int)) + "-" + d.Get("name").(string))
+	d.SetId(strconv.Itoa(d.Get("lb_id").(int)) + "#" + d.Get("name").(string))
 
 	_, err = utilityLBFrontendCheckPresence(ctx, d, m)
 	if err != nil {
@@ -82,7 +82,7 @@ func resourceLBFrontendRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	lbId, _ := strconv.ParseInt(strings.Split(d.Id(), "-")[0], 10, 32)
+	lbId, _ := strconv.ParseInt(strings.Split(d.Id(), "#")[0], 10, 32)
 	d.Set("lb_id", lbId)
 	d.Set("backend_name", f.Backend)
 	d.Set("name", f.Name)

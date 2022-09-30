@@ -53,7 +53,7 @@ func utilityLBFrontendBindCheckPresence(ctx context.Context, d *schema.ResourceD
 	if (d.Get("lb_id").(int)) != 0 {
 		urlValues.Add("lbId", strconv.Itoa(d.Get("lb_id").(int)))
 	} else {
-		parameters := strings.Split(d.Id(), "-")
+		parameters := strings.Split(d.Id(), "#")
 		urlValues.Add("lbId", parameters[0])
 		fName = parameters[1]
 		bName = parameters[2]
