@@ -43,6 +43,12 @@
     - lb
     - lb_list
     - lb_list_deleted
+    - disk_list_deleted
+    - disk_list_unattached
+    - disk_list_types
+    - disk_list_types_detailed
+    - disk_snapshot_list
+    - disk_snapshot
   - resources:
     - image
     - virtual_image
@@ -60,6 +66,7 @@
     - lb_backend
     - lb_frontend_bind
     - lb_backend_server
+    - disk_snapshot
 - cloudbroker:
   - data:
     - grid

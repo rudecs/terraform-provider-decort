@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,6 +42,7 @@ import (
 
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
+	"github.com/rudecs/terraform-provider-decort/internal/status"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -119,6 +121,9 @@ func resourceDiskCreate(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	urlValues := &url.Values{}
+	c := m.(*controller.ControllerCfg)
+
 	disk, err := utilityDiskCheckPresence(ctx, d, m)
 	if disk == nil {
 		d.SetId("")
@@ -126,6 +131,28 @@ func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 			return diag.FromErr(err)
 		}
 		return nil
+	}
+
+	if disk.Status == status.Destroyed || disk.Status == status.Purged {
+		d.Set("disk_id", 0)
+		return resourceDiskCreate(ctx, d, m)
+	} else if disk.Status == status.Deleted {
+		urlValues.Add("diskId", d.Id())
+		urlValues.Add("reason", d.Get("reason").(string))
+
+		_, err := c.DecortAPICall(ctx, "POST", disksRestoreAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		urlValues = &url.Values{}
+		disk, err = utilityDiskCheckPresence(ctx, d, m)
+		if disk == nil {
+			d.SetId("")
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			return nil
+		}
 	}
 
 	diskAcl, _ := json.Marshal(disk.Acl)
@@ -169,7 +196,7 @@ func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("sep_type", disk.SepType)
 	d.Set("size_max", disk.SizeMax)
 	d.Set("size_used", disk.SizeUsed)
-	d.Set("snapshots", flattendDiskSnapshotList(disk.Snapshots))
+	d.Set("snapshots", flattenDiskSnapshotList(disk.Snapshots))
 	d.Set("status", disk.Status)
 	d.Set("tech_status", disk.TechStatus)
 	d.Set("type", disk.Type)
@@ -179,9 +206,27 @@ func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceDiskUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
+	disk, err := utilityDiskCheckPresence(ctx, d, m)
+	if disk == nil {
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return nil
+	}
+	if disk.Status == status.Destroyed || disk.Status == status.Purged {
+		return resourceDiskCreate(ctx, d, m)
+	} else if disk.Status == status.Deleted {
+		urlValues.Add("diskId", d.Id())
+		urlValues.Add("reason", d.Get("reason").(string))
+
+		_, err := c.DecortAPICall(ctx, "POST", disksRestoreAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		urlValues = &url.Values{}
+	}
 
 	if d.HasChange("size_max") {
 		oldSize, newSize := d.GetChange("size_max")
@@ -238,26 +283,10 @@ func resourceDiskUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		urlValues = &url.Values{}
 	}
 
-	if d.HasChange("restore") {
-		if d.Get("restore").(bool) {
-			urlValues.Add("diskId", d.Id())
-			urlValues.Add("reason", d.Get("reason").(string))
-
-			_, err := c.DecortAPICall(ctx, "POST", disksRestoreAPI, urlValues)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-
-			urlValues = &url.Values{}
-		}
-
-	}
-
 	return resourceDiskRead(ctx, d, m)
 }
 
 func resourceDiskDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
 	disk, err := utilityDiskCheckPresence(ctx, d, m)
 	if disk == nil {
 		if err != nil {
@@ -265,7 +294,9 @@ func resourceDiskDelete(ctx context.Context, d *schema.ResourceData, m interface
 		}
 		return nil
 	}
-
+	if disk.Status == status.Destroyed || disk.Status == status.Purged {
+		return nil
+	}
 	params := &url.Values{}
 	params.Add("diskId", d.Id())
 	params.Add("detach", strconv.FormatBool(d.Get("detach").(bool)))
@@ -277,126 +308,141 @@ func resourceDiskDelete(ctx context.Context, d *schema.ResourceData, m interface
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	return nil
 }
 
 func resourceDiskSchemaMake() map[string]*schema.Schema {
 	rets := map[string]*schema.Schema{
 		"account_id": {
-			Type:     schema.TypeInt,
-			Required: true,
+			Type:        schema.TypeInt,
+			Required:    true,
+			ForceNew:    true,
+			Description: "The unique ID of the subscriber-owner of the disk",
 		},
 		"disk_name": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Name of disk",
 		},
 		"size_max": {
-			Type:     schema.TypeInt,
-			Required: true,
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "Size in GB",
 		},
 		"gid": {
-			Type:     schema.TypeInt,
-			Required: true,
+			Type:        schema.TypeInt,
+			Required:    true,
+			ForceNew:    true,
+			Description: "ID of the grid (platform)",
 		},
 		"pool": {
-			Type:     schema.TypeString,
-			Optional: true,
-			Computed: true,
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
+			Description: "Pool for disk location",
 		},
 		"sep_id": {
-			Type:     schema.TypeInt,
-			Optional: true,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			Description: "Storage endpoint provider ID to create disk",
 		},
 		"desc": {
-			Type:     schema.TypeString,
-			Optional: true,
-			Computed: true,
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
+			Description: "Description of disk",
 		},
 		"type": {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Computed:     true,
 			ValidateFunc: validation.StringInSlice([]string{"D", "B", "T"}, false),
+			Description:  "The type of disk in terms of its role in compute: 'B=Boot, D=Data, T=Temp'",
 		},
 
 		"detach": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
-			Description: "detach disk from machine first",
+			Description: "Detaching the disk from compute",
 		},
 		"permanently": {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
-			Description: "whether to completely delete the disk, works only with non attached disks",
+			Description: "Whether to completely delete the disk, works only with non attached disks",
 		},
 		"reason": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "",
-			Description: "reason for an action",
-		},
-		"restore": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			Description: "restore deleting disk",
+			Description: "Reason for deletion",
 		},
 
 		"disk_id": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Disk ID. Duplicates the value of the ID parameter",
 		},
 		"account_name": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The name of the subscriber '(account') to whom this disk belongs",
 		},
 		"acl": {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
 		"boot_partition": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Number of disk partitions",
 		},
 		"compute_id": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Compute ID",
 		},
 		"compute_name": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Compute name",
 		},
 		"created_time": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Created time",
 		},
 		"deleted_time": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Deleted time",
 		},
 		"destruction_time": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Time of final deletion",
 		},
 		"devicename": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the device",
 		},
 		"disk_path": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Disk path",
 		},
 		"guid": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Disk ID on the storage side",
 		},
 		"image_id": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Image ID",
 		},
 		"images": {
 			Type:     schema.TypeList,
@@ -404,6 +450,7 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
+			Description: "IDs of images using the disk",
 		},
 		"iotune": {
 			Type:     schema.TypeList,
@@ -413,143 +460,171 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"read_bytes_sec": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Number of bytes to read per second",
 					},
 					"read_bytes_sec_max": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Maximum number of bytes to read",
 					},
 					"read_iops_sec": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Number of io read operations per second",
 					},
 					"read_iops_sec_max": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Maximum number of io read operations",
 					},
 					"size_iops_sec": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Size of io operations",
 					},
 					"total_bytes_sec": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Total size bytes per second",
 					},
 					"total_bytes_sec_max": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Maximum total size of bytes per second",
 					},
 					"total_iops_sec": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Total number of io operations per second",
 					},
 					"total_iops_sec_max": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Maximum total number of io operations per second",
 					},
 					"write_bytes_sec": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Number of bytes to write per second",
 					},
 					"write_bytes_sec_max": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Maximum number of bytes to write per second",
 					},
 					"write_iops_sec": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Number of write operations per second",
 					},
 					"write_iops_sec_max": {
-						Type:     schema.TypeInt,
-						Optional: true,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Computed:    true,
+						Description: "Maximum number of write operations per second",
 					},
 				},
 			},
 		},
 		"iqn": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Disk IQN",
 		},
 		"login": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Login to access the disk",
 		},
 		"milestones": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Milestones",
 		},
 
 		"order": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Disk order",
 		},
 		"params": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Disk params",
 		},
 		"parent_id": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of the parent disk",
 		},
 		"passwd": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Password to access the disk",
 		},
 		"pci_slot": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of the pci slot to which the disk is connected",
 		},
-
 		"purge_attempts": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Number of deletion attempts",
 		},
 		"purge_time": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Time of the last deletion attempt",
 		},
 		"reality_device_number": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Reality device number",
 		},
 		"reference_id": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "ID of the reference to the disk",
 		},
 		"res_id": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Resource ID",
 		},
 		"res_name": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the resource",
 		},
 		"role": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Disk role",
 		},
-
 		"sep_type": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Type SEP. Defines the type of storage system and contains one of the values set in the cloud platform",
 		},
 		"size_used": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Number of used space, in GB",
 		},
 		"snapshots": {
 			Type:     schema.TypeList,
@@ -557,43 +632,52 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"guid": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "ID of the snapshot",
 					},
 					"label": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Name of the snapshot",
 					},
 					"res_id": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Reference to the snapshot",
 					},
 					"snap_set_guid": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The set snapshot ID",
 					},
 					"snap_set_time": {
-						Type:     schema.TypeInt,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The set time of the snapshot",
 					},
 					"timestamp": {
-						Type:     schema.TypeInt,
-						Computed: true,
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "Snapshot time",
 					},
 				},
 			},
 		},
 		"status": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Disk status",
 		},
 		"tech_status": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Technical status of the disk",
 		},
 		"vmid": {
-			Type:     schema.TypeInt,
-			Computed: true,
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Virtual Machine ID (Deprecated)",
 		},
 	}
 
@@ -614,11 +698,11 @@ func ResourceDisk() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create:  &constants.Timeout180s,
-			Read:    &constants.Timeout30s,
-			Update:  &constants.Timeout180s,
-			Delete:  &constants.Timeout60s,
-			Default: &constants.Timeout60s,
+			Create:  &constants.Timeout600s,
+			Read:    &constants.Timeout300s,
+			Update:  &constants.Timeout300s,
+			Delete:  &constants.Timeout300s,
+			Default: &constants.Timeout300s,
 		},
 
 		Schema: resourceDiskSchemaMake(),

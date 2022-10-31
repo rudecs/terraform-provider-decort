@@ -25,4 +25,6 @@ import "time"
 var Timeout30s = time.Second * 30
 var Timeout60s = time.Second * 60
 var Timeout180s = time.Second * 180
+var Timeout300s = time.Second * 300
+var Timeout600s = time.Second * 600
 var Timeout20m = time.Minute * 20

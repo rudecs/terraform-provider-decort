@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,17 +32,21 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 
 package kvmvm
 
-const KvmX86CreateAPI = "/restmachine/cloudapi/kvmx86/create"
-const KvmPPCCreateAPI = "/restmachine/cloudapi/kvmppc/create"
-const ComputeGetAPI = "/restmachine/cloudapi/compute/get"
-const RgListComputesAPI = "/restmachine/cloudapi/rg/listComputes"
-const ComputeNetAttachAPI = "/restmachine/cloudapi/compute/netAttach"
-const ComputeNetDetachAPI = "/restmachine/cloudapi/compute/netDetach"
-const ComputeDiskAttachAPI = "/restmachine/cloudapi/compute/diskAttach"
-const ComputeDiskDetachAPI = "/restmachine/cloudapi/compute/diskDetach"
-const ComputeStartAPI = "/restmachine/cloudapi/compute/start"
-const ComputeStopAPI = "/restmachine/cloudapi/compute/stop"
-const ComputeResizeAPI = "/restmachine/cloudapi/compute/resize"
-const DisksResizeAPI = "/restmachine/cloudapi/disks/resize2"
-const ComputeDeleteAPI = "/restmachine/cloudapi/compute/delete"
-const ComputeUpdateAPI = "/restmachine/cloudapi/compute/update"
+const (
+	KvmX86CreateAPI      = "/restmachine/cloudapi/kvmx86/create"
+	KvmPPCCreateAPI      = "/restmachine/cloudapi/kvmppc/create"
+	ComputeGetAPI        = "/restmachine/cloudapi/compute/get"
+	RgListComputesAPI    = "/restmachine/cloudapi/rg/listComputes"
+	ComputeNetAttachAPI  = "/restmachine/cloudapi/compute/netAttach"
+	ComputeNetDetachAPI  = "/restmachine/cloudapi/compute/netDetach"
+	ComputeDiskAttachAPI = "/restmachine/cloudapi/compute/diskAttach"
+	ComputeDiskDetachAPI = "/restmachine/cloudapi/compute/diskDetach"
+	ComputeStartAPI      = "/restmachine/cloudapi/compute/start"
+	ComputeStopAPI       = "/restmachine/cloudapi/compute/stop"
+	ComputeResizeAPI     = "/restmachine/cloudapi/compute/resize"
+	DisksResizeAPI       = "/restmachine/cloudapi/disks/resize2"
+	ComputeDeleteAPI     = "/restmachine/cloudapi/compute/delete"
+	ComputeUpdateAPI     = "/restmachine/cloudapi/compute/update"
+	ComputeDiskAddAPI    = "/restmachine/cloudapi/compute/diskAdd"
+	ComputeDiskDeleteAPI = "/restmachine/cloudapi/compute/diskDel"
+)

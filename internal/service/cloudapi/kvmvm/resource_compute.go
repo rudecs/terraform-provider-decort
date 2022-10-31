@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -131,6 +132,7 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	urlValues = &url.Values{}
 	// Compute create API returns ID of the new Compute instance on success
 
 	d.SetId(apiResp) // update ID of the resource to tell Terraform that the resource exists, albeit partially
@@ -148,6 +150,7 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 				log.Errorf("resourceComputeCreate: could not delete compute after failed creation: %v", err)
 			}
 			d.SetId("")
+			urlValues = &url.Values{}
 		}
 	}()
 
@@ -189,13 +192,50 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
+	if !cleanup {
+		if disks, ok := d.GetOk("disks"); ok {
+			log.Debugf("resourceComputeCreate: Create disks on ComputeID: %d", compId)
+			addedDisks := disks.([]interface{})
+			if len(addedDisks) > 0 {
+				for _, disk := range addedDisks {
+					diskConv := disk.(map[string]interface{})
+
+					urlValues.Add("computeId", d.Id())
+					urlValues.Add("diskName", diskConv["disk_name"].(string))
+					urlValues.Add("size", strconv.Itoa(diskConv["size"].(int)))
+					if diskConv["disk_type"].(string) != "" {
+						urlValues.Add("diskType", diskConv["disk_type"].(string))
+					}
+					if diskConv["sep_id"].(int) != 0 {
+						urlValues.Add("sepId", strconv.Itoa(diskConv["sep_id"].(int)))
+					}
+					if diskConv["pool"].(string) != "" {
+						urlValues.Add("pool", diskConv["pool"].(string))
+					}
+					if diskConv["desc"].(string) != "" {
+						urlValues.Add("desc", diskConv["desc"].(string))
+					}
+					if diskConv["image_id"].(int) != 0 {
+						urlValues.Add("imageId", strconv.Itoa(diskConv["image_id"].(int)))
+					}
+					_, err := c.DecortAPICall(ctx, "POST", ComputeDiskAddAPI, urlValues)
+					if err != nil {
+						cleanup = true
+						return diag.FromErr(err)
+					}
+					urlValues = &url.Values{}
+				}
+			}
+		}
+	}
+
 	log.Debugf("resourceComputeCreate: new Compute ID %d, name %s creation sequence complete", compId, d.Get("name").(string))
 
 	// We may reuse dataSourceComputeRead here as we maintain similarity
 	// between Compute resource and Compute data source schemas
 	// Compute read function will also update resource ID on success, so that Terraform
 	// will know the resource exists
-	return dataSourceComputeRead(ctx, d, m)
+	return resourceComputeRead(ctx, d, m)
 }
 
 func resourceComputeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -236,32 +276,32 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	*/
 
 	// 1. Resize CPU/RAM
-	params := &url.Values{}
+	urlValues := &url.Values{}
 	doUpdate := false
-	params.Add("computeId", d.Id())
+	urlValues.Add("computeId", d.Id())
 
 	oldCpu, newCpu := d.GetChange("cpu")
 	if oldCpu.(int) != newCpu.(int) {
-		params.Add("cpu", fmt.Sprintf("%d", newCpu.(int)))
+		urlValues.Add("cpu", fmt.Sprintf("%d", newCpu.(int)))
 		doUpdate = true
 	} else {
-		params.Add("cpu", "0") // no change to CPU allocation
+		urlValues.Add("cpu", "0") // no change to CPU allocation
 	}
 
 	oldRam, newRam := d.GetChange("ram")
 	if oldRam.(int) != newRam.(int) {
-		params.Add("ram", fmt.Sprintf("%d", newRam.(int)))
+		urlValues.Add("ram", fmt.Sprintf("%d", newRam.(int)))
 		doUpdate = true
 	} else {
-		params.Add("ram", "0")
+		urlValues.Add("ram", "0")
 	}
 
 	if doUpdate {
 		log.Debugf("resourceComputeUpdate: changing CPU %d -> %d and/or RAM %d -> %d",
 			oldCpu.(int), newCpu.(int),
 			oldRam.(int), newRam.(int))
-		params.Add("force", "true")
-		_, err := c.DecortAPICall(ctx, "POST", ComputeResizeAPI, params)
+		urlValues.Add("force", "true")
+		_, err := c.DecortAPICall(ctx, "POST", ComputeResizeAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -284,13 +324,15 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	// 3. Calculate and apply changes to data disks
-	err := utilityComputeExtraDisksConfigure(ctx, d, m, true) // pass do_delta = true to apply changes, if any
-	if err != nil {
-		return diag.FromErr(err)
+	if d.HasChange("extra_disks") {
+		err := utilityComputeExtraDisksConfigure(ctx, d, m, true) // pass do_delta = true to apply changes, if any
+		if err != nil {
+			return diag.FromErr(err)
+		}
 	}
 
 	// 4. Calculate and apply changes to network connections
-	err = utilityComputeNetworksConfigure(ctx, d, m, true) // pass do_delta = true to apply changes, if any
+	err := utilityComputeNetworksConfigure(ctx, d, m, true) // pass do_delta = true to apply changes, if any
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -319,9 +361,108 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
+	urlValues = &url.Values{}
+	if d.HasChange("disks") {
+		deletedDisks := make([]interface{}, 0)
+		addedDisks := make([]interface{}, 0)
+
+		oldDisks, newDisks := d.GetChange("disks")
+		oldConv := oldDisks.([]interface{})
+		newConv := newDisks.([]interface{})
+
+		for _, el := range oldConv {
+			if !isContainsDisk(newConv, el) {
+				deletedDisks = append(deletedDisks, el)
+			}
+		}
+
+		for _, el := range newConv {
+			if !isContainsDisk(oldConv, el) {
+				addedDisks = append(addedDisks, el)
+			}
+		}
+
+		if len(deletedDisks) > 0 {
+			urlValues.Add("computeId", d.Id())
+			urlValues.Add("force", "false")
+			_, err := c.DecortAPICall(ctx, "POST", ComputeStopAPI, urlValues)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			urlValues = &url.Values{}
+
+			for _, disk := range deletedDisks {
+				diskConv := disk.(map[string]interface{})
+				if diskConv["disk_name"].(string) == "bootdisk" {
+					continue
+				}
+				urlValues.Add("computeId", d.Id())
+				urlValues.Add("diskId", strconv.Itoa(diskConv["disk_id"].(int)))
+				urlValues.Add("permanently", strconv.FormatBool(diskConv["permanently"].(bool)))
+				_, err := c.DecortAPICall(ctx, "POST", ComputeDiskDeleteAPI, urlValues)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				urlValues = &url.Values{}
+			}
+			urlValues.Add("computeId", d.Id())
+			urlValues.Add("altBootId", "0")
+			_, err = c.DecortAPICall(ctx, "POST", ComputeStartAPI, urlValues)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			urlValues = &url.Values{}
+		}
+
+		if len(addedDisks) > 0 {
+			for _, disk := range addedDisks {
+				diskConv := disk.(map[string]interface{})
+				if diskConv["disk_name"].(string) == "bootdisk" {
+					continue
+				}
+				urlValues.Add("computeId", d.Id())
+				urlValues.Add("diskName", diskConv["disk_name"].(string))
+				urlValues.Add("size", strconv.Itoa(diskConv["size"].(int)))
+				if diskConv["disk_type"].(string) != "" {
+					urlValues.Add("diskType", diskConv["disk_type"].(string))
+				}
+				if diskConv["sep_id"].(int) != 0 {
+					urlValues.Add("sepId", strconv.Itoa(diskConv["sep_id"].(int)))
+				}
+				if diskConv["pool"].(string) != "" {
+					urlValues.Add("pool", diskConv["pool"].(string))
+				}
+				if diskConv["desc"].(string) != "" {
+					urlValues.Add("desc", diskConv["desc"].(string))
+				}
+				if diskConv["image_id"].(int) != 0 {
+					urlValues.Add("imageId", strconv.Itoa(diskConv["image_id"].(int)))
+				}
+				_, err := c.DecortAPICall(ctx, "POST", ComputeDiskAddAPI, urlValues)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				urlValues = &url.Values{}
+			}
+		}
+	}
+
 	// we may reuse dataSourceComputeRead here as we maintain similarity
 	// between Compute resource and Compute data source schemas
-	return dataSourceComputeRead(ctx, d, m)
+	return resourceComputeRead(ctx, d, m)
+}
+
+func isContainsDisk(els []interface{}, el interface{}) bool {
+	for _, elOld := range els {
+		elOldConv := elOld.(map[string]interface{})
+		elConv := el.(map[string]interface{})
+		if elOldConv["disk_name"].(string) == elConv["disk_name"].(string) {
+			return true
+		}
+	}
+	return false
 }
 
 func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -346,6 +487,244 @@ func resourceComputeDelete(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
+func ResourceComputeSchemaMake() map[string]*schema.Schema {
+	rets := map[string]*schema.Schema{
+		"name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Name of this compute. Compute names are case sensitive and must be unique in the resource group.",
+		},
+
+		"rg_id": {
+			Type:         schema.TypeInt,
+			Required:     true,
+			ValidateFunc: validation.IntAtLeast(1),
+			Description:  "ID of the resource group where this compute should be deployed.",
+		},
+
+		"driver": {
+			Type:         schema.TypeString,
+			Required:     true,
+			ForceNew:     true,
+			StateFunc:    statefuncs.StateFuncToUpper,
+			ValidateFunc: validation.StringInSlice([]string{"KVM_X86", "KVM_PPC"}, false), // observe case while validating
+			Description:  "Hardware architecture of this compute instance.",
+		},
+
+		"cpu": {
+			Type:         schema.TypeInt,
+			Required:     true,
+			ValidateFunc: validation.IntBetween(1, constants.MaxCpusPerCompute),
+			Description:  "Number of CPUs to allocate to this compute instance.",
+		},
+
+		"ram": {
+			Type:         schema.TypeInt,
+			Required:     true,
+			ValidateFunc: validation.IntAtLeast(constants.MinRamPerCompute),
+			Description:  "Amount of RAM in MB to allocate to this compute instance.",
+		},
+
+		"image_id": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			ForceNew:    true,
+			Description: "ID of the OS image to base this compute instance on.",
+		},
+
+		"boot_disk_size": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "This compute instance boot disk size in GB. Make sure it is large enough to accomodate selected OS image.",
+		},
+
+		"disks": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"disk_name": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "Name for disk",
+					},
+					"size": {
+						Type:        schema.TypeInt,
+						Required:    true,
+						Description: "Disk size in GiB",
+					},
+					"disk_type": {
+						Type:         schema.TypeString,
+						Computed:     true,
+						Optional:     true,
+						ValidateFunc: validation.StringInSlice([]string{"B", "D"}, false),
+						Description:  "The type of disk in terms of its role in compute: 'B=Boot, D=Data'",
+					},
+					"sep_id": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Optional:    true,
+						Description: "Storage endpoint provider ID; by default the same with boot disk",
+					},
+					"pool": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Optional:    true,
+						Description: "Pool name; by default will be chosen automatically",
+					},
+					"desc": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Optional:    true,
+						Description: "Optional description",
+					},
+					"image_id": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Optional:    true,
+						Description: "Specify image id for create disk from template",
+					},
+					"disk_id": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "Disk ID",
+					},
+					"permanently": {
+						Type:        schema.TypeBool,
+						Optional:    true,
+						Default:     false,
+						Description: "Disk deletion status",
+					},
+				},
+			},
+		},
+		"sep_id": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Computed:    true,
+			ForceNew:    true,
+			Description: "ID of SEP to create bootDisk on. Uses image's sepId if not set.",
+		},
+
+		"pool": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
+			ForceNew:    true,
+			Description: "Pool to use if sepId is set, can be also empty if needed to be chosen by system.",
+		},
+
+		"extra_disks": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			MaxItems: constants.MaxExtraDisksPerCompute,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+			Description: "Optional list of IDs of extra disks to attach to this compute. You may specify several extra disks.",
+		},
+
+		"network": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			MaxItems: constants.MaxNetworksPerCompute,
+			Elem: &schema.Resource{
+				Schema: networkSubresourceSchemaMake(),
+			},
+			Description: "Optional network connection(s) for this compute. You may specify several network blocks, one for each connection.",
+		},
+
+		/*
+			"ssh_keys": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: MaxSshKeysPerCompute,
+				Elem: &schema.Resource{
+					Schema: sshSubresourceSchemaMake(),
+				},
+				Description: "SSH keys to authorize on this compute instance.",
+			},
+		*/
+
+		"description": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Optional text description of this compute instance.",
+		},
+
+		"cloud_init": {
+			Type:             schema.TypeString,
+			Optional:         true,
+			Default:          "applied",
+			DiffSuppressFunc: cloudInitDiffSupperss,
+			Description:      "Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.",
+		},
+
+		// The rest are Compute properties, which are "computed" once it is created
+		"rg_name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the resource group where this compute instance is located.",
+		},
+
+		"account_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of the account this compute instance belongs to.",
+		},
+
+		"account_name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the account this compute instance belongs to.",
+		},
+
+		"boot_disk_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "This compute instance boot disk ID.",
+		},
+
+		"os_users": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: osUsersSubresourceSchemaMake(),
+			},
+			Description: "Guest OS users provisioned on this compute instance.",
+		},
+
+		"started": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			Description: "Is compute started.",
+		},
+		"detach_disks": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  true,
+		},
+		"permanently": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  true,
+		},
+		"is": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "system name",
+		},
+		"ipa_type": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "compute purpose",
+		},
+	}
+	return rets
+}
+
 func ResourceCompute() *schema.Resource {
 	return &schema.Resource{
 		SchemaVersion: 1,
@@ -360,185 +739,13 @@ func ResourceCompute() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create:  &constants.Timeout180s,
-			Read:    &constants.Timeout30s,
-			Update:  &constants.Timeout180s,
-			Delete:  &constants.Timeout60s,
-			Default: &constants.Timeout60s,
+			Create:  &constants.Timeout600s,
+			Read:    &constants.Timeout300s,
+			Update:  &constants.Timeout300s,
+			Delete:  &constants.Timeout300s,
+			Default: &constants.Timeout300s,
 		},
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of this compute. Compute names are case sensitive and must be unique in the resource group.",
-			},
-
-			"rg_id": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validation.IntAtLeast(1),
-				Description:  "ID of the resource group where this compute should be deployed.",
-			},
-
-			"driver": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				StateFunc:    statefuncs.StateFuncToUpper,
-				ValidateFunc: validation.StringInSlice([]string{"KVM_X86", "KVM_PPC"}, false), // observe case while validating
-				Description:  "Hardware architecture of this compute instance.",
-			},
-
-			"cpu": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validation.IntBetween(1, constants.MaxCpusPerCompute),
-				Description:  "Number of CPUs to allocate to this compute instance.",
-			},
-
-			"ram": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validation.IntAtLeast(constants.MinRamPerCompute),
-				Description:  "Amount of RAM in MB to allocate to this compute instance.",
-			},
-
-			"image_id": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				ForceNew:    true,
-				Description: "ID of the OS image to base this compute instance on.",
-			},
-
-			"boot_disk_size": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "This compute instance boot disk size in GB. Make sure it is large enough to accomodate selected OS image.",
-			},
-
-			"sep_id": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "ID of SEP to create bootDisk on. Uses image's sepId if not set.",
-			},
-
-			"pool": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "Pool to use if sepId is set, can be also empty if needed to be chosen by system.",
-			},
-
-			"extra_disks": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				MaxItems: constants.MaxExtraDisksPerCompute,
-				Elem: &schema.Schema{
-					Type: schema.TypeInt,
-				},
-				Description: "Optional list of IDs of extra disks to attach to this compute. You may specify several extra disks.",
-			},
-
-			"network": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				MaxItems: constants.MaxNetworksPerCompute,
-				Elem: &schema.Resource{
-					Schema: networkSubresourceSchemaMake(),
-				},
-				Description: "Optional network connection(s) for this compute. You may specify several network blocks, one for each connection.",
-			},
-
-			/*
-				"ssh_keys": {
-					Type:     schema.TypeList,
-					Optional: true,
-					MaxItems: MaxSshKeysPerCompute,
-					Elem: &schema.Resource{
-						Schema: sshSubresourceSchemaMake(),
-					},
-					Description: "SSH keys to authorize on this compute instance.",
-				},
-			*/
-
-			"description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Optional text description of this compute instance.",
-			},
-
-			"cloud_init": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				Default:          "applied",
-				DiffSuppressFunc: cloudInitDiffSupperss,
-				Description:      "Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.",
-			},
-
-			// The rest are Compute properties, which are "computed" once it is created
-			"rg_name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Name of the resource group where this compute instance is located.",
-			},
-
-			"account_id": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "ID of the account this compute instance belongs to.",
-			},
-
-			"account_name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Name of the account this compute instance belongs to.",
-			},
-
-			"boot_disk_id": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "This compute instance boot disk ID.",
-			},
-
-			"os_users": {
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: osUsersSubresourceSchemaMake(),
-				},
-				Description: "Guest OS users provisioned on this compute instance.",
-			},
-
-			"started": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Is compute started.",
-			},
-			"detach_disks": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
-			},
-			"permanently": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
-			},
-			"is": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "system name",
-			},
-			"ipa_type": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "compute purpose",
-			},
-		},
+		Schema: ResourceComputeSchemaMake(),
 	}
 }

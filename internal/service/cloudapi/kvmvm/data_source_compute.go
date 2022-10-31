@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -113,6 +114,36 @@ func parseComputeInterfacesToNetworks(ifaces []InterfaceRecord) []interface{} {
 	return result
 }
 
+func findInExtraDisks(DiskId uint, ExtraDisks []interface{}) bool {
+	for _, ExtraDisk := range ExtraDisks {
+		if DiskId == uint(ExtraDisk.(int)) {
+			return true
+		}
+	}
+	return false
+}
+
+func flattenComputeDisksDemo(disksList []DiskRecord, extraDisks []interface{}) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	for _, disk := range disksList {
+		if disk.Name == "bootdisk" || findInExtraDisks(disk.ID, extraDisks) { //skip main bootdisk and extraDisks
+			continue
+		}
+		temp := map[string]interface{}{
+			"disk_name": disk.Name,
+			"disk_id":   disk.ID,
+			"disk_type": disk.Type,
+			"sep_id":    disk.SepID,
+			"pool":      disk.Pool,
+			"desc":      disk.Desc,
+			"image_id":  disk.ImageID,
+			"size":      disk.SizeMax,
+		}
+		res = append(res, temp)
+	}
+	return res
+}
+
 func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	// This function expects that compFacts string contains response from API compute/get,
 	// i.e. detailed information about compute instance.
@@ -162,12 +193,12 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 	d.Set("sep_id", bootDisk.SepID)
 	d.Set("pool", bootDisk.Pool)
 
-	if len(model.Disks) > 0 {
-		log.Debugf("flattenCompute: calling parseComputeDisksToExtraDisks for %d disks", len(model.Disks))
-		if err = d.Set("extra_disks", parseComputeDisksToExtraDisks(model.Disks)); err != nil {
-			return err
-		}
-	}
+	//if len(model.Disks) > 0 {
+	//log.Debugf("flattenCompute: calling parseComputeDisksToExtraDisks for %d disks", len(model.Disks))
+	//if err = d.Set("extra_disks", parseComputeDisksToExtraDisks(model.Disks)); err != nil {
+	//return err
+	//}
+	//}
 
 	if len(model.Interfaces) > 0 {
 		log.Debugf("flattenCompute: calling parseComputeInterfacesToNetworks for %d interfaces", len(model.Interfaces))
@@ -181,6 +212,11 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 		if err = d.Set("os_users", parseOsUsers(model.OsUsers)); err != nil {
 			return err
 		}
+	}
+
+	err = d.Set("disks", flattenComputeDisksDemo(model.Disks, d.Get("extra_disks").(*schema.Set).List()))
+	if err != nil {
+		return err
 	}
 
 	return nil

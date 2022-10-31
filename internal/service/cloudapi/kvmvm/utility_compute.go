@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -91,16 +92,33 @@ func utilityComputeExtraDisksConfigure(ctx context.Context, d *schema.ResourceDa
 
 	detach_set := old_set.(*schema.Set).Difference(new_set.(*schema.Set))
 	log.Debugf("utilityComputeExtraDisksConfigure: detach set has %d items for Compute ID %s", detach_set.Len(), d.Id())
-	for _, diskId := range detach_set.List() {
+
+	if detach_set.Len() > 0 {
 		urlValues := &url.Values{}
 		urlValues.Add("computeId", d.Id())
-		urlValues.Add("diskId", fmt.Sprintf("%d", diskId.(int)))
-		_, err := c.DecortAPICall(ctx, "POST", ComputeDiskDetachAPI, urlValues)
+		urlValues.Add("force", "false")
+		_, err := c.DecortAPICall(ctx, "POST", ComputeStopAPI, urlValues)
 		if err != nil {
-			// failed to detach disk - there will be partial resource update
-			log.Errorf("utilityComputeExtraDisksConfigure: failed to detach disk ID %d from Compute ID %s: %s", diskId.(int), d.Id(), err)
-			apiErrCount++
-			lastSavedError = err
+			return err
+		}
+		for _, diskId := range detach_set.List() {
+			urlValues := &url.Values{}
+			urlValues.Add("computeId", d.Id())
+			urlValues.Add("diskId", fmt.Sprintf("%d", diskId.(int)))
+			_, err := c.DecortAPICall(ctx, "POST", ComputeDiskDetachAPI, urlValues)
+			if err != nil {
+				// failed to detach disk - there will be partial resource update
+				log.Errorf("utilityComputeExtraDisksConfigure: failed to detach disk ID %d from Compute ID %s: %s", diskId.(int), d.Id(), err)
+				apiErrCount++
+				lastSavedError = err
+			}
+		}
+		urlValues = &url.Values{}
+		urlValues.Add("computeId", d.Id())
+		urlValues.Add("altBootId", "0")
+		_, err = c.DecortAPICall(ctx, "POST", ComputeStartAPI, urlValues)
+		if err != nil {
+			return err
 		}
 	}
 

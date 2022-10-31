@@ -296,11 +296,11 @@ func ResourceVins() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create:  &constants.Timeout180s,
-			Read:    &constants.Timeout30s,
-			Update:  &constants.Timeout180s,
-			Delete:  &constants.Timeout60s,
-			Default: &constants.Timeout60s,
+			Create:  &constants.Timeout600s,
+			Read:    &constants.Timeout300s,
+			Update:  &constants.Timeout300s,
+			Delete:  &constants.Timeout300s,
+			Default: &constants.Timeout300s,
 		},
 
 		Schema: resourceVinsSchemaMake(),

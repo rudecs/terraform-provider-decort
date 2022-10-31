@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,11 +32,19 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 
 package disks
 
-const disksCreateAPI = "/restmachine/cloudapi/disks/create"
-const disksGetAPI = "/restmachine/cloudapi/disks/get"
-const disksListAPI = "/restmachine/cloudapi/disks/list"
-const disksResizeAPI = "/restmachine/cloudapi/disks/resize2"
-const disksRenameAPI = "/restmachine/cloudapi/disks/rename"
-const disksDeleteAPI = "/restmachine/cloudapi/disks/delete"
-const disksIOLimitAPI = "/restmachine/cloudapi/disks/limitIO"
-const disksRestoreAPI = "/restmachine/cloudapi/disks/restore"
+const (
+	disksCreateAPI         = "/restmachine/cloudapi/disks/create"
+	disksGetAPI            = "/restmachine/cloudapi/disks/get"
+	disksListAPI           = "/restmachine/cloudapi/disks/list"
+	disksResizeAPI         = "/restmachine/cloudapi/disks/resize2"
+	disksRenameAPI         = "/restmachine/cloudapi/disks/rename"
+	disksDeleteAPI         = "/restmachine/cloudapi/disks/delete"
+	disksIOLimitAPI        = "/restmachine/cloudapi/disks/limitIO"
+	disksRestoreAPI        = "/restmachine/cloudapi/disks/restore"
+	disksListTypesAPI      = "/restmachine/cloudapi/disks/listTypes"
+	disksListDeletedAPI    = "/restmachine/cloudapi/disks/listDeleted"
+	disksListUnattachedAPI = "/restmachine/cloudapi/disks/listUnattached"
+
+	disksSnapshotDeleteAPI   = "/restmachine/cloudapi/disks/snapshotDelete"
+	disksSnapshotRollbackAPI = "/restmachine/cloudapi/disks/snapshotRollback"
+)

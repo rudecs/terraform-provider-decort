@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -109,3 +110,66 @@ type IOTune struct {
 	WriteIopsSec     int `json:"write_iops_sec"`
 	WriteIopsSecMax  int `json:"write_iops_sec_max"`
 }
+
+type Pool struct {
+	Name  string   `json:"name"`
+	Types []string `json:"types"`
+}
+
+type PoolList []Pool
+
+type TypeDetailed struct {
+	Pools []Pool `json:"pools"`
+	SepID int    `json:"sepId"`
+}
+
+type TypesDetailedList []TypeDetailed
+
+type TypesList []string
+
+type Unattached struct {
+	Ckey                string                 `json:"_ckey"`
+	Meta                []interface{}          `json:"_meta"`
+	AccountID           int                    `json:"accountId"`
+	AccountName         string                 `json:"accountName"`
+	Acl                 map[string]interface{} `json:"acl"`
+	BootPartition       int                    `json:"bootPartition"`
+	CreatedTime         int                    `json:"createdTime"`
+	DeletedTime         int                    `json:"deletedTime"`
+	Desc                string                 `json:"desc"`
+	DestructionTime     int                    `json:"destructionTime"`
+	DiskPath            string                 `json:"diskPath"`
+	GridID              int                    `json:"gid"`
+	GUID                int                    `json:"guid"`
+	ID                  int                    `json:"id"`
+	ImageID             int                    `json:"imageId"`
+	Images              []int                  `json:"images"`
+	IOTune              IOTune                 `json:"iotune"`
+	IQN                 string                 `json:"iqn"`
+	Login               string                 `json:"login"`
+	Milestones          int                    `json:"milestones"`
+	Name                string                 `json:"name"`
+	Order               int                    `json:"order"`
+	Params              string                 `json:"params"`
+	ParentID            int                    `json:"parentId"`
+	Passwd              string                 `json:"passwd"`
+	PciSlot             int                    `json:"pciSlot"`
+	Pool                string                 `json:"pool"`
+	PurgeAttempts       int                    `json:"purgeAttempts"`
+	PurgeTime           int                    `json:"purgeTime"`
+	RealityDeviceNumber int                    `json:"realityDeviceNumber"`
+	ReferenceID         string                 `json:"referenceId"`
+	ResID               string                 `json:"resId"`
+	ResName             string                 `json:"resName"`
+	Role                string                 `json:"role"`
+	SepID               int                    `json:"sepId"`
+	SizeMax             int                    `json:"sizeMax"`
+	SizeUsed            int                    `json:"sizeUsed"`
+	Snapshots           []Snapshot             `json:"snapshots"`
+	Status              string                 `json:"status"`
+	TechStatus          string                 `json:"techStatus"`
+	Type                string                 `json:"type"`
+	VMID                int                    `json:"vmid"`
+}
+
+type UnattachedList []Unattached

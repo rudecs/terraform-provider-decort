@@ -39,6 +39,7 @@ func NewRersourcesMap() map[string]*schema.Resource {
 		"decort_resgroup":          rg.ResourceResgroup(),
 		"decort_kvmvm":             kvmvm.ResourceCompute(),
 		"decort_disk":              disks.ResourceDisk(),
+		"decort_disk_snapshot":     disks.ResourceDiskSnapshot(),
 		"decort_vins":              vins.ResourceVins(),
 		"decort_pfw":               pfw.ResourcePfw(),
 		"decort_k8s":               k8s.ResourceK8s(),
