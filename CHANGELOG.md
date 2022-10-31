@@ -14,8 +14,8 @@
 ### New features
 
 - add dockerfile for creating an image for the tf provider
-- change behaviour to disks: check the disk status during update the tf state
-- add disk block to kvmvm resource
+- change behaviour to disk resource: check the disk status during update the tf state
+- add disks block to kvmvm resource
 
 ### New articles on wiki
 
