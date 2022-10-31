@@ -1,7 +1,7 @@
 ### New data sources
 
 - decort_disk_snapshot_list
-- decort_snapshot
+- decort_disk_snapshot
 - decort_disk_list_deleted
 - decort_disk_list_unattached
 - decort_disk_list_types
