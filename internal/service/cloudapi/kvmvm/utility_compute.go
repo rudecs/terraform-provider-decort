@@ -146,7 +146,7 @@ func utilityComputeExtraDisksConfigure(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func utilityComputeNetworksConfigure(ctx context.Context, d *schema.ResourceData, m interface{}, do_delta bool) error {
+func utilityComputeNetworksConfigure(ctx context.Context, d *schema.ResourceData, m interface{}, do_delta bool, skip_zero bool) error {
 	// "d" is filled with data according to computeResource schema, so extra networks config is retrieved via "network" key
 	// If do_delta is true, this function will identify changes between new and existing specs for network and try to
 	// update compute configuration accordingly
@@ -165,7 +165,10 @@ func utilityComputeNetworksConfigure(ctx context.Context, d *schema.ResourceData
 			return nil
 		}
 
-		for _, runner := range new_set.(*schema.Set).List() {
+		for i, runner := range new_set.(*schema.Set).List() {
+			if i == 0 && skip_zero {
+				continue
+			}
 			urlValues := &url.Values{}
 			net_data := runner.(map[string]interface{})
 			urlValues.Add("computeId", d.Id())

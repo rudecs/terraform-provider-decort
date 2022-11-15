@@ -76,9 +76,8 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	urlValues.Add("cpu", fmt.Sprintf("%d", d.Get("cpu").(int)))
 	urlValues.Add("ram", fmt.Sprintf("%d", d.Get("ram").(int)))
 	urlValues.Add("imageId", fmt.Sprintf("%d", d.Get("image_id").(int)))
-	urlValues.Add("bootDisk", fmt.Sprintf("%d", d.Get("boot_disk_size").(int)))
-	urlValues.Add("netType", "NONE") // at the 1st step create isolated compute
-	urlValues.Add("start", "0")      // at the 1st step create compute in a stopped state
+	urlValues.Add("netType", "NONE")
+	urlValues.Add("start", "0") // at the 1st step create compute in a stopped state
 
 	argVal, argSet := d.GetOk("description")
 	if argSet {
@@ -97,8 +96,25 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		urlValues.Add("ipaType", ipaType.(string))
 	}
 
+	if bootSize, ok := d.GetOk("boot_disk_size"); ok {
+		urlValues.Add("bootDisk", fmt.Sprintf("%d", bootSize.(int)))
+	}
+
 	if IS, ok := d.GetOk("is"); ok {
 		urlValues.Add("IS", IS.(string))
+	}
+	if networks, ok := d.GetOk("network"); ok {
+		if networks.(*schema.Set).Len() > 0 {
+			ns := networks.(*schema.Set).List()
+			defaultNetwork := ns[0].(map[string]interface{})
+			urlValues.Set("netType", defaultNetwork["net_type"].(string))
+			urlValues.Add("netId", fmt.Sprintf("%d", defaultNetwork["net_id"].(int)))
+			ipaddr, ipSet := defaultNetwork["ip_address"] // "ip_address" key is optional
+			if ipSet {
+				urlValues.Add("ipAddr", ipaddr.(string))
+			}
+
+		}
 	}
 
 	/*
@@ -172,7 +188,7 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	argVal, argSet = d.GetOk("network")
 	if argSet && argVal.(*schema.Set).Len() > 0 {
 		log.Debugf("resourceComputeCreate: calling utilityComputeNetworksConfigure to attach %d network(s)", argVal.(*schema.Set).Len())
-		err = utilityComputeNetworksConfigure(ctx, d, m, false) // do_delta=false, as we are working on a new compute
+		err = utilityComputeNetworksConfigure(ctx, d, m, false, true) // do_delta=false, as we are working on a new compute
 		if err != nil {
 			log.Errorf("resourceComputeCreate: error when attaching networks to a new Compute ID %d: %s", compId, err)
 			cleanup = true
@@ -332,7 +348,7 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	// 4. Calculate and apply changes to network connections
-	err := utilityComputeNetworksConfigure(ctx, d, m, true) // pass do_delta = true to apply changes, if any
+	err := utilityComputeNetworksConfigure(ctx, d, m, true, false) // pass do_delta = true to apply changes, if any
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -534,7 +550,7 @@ func ResourceComputeSchemaMake() map[string]*schema.Schema {
 
 		"boot_disk_size": {
 			Type:        schema.TypeInt,
-			Required:    true,
+			Optional:    true,
 			Description: "This compute instance boot disk size in GB. Make sure it is large enough to accomodate selected OS image.",
 		},
 
@@ -628,6 +644,7 @@ func ResourceComputeSchemaMake() map[string]*schema.Schema {
 		"network": {
 			Type:     schema.TypeSet,
 			Optional: true,
+			MinItems: 1,
 			MaxItems: constants.MaxNetworksPerCompute,
 			Elem: &schema.Resource{
 				Schema: networkSubresourceSchemaMake(),
