@@ -34,6 +34,7 @@ package k8s
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -41,7 +42,7 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 )
 
-func utilityK8sWgCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*K8sNodeRecord, error) {
+func utilityK8sWgCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*K8SGroup, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
@@ -52,24 +53,29 @@ func utilityK8sWgCheckPresence(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if resp == "" {
-		return nil, nil
+		return nil, err
 	}
 
-	var k8s K8sRecord
+	var k8s K8SRecord
 	if err := json.Unmarshal([]byte(resp), &k8s); err != nil {
 		return nil, err
 	}
 
-	id, err := strconv.Atoi(d.Id())
-	if err != nil {
-		return nil, err
+	var id int
+	if d.Id() != "" {
+		id, err = strconv.Atoi(d.Id())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		id = d.Get("wg_id").(int)
 	}
 
-	for _, wg := range k8s.Groups.Workers {
-		if wg.ID == id {
+	for _, wg := range k8s.K8SGroups.Workers {
+		if wg.ID == uint64(id) {
 			return &wg, nil
 		}
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("Not found wg with id: %v in k8s cluster: %v", id, k8s.ID)
 }

@@ -44,6 +44,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/kvmvm"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -79,10 +80,11 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues.Add("workerRam", strconv.Itoa(workerNode.Ram))
 	urlValues.Add("workerDisk", strconv.Itoa(workerNode.Disk))
 
-	//if withLB, ok := d.GetOk("with_lb"); ok {
-	//urlValues.Add("withLB", strconv.FormatBool(withLB.(bool)))
-	//}
-	urlValues.Add("withLB", strconv.FormatBool(true))
+	if withLB, ok := d.GetOk("with_lb"); ok {
+		urlValues.Add("withLB", strconv.FormatBool(withLB.(bool)))
+	} else {
+		urlValues.Add("withLB", strconv.FormatBool(true))
+	}
 
 	if extNet, ok := d.GetOk("extnet_id"); ok {
 		urlValues.Add("extnetId", strconv.Itoa(extNet.(int)))
@@ -90,9 +92,9 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		urlValues.Add("extnetId", "0")
 	}
 
-	//if desc, ok := d.GetOk("desc"); ok {
-	//urlValues.Add("desc", desc.(string))
-	//}
+	if desc, ok := d.GetOk("desc"); ok {
+		urlValues.Add("desc", desc.(string))
+	}
 
 	resp, err := c.DecortAPICall(ctx, "POST", K8sCreateAPI, urlValues)
 	if err != nil {
@@ -126,59 +128,57 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		time.Sleep(time.Second * 10)
 	}
 
-	k8s, err := utilityK8sCheckPresence(ctx, d, m)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.Set("default_wg_id", k8s.Groups.Workers[0].ID)
-
-	urlValues = &url.Values{}
-	urlValues.Add("lbId", strconv.Itoa(k8s.LbID))
-
-	resp, err = c.DecortAPICall(ctx, "POST", LbGetAPI, urlValues)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	var lb LbRecord
-	if err := json.Unmarshal([]byte(resp), &lb); err != nil {
-		return diag.FromErr(err)
-	}
-	d.Set("extnet_id", lb.ExtNetID)
-	d.Set("lb_ip", lb.PrimaryNode.FrontendIP)
-
-	urlValues = &url.Values{}
-	urlValues.Add("k8sId", d.Id())
-	kubeconfig, err := c.DecortAPICall(ctx, "POST", K8sGetConfigAPI, urlValues)
-	if err != nil {
-		log.Warnf("could not get kubeconfig: %v", err)
-	}
-	d.Set("kubeconfig", kubeconfig)
-
-	return nil
+	return resourceK8sRead(ctx, d, m)
 }
 
 func resourceK8sRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Debugf("resourceK8sRead: called with id %s, rg %d", d.Id(), d.Get("rg_id").(int))
+	//log.Debugf("resourceK8sRead: called with id %s, rg %d", d.Id(), d.Get("rg_id").(int))
 
-	k8s, err := utilityK8sCheckPresence(ctx, d, m)
-	if k8s == nil {
+	k8s, err := utilityDataK8sCheckPresence(ctx, d, m)
+	if err != nil {
 		d.SetId("")
 		return diag.FromErr(err)
 	}
+	k8sList, err := utilityK8sListCheckPresence(ctx, d, m, K8sListAPI)
+	if err != nil {
+		d.SetId("")
+		return diag.FromErr(err)
+	}
+	curK8s := K8SItem{}
+	for _, k8sCluster := range k8sList {
+		if k8sCluster.ID == k8s.ID {
+			curK8s = k8sCluster
+		}
+	}
+	if curK8s.ID == 0 {
+		return diag.Errorf("Cluster with id %d not found", k8s.ID)
+	}
+	d.Set("vins_id", curK8s.VINSID)
 
-	d.Set("name", k8s.Name)
-	d.Set("rg_id", k8s.RgID)
-	d.Set("k8sci_id", k8s.CI)
-	d.Set("wg_name", k8s.Groups.Workers[0].Name)
-	d.Set("masters", nodeToResource(k8s.Groups.Masters))
-	d.Set("workers", nodeToResource(k8s.Groups.Workers[0]))
-	d.Set("default_wg_id", k8s.Groups.Workers[0].ID)
+	masterComputeList := make([]kvmvm.ComputeGetResp, 0, len(k8s.K8SGroups.Masters.DetailedInfo))
+	workersComputeList := make([]kvmvm.ComputeGetResp, 0, len(k8s.K8SGroups.Workers))
+	for _, masterNode := range k8s.K8SGroups.Masters.DetailedInfo {
+		compute, err := utilityComputeCheckPresence(ctx, d, m, masterNode.ID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		masterComputeList = append(masterComputeList, *compute)
+	}
+	for _, worker := range k8s.K8SGroups.Workers {
+		for _, info := range worker.DetailedInfo {
+			compute, err := utilityComputeCheckPresence(ctx, d, m, info.ID)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			workersComputeList = append(workersComputeList, *compute)
+		}
+	}
+
+	flattenResourceK8s(d, *k8s, masterComputeList, workersComputeList)
 
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
-	urlValues.Add("lbId", strconv.Itoa(k8s.LbID))
+	urlValues.Add("lbId", strconv.FormatUint(k8s.LBID, 10))
 
 	resp, err := c.DecortAPICall(ctx, "POST", LbGetAPI, urlValues)
 	if err != nil {
@@ -225,21 +225,21 @@ func resourceK8sUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 			return diag.FromErr(err)
 		}
 
-		wg := k8s.Groups.Workers[0]
+		wg := k8s.K8SGroups.Workers[0]
 		urlValues := &url.Values{}
 		urlValues.Add("k8sId", d.Id())
-		urlValues.Add("workersGroupId", strconv.Itoa(wg.ID))
+		urlValues.Add("workersGroupId", strconv.FormatUint(wg.ID, 10))
 
 		newWorkers := parseNode(d.Get("workers").([]interface{}))
 
-		if newWorkers.Num > wg.Num {
-			urlValues.Add("num", strconv.Itoa(newWorkers.Num-wg.Num))
+		if uint64(newWorkers.Num) > wg.Num {
+			urlValues.Add("num", strconv.FormatUint(uint64(newWorkers.Num)-wg.Num, 10))
 			if _, err := c.DecortAPICall(ctx, "POST", K8sWorkerAddAPI, urlValues); err != nil {
 				return diag.FromErr(err)
 			}
 		} else {
-			for i := wg.Num - 1; i >= newWorkers.Num; i-- {
-				urlValues.Set("workerId", strconv.Itoa(wg.DetailedInfo[i].ID))
+			for i := int(wg.Num) - 1; i >= newWorkers.Num; i-- {
+				urlValues.Set("workerId", strconv.FormatUint(wg.DetailedInfo[i].ID, 10))
 				if _, err := c.DecortAPICall(ctx, "POST", K8sWorkerDeleteAPI, urlValues); err != nil {
 					return diag.FromErr(err)
 				}
@@ -306,10 +306,11 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 		"masters": {
 			Type:     schema.TypeList,
 			Optional: true,
+			Computed: true,
 			ForceNew: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
-				Schema: nodeK8sSubresourceSchemaMake(),
+				Schema: mastersSchemaMake(),
 			},
 			Description: "Master node(s) configuration.",
 		},
@@ -317,20 +318,21 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 		"workers": {
 			Type:     schema.TypeList,
 			Optional: true,
+			Computed: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
-				Schema: nodeK8sSubresourceSchemaMake(),
+				Schema: workersSchemaMake(),
 			},
 			Description: "Worker node(s) configuration.",
 		},
 
-		//"with_lb": {
-		//Type:        schema.TypeBool,
-		//Optional:    true,
-		//ForceNew:    true,
-		//Default:     true,
-		//Description: "Create k8s with load balancer if true.",
-		//},
+		"with_lb": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			ForceNew:    true,
+			Default:     true,
+			Description: "Create k8s with load balancer if true.",
+		},
 
 		"extnet_id": {
 			Type:        schema.TypeInt,
@@ -340,16 +342,79 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			Description: "ID of the external network to connect workers to. If omitted network will be chosen by the platfom.",
 		},
 
-		//"desc": {
-		//Type:        schema.TypeString,
-		//Optional:    true,
-		//Description: "Text description of this instance.",
-		//},
+		"desc": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Text description of this instance.",
+		},
 
+		"acl": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: aclGroupSchemaMake(),
+			},
+		},
+		"account_id": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"account_name": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"bservice_id": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"created_by": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"created_time": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"deleted_by": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"deleted_time": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		"k8s_ci_name": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"lb_id": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
 		"lb_ip": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "IP address of default load balancer.",
+		},
+		"rg_name": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"status": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"tech_status": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"updated_by": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"updated_time": {
+			Type:     schema.TypeInt,
+			Computed: true,
 		},
 
 		"default_wg_id": {
@@ -362,6 +427,11 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Kubeconfig for cluster access.",
+		},
+		"vins_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of default vins for this instace.",
 		},
 	}
 }
@@ -380,7 +450,7 @@ func ResourceK8s() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create:  &constants.Timeout600s,
+			Create:  &constants.Timeout30m,
 			Read:    &constants.Timeout300s,
 			Update:  &constants.Timeout300s,
 			Delete:  &constants.Timeout300s,

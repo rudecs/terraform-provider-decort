@@ -49,4 +49,7 @@ const (
 	ComputeUpdateAPI     = "/restmachine/cloudapi/compute/update"
 	ComputeDiskAddAPI    = "/restmachine/cloudapi/compute/diskAdd"
 	ComputeDiskDeleteAPI = "/restmachine/cloudapi/compute/diskDel"
+	ComputeRestoreAPI    = "/restmachine/cloudapi/compute/restore"
+	ComputeEnableAPI     = "/restmachine/cloudapi/compute/enable"
+	ComputeDisableAPI    = "/restmachine/cloudapi/compute/disable"
 )

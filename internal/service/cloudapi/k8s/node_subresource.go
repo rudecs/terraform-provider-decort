@@ -103,3 +103,59 @@ func nodeK8sSubresourceSchemaMake() map[string]*schema.Schema {
 		},
 	}
 }
+
+func mastersSchemaMake() map[string]*schema.Schema {
+	masters := masterGroupSchemaMake()
+	masters["num"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Required:    true,
+		Description: "Number of nodes to create.",
+	}
+	masters["cpu"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Required:    true,
+		ForceNew:    true,
+		Description: "Node CPU count.",
+	}
+	masters["ram"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Required:    true,
+		ForceNew:    true,
+		Description: "Node RAM in MB.",
+	}
+	masters["disk"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Required:    true,
+		ForceNew:    true,
+		Description: "Node boot disk size in GB.",
+	}
+	return masters
+}
+
+func workersSchemaMake() map[string]*schema.Schema {
+	workers := k8sGroupListSchemaMake()
+	workers["num"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Required:    true,
+		Description: "Number of nodes to create.",
+	}
+	workers["cpu"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Required:    true,
+		ForceNew:    true,
+		Description: "Node CPU count.",
+	}
+	workers["ram"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Required:    true,
+		ForceNew:    true,
+		Description: "Node RAM in MB.",
+	}
+	workers["disk"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Required:    true,
+		ForceNew:    true,
+		Description: "Node boot disk size in GB.",
+	}
+	return workers
+}

@@ -34,6 +34,7 @@ package kvmvm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -41,6 +42,7 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
 	"github.com/rudecs/terraform-provider-decort/internal/statefuncs"
+	"github.com/rudecs/terraform-provider-decort/internal/status"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -208,6 +210,20 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
+	if enabled, ok := d.GetOk("enabled"); ok {
+		api := ComputeDisableAPI
+		if enabled.(bool) {
+			api = ComputeEnableAPI
+		}
+		urlValues := &url.Values{}
+		urlValues.Add("computeId", fmt.Sprintf("%d", compId))
+		log.Debugf("resourceComputeCreate: enable=%t Compute ID %d after completing its resource configuration", compId, enabled)
+		if _, err := c.DecortAPICall(ctx, "POST", api, urlValues); err != nil {
+			return diag.FromErr(err)
+		}
+
+	}
+
 	if !cleanup {
 		if disks, ok := d.GetOk("disks"); ok {
 			log.Debugf("resourceComputeCreate: Create disks on ComputeID: %d", compId)
@@ -258,7 +274,52 @@ func resourceComputeRead(ctx context.Context, d *schema.ResourceData, m interfac
 	log.Debugf("resourceComputeRead: called for Compute name %s, RG ID %d",
 		d.Get("name").(string), d.Get("rg_id").(int))
 
+	c := m.(*controller.ControllerCfg)
+
 	compFacts, err := utilityComputeCheckPresence(ctx, d, m)
+	if compFacts == "" {
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		// Compute with such name and RG ID was not found
+		return nil
+	}
+
+	compute := &ComputeGetResp{}
+	err = json.Unmarshal([]byte(compFacts), compute)
+
+	log.Debugf("resourceComputeRead: compute is: %+v", compute)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	switch compute.Status {
+	case status.Deleted:
+		urlValues := &url.Values{}
+		urlValues.Add("computeId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", ComputeRestoreAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		_, err = c.DecortAPICall(ctx, "POST", ComputeEnableAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	case status.Destroyed:
+		d.SetId("")
+		return resourceComputeCreate(ctx, d, m)
+	case status.Disabled:
+		log.Debugf("The compute is in status: %s, may troubles can be occured with update. Please, enable compute first.", compute.Status)
+	case status.Redeploying:
+	case status.Deleting:
+	case status.Destroying:
+		return diag.Errorf("The compute is in progress with status: %s", compute.Status)
+	case status.Modeled:
+		return diag.Errorf("The compute is in status: %s, please, contant the support for more information", compute.Status)
+	}
+
+	compFacts, err = utilityComputeCheckPresence(ctx, d, m)
+	log.Debugf("resourceComputeRead: after changes compute is: %s", compFacts)
 	if compFacts == "" {
 		if err != nil {
 			return diag.FromErr(err)
@@ -282,6 +343,56 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		d.Id(), d.Get("name").(string), d.Get("rg_id").(int))
 
 	c := m.(*controller.ControllerCfg)
+
+	computeRaw, err := utilityComputeCheckPresence(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	compute := &ComputeGetResp{}
+	err = json.Unmarshal([]byte(computeRaw), compute)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if d.HasChange("enabled") {
+		enabled := d.Get("enabled")
+		api := ComputeDisableAPI
+		if enabled.(bool) {
+			api = ComputeEnableAPI
+		}
+		urlValues := &url.Values{}
+		urlValues.Add("computeId", d.Id())
+		log.Debugf("resourceComputeUpdate: enable=%t Compute ID %s after completing its resource configuration", d.Id(), enabled)
+		if _, err := c.DecortAPICall(ctx, "POST", api, urlValues); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	// check compute statuses
+	switch compute.Status {
+	case status.Deleted:
+		urlValues := &url.Values{}
+		urlValues.Add("computeId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", ComputeRestoreAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		_, err = c.DecortAPICall(ctx, "POST", ComputeEnableAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	case status.Destroyed:
+		d.SetId("")
+		return resourceComputeCreate(ctx, d, m)
+	case status.Disabled:
+		log.Debugf("The compute is in status: %s, may troubles can be occured with update. Please, enable compute first.", compute.Status)
+	case status.Redeploying:
+	case status.Deleting:
+	case status.Destroying:
+		return diag.Errorf("The compute is in progress with status: %s", compute.Status)
+	case status.Modeled:
+		return diag.Errorf("The compute is in status: %s, please, contant the support for more information", compute.Status)
+	}
 
 	/*
 		1. Resize CPU/RAM
@@ -348,7 +459,7 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	// 4. Calculate and apply changes to network connections
-	err := utilityComputeNetworksConfigure(ctx, d, m, true, false) // pass do_delta = true to apply changes, if any
+	err = utilityComputeNetworksConfigure(ctx, d, m, true, false) // pass do_delta = true to apply changes, if any
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -678,6 +789,13 @@ func ResourceComputeSchemaMake() map[string]*schema.Schema {
 			Description:      "Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.",
 		},
 
+		"enabled": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Computed:    true,
+			Description: "If true - enable compute, else - disable",
+		},
+
 		// The rest are Compute properties, which are "computed" once it is created
 		"rg_name": {
 			Type:        schema.TypeString,
@@ -715,7 +833,7 @@ func ResourceComputeSchemaMake() map[string]*schema.Schema {
 		"started": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     true,
+			Computed:    true,
 			Description: "Is compute started.",
 		},
 		"detach_disks": {

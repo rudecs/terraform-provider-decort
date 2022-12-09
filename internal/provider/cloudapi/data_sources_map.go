@@ -26,6 +26,7 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/disks"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/extnet"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/image"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/k8s"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/kvmvm"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/lb"
 	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/locations"
@@ -39,6 +40,11 @@ func NewDataSourcesMap() map[string]*schema.Resource {
 		"decort_account":                        account.DataSourceAccount(),
 		"decort_resgroup":                       rg.DataSourceResgroup(),
 		"decort_kvmvm":                          kvmvm.DataSourceCompute(),
+		"decort_k8s":                            k8s.DataSourceK8s(),
+		"decort_k8s_list":                       k8s.DataSourceK8sList(),
+		"decort_k8s_list_deleted":               k8s.DataSourceK8sListDeleted(),
+		"decort_k8s_wg":                         k8s.DataSourceK8sWg(),
+		"decort_k8s_wg_list":                    k8s.DataSourceK8sWgList(),
 		"decort_vins":                           vins.DataSourceVins(),
 		"decort_snapshot_list":                  snapshot.DataSourceSnapshotList(),
 		"decort_disk":                           disks.DataSourceDisk(),

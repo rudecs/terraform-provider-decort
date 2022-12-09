@@ -35,11 +35,13 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/kvmvm"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -91,23 +93,51 @@ func resourceK8sWgCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	//time.Sleep(time.Second * 5)
 	//}
 
-	return nil
+	return resourceK8sWgRead(ctx, d, m)
 }
 
 func resourceK8sWgRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Debugf("resourceK8sWgRead: called with k8s id %d", d.Get("k8s_id").(int))
+	log.Debugf("resourceK8sWgRead: called with %v", d.Id())
 
-	wg, err := utilityK8sWgCheckPresence(ctx, d, m)
-	if wg == nil {
-		d.SetId("")
+	k8s, err := utilityDataK8sCheckPresence(ctx, d, m)
+	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.Set("name", wg.Name)
-	d.Set("num", wg.Num)
-	d.Set("cpu", wg.Cpu)
-	d.Set("ram", wg.Ram)
-	d.Set("disk", wg.Disk)
+	var id int
+	if d.Id() != "" {
+		id, err = strconv.Atoi(strings.Split(d.Id(), "#")[0])
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		id = d.Get("wg_id").(int)
+	}
+
+	curWg := K8SGroup{}
+	for _, wg := range k8s.K8SGroups.Workers {
+		if wg.ID == uint64(id) {
+			curWg = wg
+			break
+		}
+	}
+	if curWg.ID == 0 {
+		return diag.Errorf("Not found wg with id: %v in k8s cluster: %v", id, k8s.ID)
+	}
+
+	workersComputeList := make([]kvmvm.ComputeGetResp, 0, 0)
+	for _, info := range curWg.DetailedInfo {
+		compute, err := utilityComputeCheckPresence(ctx, d, m, info.ID)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		workersComputeList = append(workersComputeList, *compute)
+	}
+
+	d.SetId(strings.Split(d.Id(), "#")[0])
+	d.Set("k8s_id", k8s.ID)
+	d.Set("wg_id", curWg.ID)
+	flattenWgData(d, curWg, workersComputeList)
 
 	return nil
 }
@@ -126,15 +156,15 @@ func resourceK8sWgUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
 	urlValues.Add("workersGroupId", d.Id())
 
-	if newNum := d.Get("num").(int); newNum > wg.Num {
-		urlValues.Add("num", strconv.Itoa(newNum-wg.Num))
+	if newNum := d.Get("num").(int); uint64(newNum) > wg.Num {
+		urlValues.Add("num", strconv.FormatUint(uint64(newNum)-wg.Num, 10))
 		_, err := c.DecortAPICall(ctx, "POST", K8sWorkerAddAPI, urlValues)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	} else {
-		for i := wg.Num - 1; i >= newNum; i-- {
-			urlValues.Set("workerId", strconv.Itoa(wg.DetailedInfo[i].ID))
+		for i := int(wg.Num) - 1; i >= newNum; i-- {
+			urlValues.Set("workerId", strconv.FormatUint(wg.DetailedInfo[i].ID, 10))
 			_, err := c.DecortAPICall(ctx, "POST", K8sWorkerDeleteAPI, urlValues)
 			if err != nil {
 				return diag.FromErr(err)
@@ -159,7 +189,7 @@ func resourceK8sWgDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
-	urlValues.Add("workersGroupId", strconv.Itoa(wg.ID))
+	urlValues.Add("workersGroupId", strconv.FormatUint(wg.ID, 10))
 
 	_, err = c.DecortAPICall(ctx, "POST", K8sWgDeleteAPI, urlValues)
 	if err != nil {
@@ -214,6 +244,43 @@ func resourceK8sWgSchemaMake() map[string]*schema.Schema {
 			ForceNew:    true,
 			Default:     0,
 			Description: "Worker node boot disk size. If unspecified or 0, size is defined by OS image size.",
+		},
+		"wg_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of k8s worker Group.",
+		},
+		"detailed_info": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: detailedInfoSchemaMake(),
+			},
+		},
+		"labels": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"guid": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"annotations": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"taints": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
 		},
 	}
 }

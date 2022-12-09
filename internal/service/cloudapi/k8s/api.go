@@ -31,19 +31,23 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 
 package k8s
 
-const K8sCreateAPI = "/restmachine/cloudapi/k8s/create"
-const K8sGetAPI = "/restmachine/cloudapi/k8s/get"
-const K8sUpdateAPI = "/restmachine/cloudapi/k8s/update"
-const K8sDeleteAPI = "/restmachine/cloudapi/k8s/delete"
+const (
+	K8sCreateAPI      = "/restmachine/cloudapi/k8s/create"
+	K8sGetAPI         = "/restmachine/cloudapi/k8s/get"
+	K8sUpdateAPI      = "/restmachine/cloudapi/k8s/update"
+	K8sDeleteAPI      = "/restmachine/cloudapi/k8s/delete"
+	K8sListAPI        = "/restmachine/cloudapi/k8s/list"
+	K8sListDeletedAPI = "/restmachine/cloudapi/k8s/listDeleted"
 
-const K8sWgCreateAPI = "/restmachine/cloudapi/k8s/workersGroupAdd"
-const K8sWgDeleteAPI = "/restmachine/cloudapi/k8s/workersGroupDelete"
+	K8sWgCreateAPI = "/restmachine/cloudapi/k8s/workersGroupAdd"
+	K8sWgDeleteAPI = "/restmachine/cloudapi/k8s/workersGroupDelete"
 
-const K8sWorkerAddAPI = "/restmachine/cloudapi/k8s/workerAdd"
-const K8sWorkerDeleteAPI = "/restmachine/cloudapi/k8s/deleteWorkerFromGroup"
+	K8sWorkerAddAPI    = "/restmachine/cloudapi/k8s/workerAdd"
+	K8sWorkerDeleteAPI = "/restmachine/cloudapi/k8s/deleteWorkerFromGroup"
 
-const K8sGetConfigAPI = "/restmachine/cloudapi/k8s/getConfig"
+	K8sGetConfigAPI = "/restmachine/cloudapi/k8s/getConfig"
 
-const LbGetAPI = "/restmachine/cloudapi/lb/get"
+	LbGetAPI = "/restmachine/cloudapi/lb/get"
 
-const AsyncTaskGetAPI = "/restmachine/cloudapi/tasks/get"
+	AsyncTaskGetAPI = "/restmachine/cloudapi/tasks/get"
+)

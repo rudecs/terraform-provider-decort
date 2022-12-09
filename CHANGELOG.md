@@ -1,5 +1,10 @@
-### Version 3.2.1
+### Version 3.2.2
 
 ### Bug fixes
 
-- Fix bug with creating kvmvm. Now, the resource kvmvm creates with user defined network.
+- Fix bug with getting kvmvm data_source
+
+### Features
+
+- Add enable/disable functionality for kvmvm resource
+- Add status checker for kvmvm resource

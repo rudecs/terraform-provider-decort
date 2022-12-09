@@ -6,16 +6,16 @@ NAME=terraform-provider-decort
 BINARY=${NAME}.exe
 WORKPATH= ./examples/terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAMESPACE}/${VERSION}/${OS_ARCH} 
 MAINPATH = ./cmd/decort/
-VERSION=3.2.1
+VERSION=1.1
 #OS_ARCH=darwin_amd64
-#OS_ARCH=windows_amd64
+OS_ARCH=windows_amd64
 #OS_ARCH=linux_amd64
 
 default: install
 
 image:
 	GOOS=linux GOARCH=amd64 go build -o terraform-provider-decort ./cmd/decort/
-	docker build . -t rudecs/tf:3.2.1
+	docker build . -t rudecs/tf:3.2.2
 	rm terraform-provider-decort
 
 lint:

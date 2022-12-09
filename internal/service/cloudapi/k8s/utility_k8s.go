@@ -35,12 +35,15 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
+	"github.com/rudecs/terraform-provider-decort/internal/service/cloudapi/kvmvm"
 )
 
-func utilityK8sCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*K8sRecord, error) {
+func utilityK8sCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*K8SRecord, error) {
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 	urlValues.Add("k8sId", d.Id())
@@ -54,10 +57,76 @@ func utilityK8sCheckPresence(ctx context.Context, d *schema.ResourceData, m inte
 		return nil, nil
 	}
 
-	var k8s K8sRecord
+	k8s := K8SRecord{}
 	if err := json.Unmarshal([]byte(resp), &k8s); err != nil {
 		return nil, err
 	}
 
 	return &k8s, nil
+}
+
+func utilityComputeCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}, computeID uint64) (*kvmvm.ComputeGetResp, error) {
+	c := m.(*controller.ControllerCfg)
+	urlValues := &url.Values{}
+
+	urlValues.Add("computeId", strconv.FormatUint(computeID, 10))
+
+	computeRaw, err := c.DecortAPICall(ctx, "POST", kvmvm.ComputeGetAPI, urlValues)
+	if err != nil {
+		return nil, err
+	}
+
+	compute := &kvmvm.ComputeGetResp{}
+	err = json.Unmarshal([]byte(computeRaw), compute)
+	if err != nil {
+		return nil, err
+	}
+
+	return compute, nil
+}
+
+func utilityDataK8sCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*K8SRecord, error) {
+	c := m.(*controller.ControllerCfg)
+	urlValues := &url.Values{}
+	if d.Get("k8s_id") != 0 && d.Get("k8s_id") != nil {
+		urlValues.Add("k8sId", strconv.Itoa(d.Get("k8s_id").(int)))
+	} else if id := d.Id(); id != "" {
+		if strings.Contains(id, "#") {
+			urlValues.Add("k8sId", strings.Split(d.Id(), "#")[1])
+		} else {
+			urlValues.Add("k8sId", d.Id())
+		}
+	}
+	k8sRaw, err := c.DecortAPICall(ctx, "POST", K8sGetAPI, urlValues)
+	if err != nil {
+		return nil, err
+	}
+
+	k8s := &K8SRecord{}
+	err = json.Unmarshal([]byte(k8sRaw), k8s)
+	if err != nil {
+		return nil, err
+	}
+	return k8s, nil
+}
+
+func utilityK8sListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}, api string) (K8SList, error) {
+	c := m.(*controller.ControllerCfg)
+	urlValues := &url.Values{}
+	urlValues.Add("includedeleted", "false")
+	urlValues.Add("page", "0")
+	urlValues.Add("size", "0")
+
+	k8sListRaw, err := c.DecortAPICall(ctx, "POST", api, urlValues)
+	if err != nil {
+		return nil, err
+	}
+
+	k8sList := K8SList{}
+
+	err = json.Unmarshal([]byte(k8sListRaw), &k8sList)
+	if err != nil {
+		return nil, err
+	}
+	return k8sList, nil
 }

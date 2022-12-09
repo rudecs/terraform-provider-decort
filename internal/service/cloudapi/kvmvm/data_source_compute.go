@@ -40,10 +40,12 @@ import (
 	// "net/url"
 
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
+	"github.com/rudecs/terraform-provider-decort/internal/status"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
@@ -176,14 +178,17 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 		d.Set("image_id", model.ImageID)
 	}
 	d.Set("description", model.Desc)
+	d.Set("enabled", false)
+	if model.Status == status.Enabled {
+		d.Set("enabled", true)
+	}
+
 	d.Set("cloud_init", "applied") // NOTE: for existing compute we hard-code this value as an indicator for DiffSuppress fucntion
 	// d.Set("status", model.Status)
 	// d.Set("tech_status", model.TechStatus)
-
+	d.Set("started", false)
 	if model.TechStatus == "STARTED" {
 		d.Set("started", true)
-	} else {
-		d.Set("started", false)
 	}
 
 	bootDisk := findBootDisk(model.Disks)
@@ -270,6 +275,12 @@ func DataSourceCompute() *schema.Resource {
 				Description: "ID of the resource group where this compute instance is located.",
 			},
 
+			"enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "If true - enable the compute, else - disable",
+			},
+
 			"rg_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -339,16 +350,67 @@ func DataSourceCompute() *schema.Resource {
 				Description: "IDs of the extra disk(s) attached to this compute.",
 			},
 
-			/*
-				"disks": {
-					Type:     schema.TypeList,
-					Computed: true,
-					Elem: &schema.Resource{
-						Schema: dataSourceDiskSchemaMake(), // ID, type,  name, size, account ID, SEP ID, SEP type, pool, status, tech status, compute ID, image ID
+			"disks": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"disk_name": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Name for disk",
+						},
+						"size": {
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: "Disk size in GiB",
+						},
+						"disk_type": {
+							Type:         schema.TypeString,
+							Computed:     true,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"B", "D"}, false),
+							Description:  "The type of disk in terms of its role in compute: 'B=Boot, D=Data'",
+						},
+						"sep_id": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Optional:    true,
+							Description: "Storage endpoint provider ID; by default the same with boot disk",
+						},
+						"pool": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Optional:    true,
+							Description: "Pool name; by default will be chosen automatically",
+						},
+						"desc": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Optional:    true,
+							Description: "Optional description",
+						},
+						"image_id": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Optional:    true,
+							Description: "Specify image id for create disk from template",
+						},
+						"disk_id": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Disk ID",
+						},
+						"permanently": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Disk deletion status",
+						},
 					},
-					Description: "Detailed specification for all disks attached to this compute instance (including bood disk).",
 				},
-			*/
+			},
 
 			"network": {
 				Type:     schema.TypeSet,
@@ -384,7 +446,7 @@ func DataSourceCompute() *schema.Resource {
 			"started": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     true,
+				Computed:    true,
 				Description: "Is compute started.",
 			},
 		},
