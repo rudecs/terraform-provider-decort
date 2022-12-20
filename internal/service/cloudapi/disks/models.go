@@ -173,3 +173,8 @@ type Unattached struct {
 }
 
 type UnattachedList []Unattached
+
+type Pair struct {
+	intPort      int
+	extPortStart int
+}

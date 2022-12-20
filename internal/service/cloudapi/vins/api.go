@@ -32,14 +32,27 @@ Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 
 package vins
 
-const VinsListAPI = "/restmachine/cloudapi/vins/list"
-const VinsGetAPI = "/restmachine/cloudapi/vins/get"
-const VinsSearchAPI = "/restmachine/cloudapi/vins/search"
-
-const VinsCreateInAccountAPI = "/restmachine/cloudapi/vins/createInAccount"
-const VinsCreateInRgAPI = "/restmachine/cloudapi/vins/createInRG"
-
-const VinsExtNetConnectAPI = "/restmachine/cloudapi/vins/extNetConnect"
-const VinsExtNetDisconnectAPI = "/restmachine/cloudapi/vins/extNetDisconnect"
-
-const VinsDeleteAPI = "/restmachine/cloudapi/vins/delete"
+const (
+	VinsAuditsAPI           = "/restmachine/cloudapi/vins/audits"
+	VinsCreateInAccountAPI  = "/restmachine/cloudapi/vins/createInAccount"
+	VinsCreateInRgAPI       = "/restmachine/cloudapi/vins/createInRG"
+	VinsDeleteAPI           = "/restmachine/cloudapi/vins/delete"
+	VinsDisableAPI          = "/restmachine/cloudapi/vins/disable"
+	VinsEnableAPI           = "/restmachine/cloudapi/vins/enable"
+	VinsExtNetConnectAPI    = "/restmachine/cloudapi/vins/extNetConnect"
+	VinsExtNetDisconnectAPI = "/restmachine/cloudapi/vins/extNetDisconnect"
+	VinsExtNetListAPI       = "/restmachine/cloudapi/vins/extNetList"
+	VinsGetAPI              = "/restmachine/cloudapi/vins/get"
+	VinsIpListAPI           = "/restmachine/cloudapi/vins/ipList"
+	VinsIpReleaseAPI        = "/restmachine/cloudapi/vins/ipRelease"
+	VinsIpReserveAPI        = "/restmachine/cloudapi/vins/ipReserve"
+	VinsListAPI             = "/restmachine/cloudapi/vins/list"
+	VinsListDeletedAPI      = "/restmachine/cloudapi/vins/listDeleted"
+	VinsNatRuleAddAPI       = "/restmachine/cloudapi/vins/natRuleAdd"
+	VinsNatRuleDelAPI       = "/restmachine/cloudapi/vins/natRuleDel"
+	VinsNatRuleListAPI      = "/restmachine/cloudapi/vins/natRuleList"
+	VinsRestoreAPI          = "/restmachine/cloudapi/vins/restore"
+	VinsSearchAPI           = "/restmachine/cloudapi/vins/search"
+	VinsVnfdevRedeployAPI   = "/restmachine/cloudapi/vins/vnfdevRedeploy"
+	VinsVnfdevRestartAPI    = "/restmachine/cloudapi/vins/vnfdevRestart"
+)

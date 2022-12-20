@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,6 +40,8 @@ import (
 
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
+	"github.com/rudecs/terraform-provider-decort/internal/dc"
+	"github.com/rudecs/terraform-provider-decort/internal/status"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -46,112 +49,221 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func ipcidrDiffSupperss(key, oldVal, newVal string, d *schema.ResourceData) bool {
-	if oldVal == "" && newVal != "" {
-		// if old value for "ipcidr" resource is empty string, it means that we are creating new ViNS
-		// and there is a chance that the user will want specific IP address range for this ViNS -
-		// check if "ipcidr" is explicitly set in TF file to a non-empty string.
-		log.Debugf("ipcidrDiffSupperss: key=%s, oldVal=%q, newVal=%q -> suppress=FALSE", key, oldVal, newVal)
-		return false // there is a difference between stored and new value
-	}
-	log.Debugf("ipcidrDiffSupperss: key=%s, oldVal=%q, newVal=%q -> suppress=TRUE", key, oldVal, newVal)
-	return true // suppress difference
-}
-
 func resourceVinsCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Debugf("resourceVinsCreate: called for ViNS name %s, Account ID %d, RG ID %d",
-		d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
-
-	apiToCall := VinsCreateInAccountAPI
-
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 
-	urlValues.Add("name", d.Get("name").(string))
-
-	argVal, argSet := d.GetOk("rg_id")
-	if argSet && argVal.(int) > 0 {
-		apiToCall = VinsCreateInRgAPI
-		urlValues.Add("rgId", fmt.Sprintf("%d", argVal.(int)))
-	} else {
-		// RG ID either not set at all or set to 0 - user may want ViNS at account level
-		argVal, argSet = d.GetOk("account_id")
-		if !argSet || argVal.(int) <= 0 {
-			// No valid Account ID (and no RG ID either) - cannot create ViNS
-			return diag.Errorf("resourceVinsCreate: ViNS name %s - no valid account and/or resource group ID specified", d.Id())
-		}
-		urlValues.Add("accountId", fmt.Sprintf("%d", argVal.(int)))
+	rgId, rgOk := d.GetOk("rg_id")
+	accountId, accountIdOk := d.GetOk("account_id")
+	if !rgOk && !accountIdOk {
+		return diag.Errorf("resourceVinsCreate: no valid accountId or resource group ID specified")
 	}
 
-	argVal, argSet = d.GetOk("ext_net_id") // NB: even if ext_net_id value is explicitly set to 0, argSet = false anyway
-	if argSet {
-		if argVal.(int) > 0 {
-			// connect to specific external network
-			urlValues.Add("extNetId", fmt.Sprintf("%d", argVal.(int)))
-			/*
-				 Commented out, as we've made "ext_net_ip" parameter non-configurable via Terraform!
+	if rgOk {
+		urlValues.Add("name", d.Get("name").(string))
+		urlValues.Add("rgId", strconv.Itoa(rgId.(int)))
+		if ipcidr, ok := d.GetOk("ipcidr"); ok {
+			urlValues.Add("ipcidr", ipcidr.(string))
+		}
 
-				// in case of specific ext net connection user may also want a particular IP address
-				argVal, argSet = d.GetOk("ext_net_ip")
-				if argSet && argVal.(string) != "" {
-					urlValues.Add("extIp", argVal.(string))
+		//extnet v1
+		urlValues.Add("extNetId", strconv.Itoa(d.Get("ext_net_id").(int)))
+		if extIp, ok := d.GetOk("ext_ip_addr"); ok {
+			urlValues.Add("extIp", extIp.(string))
+		}
+
+		//extnet v2
+		if extNetResp, ok := d.GetOk("ext_net"); ok {
+			extNetSl := extNetResp.([]interface{})
+			extNet := extNetSl[0].(map[string]interface{})
+			urlValues.Add("vinsId", d.Id())
+			urlValues.Add("netId", strconv.Itoa(extNet["ext_net_id"].(int)))
+			urlValues.Add("extIp", extNet["ext_net_ip"].(string))
+		}
+
+		if desc, ok := d.GetOk("desc"); ok {
+			urlValues.Add("desc", desc.(string))
+		}
+		urlValues.Add("preReservationsNum", strconv.Itoa(d.Get("pre_reservations_num").(int)))
+		id, err := c.DecortAPICall(ctx, "POST", VinsCreateInRgAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(id)
+	} else if accountIdOk {
+		urlValues.Add("name", d.Get("name").(string))
+		urlValues.Add("accountId", strconv.Itoa(accountId.(int)))
+		if gid, ok := d.GetOk("gid"); ok {
+			urlValues.Add("gid", strconv.Itoa(gid.(int)))
+		}
+		if ipcidr, ok := d.GetOk("ipcidr"); ok {
+			urlValues.Add("ipcidr", ipcidr.(string))
+		}
+		if desc, ok := d.GetOk("desc"); ok {
+			urlValues.Add("desc", desc.(string))
+		}
+		urlValues.Add("preReservationsNum", strconv.Itoa(d.Get("pre_reservations_num").(int)))
+		id, err := c.DecortAPICall(ctx, "POST", VinsCreateInAccountAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.SetId(id)
+	}
+
+	warnings := dc.Warnings{}
+	urlValues = &url.Values{}
+	if ipRes, ok := d.GetOk("ip"); ok {
+		ipsSlice := ipRes.([]interface{})
+		for _, ipInterfase := range ipsSlice {
+			ip := ipInterfase.(map[string]interface{})
+			urlValues = &url.Values{}
+			urlValues.Add("vinsId", d.Id())
+			urlValues.Add("type", ip["type"].(string))
+			if ipAddr, ok := ip["ip_addr"]; ok {
+				urlValues.Add("ipAddr", ipAddr.(string))
+			}
+			if macAddr, ok := ip["mac_addr"]; ok {
+				urlValues.Add("mac", macAddr.(string))
+			}
+			if computeId, ok := ip["compute_id"]; ok {
+				urlValues.Add("computeId", strconv.Itoa(computeId.(int)))
+			}
+			_, err := c.DecortAPICall(ctx, "POST", VinsIpReserveAPI, urlValues)
+			if err != nil {
+				warnings.Add(err)
+			}
+		}
+	}
+
+	urlValues = &url.Values{}
+	if natRule, ok := d.GetOk("nat_rule"); ok {
+		addedNatRules := natRule.([]interface{})
+		if len(addedNatRules) > 0 {
+			for _, natRuleInterface := range addedNatRules {
+				urlValues = &url.Values{}
+				natRule := natRuleInterface.(map[string]interface{})
+
+				urlValues.Add("vinsId", d.Id())
+				urlValues.Add("intIp", natRule["int_ip"].(string))
+				urlValues.Add("intPort", strconv.Itoa(natRule["int_port"].(int)))
+				urlValues.Add("extPortStart", strconv.Itoa(natRule["ext_port_start"].(int)))
+				urlValues.Add("extPortEnd", strconv.Itoa(natRule["ext_port_end"].(int)))
+				urlValues.Add("proto", natRule["proto"].(string))
+
+				_, err := c.DecortAPICall(ctx, "POST", VinsNatRuleAddAPI, urlValues)
+				if err != nil {
+					warnings.Add(err)
 				}
-			*/
-		} else {
-			// ext_net_id is set to a negative value - connect to default external network
-			// no particular IP address selection in this case
-			urlValues.Add("extNetId", "0")
+			}
 		}
 	}
 
-	argVal, argSet = d.GetOk("ipcidr")
-	if argSet && argVal.(string) != "" {
-		log.Debugf("resourceVinsCreate: ipcidr is set to %s", argVal.(string))
-		urlValues.Add("ipcidr", argVal.(string))
-	}
-
-	argVal, argSet = d.GetOk("description")
-	if argSet {
-		urlValues.Add("desc", argVal.(string))
-	}
-
-	apiResp, err := c.DecortAPICall(ctx, "POST", apiToCall, urlValues)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(apiResp) // update ID of the resource to tell Terraform that the ViNS resource exists
-	vinsId, _ := strconv.Atoi(apiResp)
-
-	log.Debugf("resourceVinsCreate: new ViNS ID / name %d / %s creation sequence complete", vinsId, d.Get("name").(string))
-
-	// We may reuse dataSourceVinsRead here as we maintain similarity
-	// between ViNS resource and ViNS data source schemas
-	// ViNS resource read function will also update resource ID on success, so that Terraform
-	// will know the resource exists (however, we already did it a few lines before)
-	return dataSourceVinsRead(ctx, d, m)
+	defer resourceVinsRead(ctx, d, m)
+	return warnings.Get()
 }
 
 func resourceVinsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	vinsFacts, err := utilityVinsCheckPresence(ctx, d, m)
-	if vinsFacts == "" {
-		// if empty string is returned from utilityVinsCheckPresence then there is no
-		// such ViNS and err tells so - just return it to the calling party
-		d.SetId("") // ensure ID is empty
+	c := m.(*controller.ControllerCfg)
+	urlValues := &url.Values{}
+	warnings := dc.Warnings{}
+
+	vins, err := utilityVinsCheckPresence(ctx, d, m)
+	if err != nil {
+		d.SetId("")
 		return diag.FromErr(err)
 	}
 
-	return flattenVins(d, vinsFacts)
+	hasChangeState := false
+	if vins.Status == status.Destroyed {
+		d.SetId("")
+		d.Set("vins_id", 0)
+		return resourceVinsCreate(ctx, d, m)
+	} else if vins.Status == status.Deleted {
+		hasChangeState = true
+
+		urlValues.Add("vinsId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", VinsRestoreAPI, urlValues)
+		if err != nil {
+			warnings.Add(err)
+		}
+	}
+	urlValues = &url.Values{}
+
+	isEnabled := d.Get("enable").(bool)
+	if vins.Status == status.Disabled && isEnabled {
+		hasChangeState = true
+
+		urlValues.Add("vinsId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", VinsEnableAPI, urlValues)
+		if err != nil {
+			warnings.Add(err)
+		}
+	} else if vins.Status == status.Enabled && !isEnabled {
+		hasChangeState = true
+
+		urlValues.Add("vinsId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", VinsDisableAPI, urlValues)
+		if err != nil {
+			warnings.Add(err)
+		}
+	}
+	if hasChangeState {
+		vins, err = utilityVinsCheckPresence(ctx, d, m)
+		if err != nil {
+			d.SetId("")
+			return diag.FromErr(err)
+		}
+	}
+
+	flattenVins(d, *vins)
+	return warnings.Get()
+}
+
+func isContainsIp(els []interface{}, el interface{}) bool {
+	for _, elOld := range els {
+		elOldConv := elOld.(map[string]interface{})
+		elConv := el.(map[string]interface{})
+		if elOldConv["ip_addr"].(string) == elConv["ip_addr"].(string) {
+			return true
+		}
+	}
+	return false
+}
+
+func isContinsNatRule(els []interface{}, el interface{}) bool {
+	for _, elOld := range els {
+		elOldConv := elOld.(map[string]interface{})
+		elConv := el.(map[string]interface{})
+		if elOldConv["int_ip"].(string) == elConv["int_ip"].(string) &&
+			elOldConv["int_port"].(int) == elConv["int_port"].(int) &&
+			elOldConv["ext_port_start"].(int) == elConv["ext_port_start"].(int) {
+			return true
+		}
+	}
+	return false
 }
 
 func resourceVinsUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-
-	log.Debugf("resourceVinsUpdate: called for ViNS ID / name %s / %s,  Account ID %d, RG ID %d",
-		d.Id(), d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
-
 	c := m.(*controller.ControllerCfg)
+	urlValues := &url.Values{}
+	warnings := dc.Warnings{}
 
-	// 1. Handle external network connection change
+	enableOld, enableNew := d.GetChange("enable")
+	if enableOld.(bool) && !enableNew.(bool) {
+		urlValues.Add("vinsId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", VinsDisableAPI, urlValues)
+		if err != nil {
+			warnings.Add(err)
+		}
+	} else if !enableOld.(bool) && enableNew.(bool) {
+		urlValues.Add("vinsId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", VinsEnableAPI, urlValues)
+		if err != nil {
+			warnings.Add(err)
+		}
+	}
+
+	//extnet v1
 	oldExtNetId, newExtNedId := d.GetChange("ext_net_id")
 	if oldExtNetId.(int) != newExtNedId.(int) {
 		log.Debugf("resourceVinsUpdate: changing ViNS ID %s - ext_net_id %d -> %d", d.Id(), oldExtNetId.(int), newExtNedId.(int))
@@ -163,46 +275,178 @@ func resourceVinsUpdate(ctx context.Context, d *schema.ResourceData, m interface
 			// there was preexisting external net connection - disconnect ViNS
 			_, err := c.DecortAPICall(ctx, "POST", VinsExtNetDisconnectAPI, extnetParams)
 			if err != nil {
-				return diag.FromErr(err)
+				warnings.Add(err)
 			}
 		}
 
 		if newExtNedId.(int) > 0 {
 			// new external network connection requested - connect ViNS
 			extnetParams.Add("netId", fmt.Sprintf("%d", newExtNedId.(int)))
+			extNetIp, ok := d.GetOk("ext_net_ip")
+			if ok && extNetIp.(string) != "" {
+				urlValues.Add("Ip", extNetIp.(string))
+			}
 			_, err := c.DecortAPICall(ctx, "POST", VinsExtNetConnectAPI, extnetParams)
 			if err != nil {
-				return diag.FromErr(err)
+				warnings.Add(err)
 			}
 		}
 	}
 
-	// we may reuse dataSourceVinsRead here as we maintain similarity
-	// between Compute resource and Compute data source schemas
-	return dataSourceVinsRead(ctx, d, m)
+	urlValues = &url.Values{}
+	if d.HasChange("ip") {
+		deletedIps := make([]interface{}, 0)
+		addedIps := make([]interface{}, 0)
+
+		oldIpInterface, newIpInterface := d.GetChange("ip")
+		oldIpSlice := oldIpInterface.([]interface{})
+		newIpSlice := newIpInterface.([]interface{})
+
+		for _, el := range oldIpSlice {
+			if !isContainsIp(newIpSlice, el) {
+				deletedIps = append(deletedIps, el)
+			}
+		}
+
+		for _, el := range newIpSlice {
+			if !isContainsIp(oldIpSlice, el) {
+				addedIps = append(addedIps, el)
+			}
+		}
+
+		if len(deletedIps) > 0 {
+			for _, ipInterfase := range deletedIps {
+				urlValues = &url.Values{}
+				ip := ipInterfase.(map[string]interface{})
+
+				urlValues.Add("vinsId", d.Id())
+				if ip["ip_addr"].(string) != "" {
+					urlValues.Add("ipAddr", ip["ip_addr"].(string))
+				}
+				if ip["mac_addr"].(string) != "" {
+					urlValues.Add("mac", ip["mac_addr"].(string))
+				}
+				_, err := c.DecortAPICall(ctx, "POST", VinsIpReleaseAPI, urlValues)
+				if err != nil {
+					warnings.Add(err)
+				}
+			}
+		}
+
+		if len(addedIps) > 0 {
+			for _, ipInterfase := range addedIps {
+				urlValues = &url.Values{}
+				ip := ipInterfase.(map[string]interface{})
+
+				urlValues.Add("vinsId", d.Id())
+				urlValues.Add("type", ip["type"].(string))
+				if ip["ip_addr"].(string) != "" {
+					urlValues.Add("ipAddr", ip["ip_addr"].(string))
+				}
+				if ip["mac_addr"].(string) != "" {
+					urlValues.Add("mac", ip["mac_addr"].(string))
+				}
+				if ip["compute_id"].(int) != 0 {
+					urlValues.Add("computeId", strconv.Itoa(ip["compute_id"].(int)))
+				}
+				_, err := c.DecortAPICall(ctx, "POST", VinsIpReserveAPI, urlValues)
+				if err != nil {
+					warnings.Add(err)
+				}
+			}
+		}
+	}
+
+	if d.HasChange("nat_rule") {
+		deletedNatRules := make([]interface{}, 0)
+		addedNatRules := make([]interface{}, 0)
+
+		oldNatRulesInterface, newNatRulesInterface := d.GetChange("nat_rule")
+		oldNatRulesSlice := oldNatRulesInterface.([]interface{})
+		newNatRulesSlice := newNatRulesInterface.([]interface{})
+
+		for _, el := range oldNatRulesSlice {
+			if !isContinsNatRule(newNatRulesSlice, el) {
+				deletedNatRules = append(deletedNatRules, el)
+			}
+		}
+
+		for _, el := range newNatRulesSlice {
+			if !isContinsNatRule(oldNatRulesSlice, el) {
+				addedNatRules = append(addedNatRules, el)
+			}
+		}
+
+		if len(deletedNatRules) > 0 {
+			for _, natRuleInterface := range deletedNatRules {
+				urlValues = &url.Values{}
+				natRule := natRuleInterface.(map[string]interface{})
+
+				urlValues.Add("vinsId", d.Id())
+				urlValues.Add("ruleId", strconv.Itoa(natRule["rule_id"].(int)))
+				log.Debug("NAT_RULE_DEL_WITH: ", urlValues.Encode())
+				_, err := c.DecortAPICall(ctx, "POST", VinsNatRuleDelAPI, urlValues)
+				if err != nil {
+					warnings.Add(err)
+				}
+			}
+		}
+
+		if len(addedNatRules) > 0 {
+			for _, natRuleInterface := range addedNatRules {
+				urlValues = &url.Values{}
+				natRule := natRuleInterface.(map[string]interface{})
+
+				urlValues.Add("vinsId", d.Id())
+				urlValues.Add("intIp", natRule["int_ip"].(string))
+				urlValues.Add("intPort", strconv.Itoa(natRule["int_port"].(int)))
+				urlValues.Add("extPortStart", strconv.Itoa(natRule["ext_port_start"].(int)))
+				if natRule["ext_port_end"].(int) != 0 {
+					urlValues.Add("extPortEnd", strconv.Itoa(natRule["ext_port_end"].(int)))
+				}
+				if natRule["proto"].(string) != "" {
+					urlValues.Add("proto", natRule["proto"].(string))
+				}
+
+				log.Debug("NAT_RULE_ADD_WITH: ", urlValues.Encode())
+				_, err := c.DecortAPICall(ctx, "POST", VinsNatRuleAddAPI, urlValues)
+				if err != nil {
+					warnings.Add(err)
+				}
+			}
+		}
+	}
+
+	if oldRestart, newRestart := d.GetChange("vnfdev_restart"); oldRestart == false && newRestart == true {
+		urlValues = &url.Values{}
+		urlValues.Add("vinsId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", VinsVnfdevRestartAPI, urlValues)
+		if err != nil {
+			warnings.Add(err)
+		}
+	}
+
+	if oldRedeploy, newRedeploy := d.GetChange("vnfdev_redeploy"); oldRedeploy == false && newRedeploy == true {
+		urlValues = &url.Values{}
+		urlValues.Add("vinsId", d.Id())
+		_, err := c.DecortAPICall(ctx, "POST", VinsVnfdevRedeployAPI, urlValues)
+		if err != nil {
+			warnings.Add(err)
+		}
+	}
+
+	defer resourceVinsRead(ctx, d, m)
+	return warnings.Get()
 }
 
 func resourceVinsDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Debugf("resourceVinsDelete: called for ViNS ID / name %s / %s, Account ID %d, RG ID %d",
-		d.Id(), d.Get("name").(string), d.Get("account_id").(int), d.Get("rg_id").(int))
-
-	vinsFacts, err := utilityVinsCheckPresence(ctx, d, m)
-	if vinsFacts == "" {
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		// the specified ViNS does not exist - in this case according to Terraform best practice
-		// we exit from Destroy method without error
-		return nil
-	}
-
-	params := &url.Values{}
-	params.Add("vinsId", d.Id())
-	params.Add("force", "1")       // disconnect all computes before deleting ViNS
-	params.Add("permanently", "1") // delete ViNS immediately bypassing recycle bin
-
+	urlValues := &url.Values{}
 	c := m.(*controller.ControllerCfg)
-	_, err = c.DecortAPICall(ctx, "POST", VinsDeleteAPI, params)
+
+	urlValues.Add("vinsId", d.Id())
+	urlValues.Add("force", strconv.FormatBool(d.Get("force").(bool)))
+	urlValues.Add("permanently", strconv.FormatBool(d.Get("permanently").(bool)))
+	_, err := c.DecortAPICall(ctx, "POST", VinsDeleteAPI, urlValues)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -210,73 +454,184 @@ func resourceVinsDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceVinsSchemaMake() map[string]*schema.Schema {
-	rets := map[string]*schema.Schema{
-		"name": {
-			Type:         schema.TypeString,
-			Required:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-			Description:  "Name of the ViNS. Names are case sensitive and unique within the context of an account or resource group.",
-		},
-
-		/* we do not need ViNS ID as an argument because if we already know this ID, it is not practical to call resource provider.
-		   Resource Import will work anyway, as it obtains the ID of ViNS to be imported through another mechanism.
-		"vins_id": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Description: "Unique ID of the ViNS. If ViNS ID is specified, then ViNS name, rg_id and account_id are ignored.",
-		},
-		*/
-
-		"rg_id": {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			ForceNew:    true,
-			Default:     0,
-			Description: "ID of the resource group, where this ViNS belongs to. Non-zero for ViNS created at resource group level, 0 otherwise.",
-		},
-
-		"account_id": {
-			Type:         schema.TypeInt,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.IntAtLeast(1),
-			Description:  "ID of the account, which this ViNS belongs to. For ViNS created at account level, resource group ID is 0.",
-		},
-
+func extNetSchemaMake() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
 		"ext_net_id": {
-			Type:         schema.TypeInt,
-			Required:     true,
-			ValidateFunc: validation.IntAtLeast(0),
-			Description:  "ID of the external network this ViNS is connected to. Pass 0 if no external connection required.",
+			Type:     schema.TypeInt,
+			Default:  0,
+			Optional: true,
 		},
+		"ext_net_ip": {
+			Type:     schema.TypeInt,
+			Optional: true,
+			Default:  "",
+		},
+	}
+}
 
-		"ipcidr": {
-			Type:             schema.TypeString,
-			Optional:         true,
-			DiffSuppressFunc: ipcidrDiffSupperss,
-			Description:      "Network address to use by this ViNS. This parameter is only valid when creating new ViNS.",
+func ipSchemaMake() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"type": {
+			Type:     schema.TypeString,
+			Required: true,
 		},
+		"ip_addr": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"mac_addr": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"compute_id": {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+	}
+}
 
-		"description": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Default:     "",
-			Description: "Optional user-defined text description of this ViNS.",
+func natRuleSchemaMake() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"int_ip": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Computed: true,
 		},
+		"int_port": {
+			Type:     schema.TypeInt,
+			Optional: true,
+			Computed: true,
+		},
+		"ext_port_start": {
+			Type:     schema.TypeInt,
+			Optional: true,
+			Computed: true,
+		},
+		"ext_port_end": {
+			Type:     schema.TypeInt,
+			Optional: true,
+			Computed: true,
+		},
+		"proto": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.StringInSlice([]string{"tcp", "udp"}, false),
+			Computed:     true,
+		},
+		"rule_id": {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
+	}
+}
 
-		// the rest of attributes are computed
-		"account_name": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "Name of the account, which this ViNS belongs to.",
+func resourceVinsSchemaMake() map[string]*schema.Schema {
+	rets := dataSourceVinsSchemaMake()
+	rets["name"] = &schema.Schema{
+		Type:     schema.TypeString,
+		Required: true,
+	}
+	rets["rg_id"] = &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+	}
+	rets["account_id"] = &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+		Computed: true,
+	}
+	rets["ext_net_id"] = &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+		Default:  -1,
+	}
+	rets["ipcidr"] = &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+	}
+	rets["ext_ip_addr"] = &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+		Default:  "",
+	}
+	rets["pre_reservations_num"] = &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+		Default:  32,
+	}
+	rets["gid"] = &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+		Computed: true,
+	}
+	rets["enable"] = &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  true,
+	}
+	rets["permanently"] = &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false,
+	}
+	rets["force"] = &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false,
+	}
+	rets["ext_net"] = &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: extNetSchemaMake(),
 		},
+	}
+	rets["ip"] = &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: ipSchemaMake(),
+		},
+	}
+	rets["nat_rule"] = &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Elem: &schema.Resource{
+			Schema: natRuleSchemaMake(),
+		},
+	}
+	rets["desc"] = &schema.Schema{
+		Type:        schema.TypeString,
+		Optional:    true,
+		Default:     "",
+		Description: "Optional user-defined text description of this ViNS.",
+	}
+	rets["ext_ip_addr"] = &schema.Schema{
+		Type:        schema.TypeString,
+		Computed:    true,
+		Description: "IP address of the external connection (valid for ViNS connected to external network, ignored otherwise).",
+	}
+	rets["restore"] = &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false,
+	}
+	rets["vnfdev_restart"] = &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false,
+	}
+	rets["vnfdev_redeploy"] = &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false,
+	}
 
-		"ext_ip_addr": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "IP address of the external connection (valid for ViNS connected to external network, ignored otherwise).",
-		},
+	rets["vins_id"] = &schema.Schema{
+		Type:        schema.TypeInt,
+		Computed:    true,
+		Description: "Unique ID of the ViNS. If ViNS ID is specified, then ViNS name, rg_id and account_id are ignored.",
 	}
 
 	return rets

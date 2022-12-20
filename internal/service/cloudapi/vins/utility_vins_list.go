@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,8 +44,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func utilityVinsListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (VinsList, error) {
-	vinsList := VinsList{}
+func utilityVinsListCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (VINSList, error) {
+	vinsList := VINSList{}
 	c := m.(*controller.ControllerCfg)
 	urlValues := &url.Values{}
 

@@ -1,3 +1,35 @@
+/*
+Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
+Authors:
+Petr Krutov, <petr.krutov@digitalenergy.online>
+Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/*
+Terraform DECORT provider - manage resources provided by DECORT (Digital Energy Cloud
+Orchestration Technology) with Terraform by Hashicorp.
+
+Source code: https://github.com/rudecs/terraform-provider-decort
+
+Please see README.md to learn where to place source code so that it
+builds seamlessly.
+
+Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
+*/
+
 package k8s
 
 import (
@@ -244,4 +276,44 @@ func flattenResourceK8s(d *schema.ResourceData, k8s K8SRecord, masters []kvmvm.C
 	d.Set("updated_by", k8s.UpdatedBy)
 	d.Set("updated_time", k8s.UpdatedTime)
 	d.Set("default_wg_id", k8s.K8SGroups.Workers[0].ID)
+}
+
+func flattenWgData(d *schema.ResourceData, wg K8SGroup, computes []kvmvm.ComputeGetResp) {
+	d.Set("annotations", wg.Annotations)
+	d.Set("cpu", wg.CPU)
+	d.Set("detailed_info", flattenDetailedInfo(wg.DetailedInfo, computes))
+	d.Set("disk", wg.Disk)
+	d.Set("guid", wg.GUID)
+	d.Set("labels", wg.Labels)
+	d.Set("name", wg.Name)
+	d.Set("num", wg.Num)
+	d.Set("ram", wg.RAM)
+	d.Set("taints", wg.Taints)
+}
+
+func flattenWgList(wgList K8SGroupList, computesMap map[uint64][]kvmvm.ComputeGetResp) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	for _, wg := range wgList {
+		computes := computesMap[wg.ID]
+		temp := map[string]interface{}{
+			"annotations":   wg.Annotations,
+			"cpu":           wg.CPU,
+			"wg_id":         wg.ID,
+			"detailed_info": flattenDetailedInfo(wg.DetailedInfo, computes),
+			"disk":          wg.Disk,
+			"guid":          wg.GUID,
+			"labels":        wg.Labels,
+			"name":          wg.Name,
+			"num":           wg.Num,
+			"ram":           wg.RAM,
+			"taints":        wg.Taints,
+		}
+
+		res = append(res, temp)
+	}
+	return res
+}
+
+func flattenItemsWg(d *schema.ResourceData, wgList K8SGroupList, computes map[uint64][]kvmvm.ComputeGetResp) {
+	d.Set("items", flattenWgList(wgList, computes))
 }

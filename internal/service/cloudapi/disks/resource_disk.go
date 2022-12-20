@@ -42,6 +42,7 @@ import (
 
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
+	"github.com/rudecs/terraform-provider-decort/internal/dc"
 	"github.com/rudecs/terraform-provider-decort/internal/status"
 	log "github.com/sirupsen/logrus"
 
@@ -123,6 +124,7 @@ func resourceDiskCreate(ctx context.Context, d *schema.ResourceData, m interface
 func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	urlValues := &url.Values{}
 	c := m.(*controller.ControllerCfg)
+	warnings := dc.Warnings{}
 
 	disk, err := utilityDiskCheckPresence(ctx, d, m)
 	if disk == nil {
@@ -133,17 +135,21 @@ func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return nil
 	}
 
+	hasChangeState := false
 	if disk.Status == status.Destroyed || disk.Status == status.Purged {
 		d.Set("disk_id", 0)
 		return resourceDiskCreate(ctx, d, m)
 	} else if disk.Status == status.Deleted {
+		hasChangeState = true
 		urlValues.Add("diskId", d.Id())
 		urlValues.Add("reason", d.Get("reason").(string))
 
 		_, err := c.DecortAPICall(ctx, "POST", disksRestoreAPI, urlValues)
 		if err != nil {
-			return diag.FromErr(err)
+			warnings.Add(err)
 		}
+	}
+	if hasChangeState {
 		urlValues = &url.Values{}
 		disk, err = utilityDiskCheckPresence(ctx, d, m)
 		if disk == nil {
@@ -202,7 +208,7 @@ func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("type", disk.Type)
 	d.Set("vmid", disk.VMID)
 
-	return nil
+	return warnings.Get()
 }
 
 func resourceDiskUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -214,18 +220,6 @@ func resourceDiskUpdate(ctx context.Context, d *schema.ResourceData, m interface
 			return diag.FromErr(err)
 		}
 		return nil
-	}
-	if disk.Status == status.Destroyed || disk.Status == status.Purged {
-		return resourceDiskCreate(ctx, d, m)
-	} else if disk.Status == status.Deleted {
-		urlValues.Add("diskId", d.Id())
-		urlValues.Add("reason", d.Get("reason").(string))
-
-		_, err := c.DecortAPICall(ctx, "POST", disksRestoreAPI, urlValues)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		urlValues = &url.Values{}
 	}
 
 	if d.HasChange("size_max") {

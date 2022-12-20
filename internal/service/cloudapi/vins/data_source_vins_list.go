@@ -41,32 +41,6 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 )
 
-func flattenVinsList(vl VinsList) []map[string]interface{} {
-	res := make([]map[string]interface{}, 0)
-	for _, v := range vl {
-		temp := map[string]interface{}{
-			"account_id":   v.AccountId,
-			"account_name": v.AccountName,
-			"created_by":   v.CreatedBy,
-			"created_time": v.CreatedTime,
-			"deleted_by":   v.DeletedBy,
-			"deleted_time": v.DeletedTime,
-			"external_ip":  v.ExternalIP,
-			"vins_id":      v.ID,
-			"vins_name":    v.Name,
-			"network":      v.Network,
-			"rg_id":        v.RGID,
-			"rg_name":      v.RGName,
-			"status":       v.Status,
-			"updated_by":   v.UpdatedBy,
-			"updated_time": v.UpdatedTime,
-			"vxlan_id":     v.VXLanID,
-		}
-		res = append(res, temp)
-	}
-	return res
-}
-
 func dataSourceVinsListRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	vinsList, err := utilityVinsListCheckPresence(ctx, d, m)
 	if err != nil {
