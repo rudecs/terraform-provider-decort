@@ -545,14 +545,14 @@ func resourceVinsSchemaMake() map[string]*schema.Schema {
 		Optional: true,
 		Default:  -1,
 	}
-	rets["ipcidr"] = &schema.Schema{
-		Type:     schema.TypeString,
-		Optional: true,
-	}
 	rets["ext_ip_addr"] = &schema.Schema{
 		Type:     schema.TypeString,
 		Optional: true,
 		Default:  "",
+	}
+	rets["ipcidr"] = &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
 	}
 	rets["pre_reservations_num"] = &schema.Schema{
 		Type:     schema.TypeInt,
@@ -606,11 +606,6 @@ func resourceVinsSchemaMake() map[string]*schema.Schema {
 		Optional:    true,
 		Default:     "",
 		Description: "Optional user-defined text description of this ViNS.",
-	}
-	rets["ext_ip_addr"] = &schema.Schema{
-		Type:        schema.TypeString,
-		Computed:    true,
-		Description: "IP address of the external connection (valid for ViNS connected to external network, ignored otherwise).",
 	}
 	rets["restore"] = &schema.Schema{
 		Type:     schema.TypeBool,

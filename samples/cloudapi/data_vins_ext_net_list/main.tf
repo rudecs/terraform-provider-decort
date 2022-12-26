@@ -30,7 +30,6 @@ data "decort_vins_ext_net_list" "vins_ext_net_list" {
   #id жедаемого vins
   #тип - число
   vins_id = 10101
-
 }
 
 output "test" {

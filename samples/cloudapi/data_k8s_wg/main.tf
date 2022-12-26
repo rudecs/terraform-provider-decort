@@ -25,7 +25,7 @@ provider "decort" {
   allow_unverified_ssl = true
 }
 
-data "decort_k8s_wf" "k8s_wg" {
+data "decort_k8s_wg" "k8s_wg" {
   #id кластера
   #обязательный параметр
   #тип - число

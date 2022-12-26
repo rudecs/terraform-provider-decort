@@ -183,7 +183,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 		d.Set("enabled", true)
 	}
 
-	d.Set("cloud_init", "applied") // NOTE: for existing compute we hard-code this value as an indicator for DiffSuppress fucntion
+	//d.Set("cloud_init", "applied") // NOTE: for existing compute we hard-code this value as an indicator for DiffSuppress fucntion
 	// d.Set("status", model.Status)
 	// d.Set("tech_status", model.TechStatus)
 	d.Set("started", false)

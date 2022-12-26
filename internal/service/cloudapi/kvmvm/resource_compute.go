@@ -782,11 +782,11 @@ func ResourceComputeSchemaMake() map[string]*schema.Schema {
 		},
 
 		"cloud_init": {
-			Type:             schema.TypeString,
-			Optional:         true,
-			Default:          "applied",
-			DiffSuppressFunc: cloudInitDiffSupperss,
-			Description:      "Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Optional cloud_init parameters. Applied when creating new compute instance only, ignored in all other cases.",
+			//Default:          "applied",
+			//DiffSuppressFunc: cloudInitDiffSupperss,
 		},
 
 		"enabled": {

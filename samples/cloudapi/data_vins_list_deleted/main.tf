@@ -25,7 +25,7 @@ provider "decort" {
   allow_unverified_ssl = true
 }
 
-data "decort_vins_list_deleted" "vinslist_deleted" {
+data "decort_vins_list_deleted" "vins_list_deleted" {
   #кол-во страниц для вывода
   #опицональный параметр 
   #тип - число

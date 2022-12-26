@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     decort = {
-      source  = "digitalenergy.online/decort/decort"
-      version = "3.3.0"
+      source  = " digitalenergy.online/decort/decort"
+      version = "3.3.1"
     }
   }
 }
