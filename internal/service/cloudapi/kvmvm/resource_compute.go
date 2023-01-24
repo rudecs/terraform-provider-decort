@@ -694,6 +694,18 @@ func ResourceComputeSchemaMake() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "Storage endpoint provider ID; by default the same with boot disk",
 					},
+					"shareable": {
+						Type:     schema.TypeBool,
+						Computed: true,
+					},
+					"size_max": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
+					"size_used": {
+						Type:     schema.TypeInt,
+						Computed: true,
+					},
 					"pool": {
 						Type:        schema.TypeString,
 						Computed:    true,

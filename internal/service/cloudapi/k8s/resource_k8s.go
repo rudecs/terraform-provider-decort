@@ -69,6 +69,8 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues.Add("masterCpu", strconv.Itoa(masterNode.Cpu))
 	urlValues.Add("masterRam", strconv.Itoa(masterNode.Ram))
 	urlValues.Add("masterDisk", strconv.Itoa(masterNode.Disk))
+	urlValues.Add("masterSepId", strconv.Itoa(masterNode.SepID))
+	urlValues.Add("masterSepPool", masterNode.SepPool)
 
 	var workerNode K8sNodeRecord
 	if workers, ok := d.GetOk("workers"); ok {
@@ -80,6 +82,29 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	urlValues.Add("workerCpu", strconv.Itoa(workerNode.Cpu))
 	urlValues.Add("workerRam", strconv.Itoa(workerNode.Ram))
 	urlValues.Add("workerDisk", strconv.Itoa(workerNode.Disk))
+	urlValues.Add("workerSepId", strconv.Itoa(workerNode.SepID))
+	urlValues.Add("workerSepPool", workerNode.SepPool)
+
+	if labels, ok := d.GetOk("labels"); ok {
+		labels := labels.([]interface{})
+		for _, label := range labels {
+			urlValues.Add("labels", label.(string))
+		}
+	}
+
+	if taints, ok := d.GetOk("taints"); ok {
+		taints := taints.([]interface{})
+		for _, taint := range taints {
+			urlValues.Add("taints", taint.(string))
+		}
+	}
+
+	if annotations, ok := d.GetOk("annotations"); ok {
+		annotations := annotations.([]interface{})
+		for _, annotation := range annotations {
+			urlValues.Add("annotations", annotation.(string))
+		}
+	}
 
 	if withLB, ok := d.GetOk("with_lb"); ok {
 		urlValues.Add("withLB", strconv.FormatBool(withLB.(bool)))
@@ -133,7 +158,6 @@ func resourceK8sCreate(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceK8sRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	//log.Debugf("resourceK8sRead: called with id %s, rg %d", d.Id(), d.Get("rg_id").(int))
 
 	k8s, err := utilityDataK8sCheckPresence(ctx, d, m)
 	if err != nil {
@@ -282,28 +306,45 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			Required:    true,
 			Description: "Name of the cluster.",
 		},
-
 		"rg_id": {
 			Type:        schema.TypeInt,
 			Required:    true,
 			ForceNew:    true,
 			Description: "Resource group ID that this instance belongs to.",
 		},
-
 		"k8sci_id": {
 			Type:        schema.TypeInt,
 			Required:    true,
 			ForceNew:    true,
 			Description: "ID of the k8s catalog item to base this instance on.",
 		},
-
 		"wg_name": {
 			Type:        schema.TypeString,
 			Required:    true,
 			ForceNew:    true,
 			Description: "Name for first worker group created with cluster.",
 		},
-
+		"labels": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"taints": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"annotations": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
 		"masters": {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -315,7 +356,6 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			},
 			Description: "Master node(s) configuration.",
 		},
-
 		"workers": {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -326,7 +366,6 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			},
 			Description: "Worker node(s) configuration.",
 		},
-
 		"with_lb": {
 			Type:        schema.TypeBool,
 			Optional:    true,
@@ -334,7 +373,6 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			Default:     true,
 			Description: "Create k8s with load balancer if true.",
 		},
-
 		"extnet_id": {
 			Type:        schema.TypeInt,
 			Optional:    true,
@@ -342,7 +380,6 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			ForceNew:    true,
 			Description: "ID of the external network to connect workers to. If omitted network will be chosen by the platfom.",
 		},
-
 		"desc": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -417,13 +454,11 @@ func resourceK8sSchemaMake() map[string]*schema.Schema {
 			Type:     schema.TypeInt,
 			Computed: true,
 		},
-
 		"default_wg_id": {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "ID of default workers group for this instace.",
 		},
-
 		"kubeconfig": {
 			Type:        schema.TypeString,
 			Computed:    true,

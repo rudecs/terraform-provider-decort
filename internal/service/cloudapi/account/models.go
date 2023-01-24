@@ -89,13 +89,19 @@ type AccountCloudApi struct {
 
 type AccountCloudApiList []AccountCloudApi
 
+type ResourceSep struct {
+	DiskSize    float64 `json:"disksize"`
+	DiskSizeMax int     `json:"disksizemax"`
+}
+
 type Resource struct {
-	CPU        int `json:"cpu"`
-	Disksize   int `json:"disksize"`
-	Extips     int `json:"extips"`
-	Exttraffic int `json:"exttraffic"`
-	GPU        int `json:"gpu"`
-	RAM        int `json:"ram"`
+	CPU        int                               `json:"cpu"`
+	Disksize   int                               `json:"disksize"`
+	Extips     int                               `json:"extips"`
+	Exttraffic int                               `json:"exttraffic"`
+	GPU        int                               `json:"gpu"`
+	RAM        int                               `json:"ram"`
+	SEPs       map[string]map[string]ResourceSep `json:"seps"`
 }
 
 type Resources struct {
@@ -147,12 +153,13 @@ type AccountCompute struct {
 type AccountComputesList []AccountCompute
 
 type AccountDisk struct {
-	ID      int    `json:"id"`
-	Name    string `json:"name"`
-	Pool    string `json:"pool"`
-	SepId   int    `json:"sepId"`
-	SizeMax int    `json:"sizeMax"`
-	Type    string `json:"type"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Pool      string `json:"pool"`
+	SepId     int    `json:"sepId"`
+	Shareable bool   `json:"shareable"`
+	SizeMax   int    `json:"sizeMax"`
+	Type      string `json:"type"`
 }
 
 type AccountDisksList []AccountDisk

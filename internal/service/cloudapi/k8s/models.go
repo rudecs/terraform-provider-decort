@@ -49,6 +49,8 @@ type K8sNodeRecord struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 	} `json:"detailedInfo"`
+	SepID   int    `json:"SepId"`
+	SepPool string `json:"SepPool"`
 }
 
 //K8sRecord represents k8s instance

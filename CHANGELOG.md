@@ -1,10 +1,51 @@
-### Version 3.3.1
-
-### Bug fixes
-
-- Fix bug with sample decort_k8s_wg
-- Fix bug with the absence of an optional field ext_ip_addr with vins resource
+### Version 3.4.0
 
 ### Features
 
-- Change cloud_init in vins resource, the field shows full information about the configuration made by the user
+- Add "seps" to the data source decort_account
+- Add "seps" to the resource decort_account
+- Add "shareable" to the data source decort_account_disk_list
+- Change "compute_id" and "compute_name" to "computes" in data source decort_disks
+- Change "compute_id" and "compute_name" to "computes" in resource decort_disks
+- Change "compute_id" and "compute_name" to "computes" in data source decort_disks_list
+- Add "shareable" to the data source decort_disk
+- Add "shareable" to the resource decort_disk
+- Add "shareable" to the data source decort_disk_list
+- Add optional field "share" to the resource decort_account_disk_list
+- Add "present_to" to the data source decort_disk
+- Add "present_to" to the data source decort_disk_list
+- Add "present_to" to the resource decort_disk
+- Add "shareable" to the data source decort_kvmvm
+- Add "shareable" to the resource decort_kvmvm
+- Add "size_max" to the data source decort_kvmvm
+- Add "size_max" to the resource decort_kvmvm
+- Add "size_used" to the data source decort_kvmvm
+- Add "size_used" to the resource decort_kvmvm
+- Add "present_to" to the data source decort_image
+- Add "present_to" to the resource decort_image
+- Add optional field "labels" to the resource decort_k8s
+- Add optional field "taints" to the resource decort_k8s
+- Add optional field "annotations" to the resource decort_k8s
+- Add optional field "sep_id" in block masters in the resource decort_k8s
+- Add optional field "sep_pool" in block masters in the resource decort_k8s
+- Add optional field "sep_id" in block workers in the resource decort_k8s
+- Add optional field "sep_pool" in block workers in the resource decort_k8s
+- Add "gid" to the data source decort_resgroup
+- Add "resources" to the data source decort_resgroup
+- Add "status" to the data source decort_resgroup
+- Add "vins" to the data source decort_resgroup
+- Add "vms" to the data source decort_resgroup
+- Add "gid" to the resource decort_resgroup
+- Add "resources" to the resource decort_resgroup
+- Add "status" to the resource decort_resgroup
+- Add "vins" to the resource decort_resgroup
+- Add "vms" to the resource decort_resgroup
+- Add optional field "force" to the resource decort_resgroup
+- Add optional field "permanently" to the resource decort_resgroup
+- Add optional field "reason" to the resource decort_resgroup
+- Add "resources" to the resource decort_resgroup
+- Add "gid" to the resource decort_resgroup
+- Add "resources" to the data source decort_resgroup
+- Add "gid" to the data source decort_resgroup
+- Change required field "account_id" to optional in data source decort_resgroup
+

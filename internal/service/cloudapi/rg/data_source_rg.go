@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,10 +35,11 @@ package rg
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"net/url"
+	"strconv"
 
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
-	log "github.com/sirupsen/logrus"
+	"github.com/rudecs/terraform-provider-decort/internal/controller"
 
 	// "net/url"
 
@@ -45,53 +47,31 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func flattenResgroup(d *schema.ResourceData, rg_facts string) error {
-	// NOTE: this function modifies ResourceData argument - as such it should never be called
-	// from resourceRsgroupExists(...) method
-	// log.Debugf("%s", rg_facts)
-	log.Debugf("flattenResgroup: ready to decode response body from API")
-	details := ResgroupGetResp{}
-	err := json.Unmarshal([]byte(rg_facts), &details)
+func utilityDataResgroupCheckPresence(ctx context.Context, d *schema.ResourceData, m interface{}) (*ResgroupGetResp, error) {
+	c := m.(*controller.ControllerCfg)
+	urlValues := &url.Values{}
+	rgData := &ResgroupGetResp{}
+
+	urlValues.Add("rgId", strconv.Itoa(d.Get("rg_id").(int)))
+	rgRaw, err := c.DecortAPICall(ctx, "POST", ResgroupGetAPI, urlValues)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	log.Debugf("flattenResgroup: decoded RG name %q / ID %d, account ID %d",
-		details.Name, details.ID, details.AccountID)
-
-	d.SetId(fmt.Sprintf("%d", details.ID))
-	d.Set("rg_id", details.ID)
-	d.Set("name", details.Name)
-	d.Set("account_name", details.AccountName)
-	d.Set("account_id", details.AccountID)
-	// d.Set("grid_id", details.GridID)
-	d.Set("description", details.Desc)
-	d.Set("status", details.Status)
-	d.Set("def_net_type", details.DefaultNetType)
-	d.Set("def_net_id", details.DefaultNetID)
-	/*
-		d.Set("vins", details.Vins)
-		d.Set("computes", details.Computes)
-	*/
-
-	log.Debugf("flattenResgroup: calling flattenQuota()")
-	if err = d.Set("quota", parseQuota(details.Quota)); err != nil {
-		return err
+	err = json.Unmarshal([]byte(rgRaw), rgData)
+	if err != nil {
+		return nil, err
 	}
-
-	return nil
+	return rgData, nil
 }
 
 func dataSourceResgroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	rg_facts, err := utilityResgroupCheckPresence(ctx, d, m)
-	if rg_facts == "" {
-		// if empty string is returned from utilityResgroupCheckPresence then there is no
-		// such resource group and err tells so - just return it to the calling party
+	rg, err := utilityDataResgroupCheckPresence(ctx, d, m)
+	if err != nil {
 		d.SetId("") // ensure ID is empty in this case
 		return diag.FromErr(err)
 	}
-
-	return diag.FromErr(flattenResgroup(d, rg_facts))
+	return diag.FromErr(flattenDataResgroup(d, *rg))
 }
 
 func DataSourceResgroup() *schema.Resource {
@@ -126,7 +106,7 @@ func DataSourceResgroup() *schema.Resource {
 
 			"account_id": {
 				Type:        schema.TypeInt,
-				Required:    true,
+				Optional:    true,
 				Description: "Unique ID of the account, which this resource group belongs to.",
 			},
 
@@ -135,15 +115,11 @@ func DataSourceResgroup() *schema.Resource {
 				Computed:    true,
 				Description: "User-defined text description of this resource group.",
 			},
-
-			/* commented out, as in this version of provider we use default Grid ID
-			"grid_id": {
+			"gid": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Unique ID of the grid, where this resource group is deployed.",
 			},
-			*/
-
 			"quota": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -165,32 +141,150 @@ func DataSourceResgroup() *schema.Resource {
 				Description: "ID of the default network for this resource group (if any).",
 			},
 
-			/*
-				"status": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Current status of this resource group.",
-				},
-
-				"vins": {
-					Type:     schema.TypeList, // this is a list of ints
-					Computed: true,
-					MaxItems: LimitMaxVinsPerResgroup,
-					Elem: &schema.Schema{
-						Type: schema.TypeInt,
+			"resources": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"current": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"cpu": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"disksize": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"extips": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"exttraffic": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"gpu": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"ram": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"seps": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"sep_id": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"data_name": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"disk_size": {
+													Type:     schema.TypeFloat,
+													Computed: true,
+												},
+												"disk_size_max": {
+													Type:     schema.TypeInt,
+													Computed: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"reserved": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"cpu": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"disksize": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"extips": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"exttraffic": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"gpu": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"ram": {
+										Type:     schema.TypeInt,
+										Computed: true,
+									},
+									"seps": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"sep_id": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"data_name": {
+													Type:     schema.TypeString,
+													Computed: true,
+												},
+												"disk_size": {
+													Type:     schema.TypeFloat,
+													Computed: true,
+												},
+												"disk_size_max": {
+													Type:     schema.TypeInt,
+													Computed: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
-					Description: "List of VINs deployed in this resource group.",
 				},
+			},
 
-				"computes": {
-					Type:     schema.TypeList, //t his is a list of ints
-					Computed: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeInt,
-					},
-					Description: "List of computes deployed in this resource group.",
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Current status of this resource group.",
+			},
+
+			"vins": {
+				Type:     schema.TypeList, // this is a list of ints
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeInt,
 				},
-			*/
+				Description: "List of VINs deployed in this resource group.",
+			},
+
+			"vms": {
+				Type:     schema.TypeList, //t his is a list of ints
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeInt,
+				},
+				Description: "List of computes deployed in this resource group.",
+			},
 		},
 	}
 }

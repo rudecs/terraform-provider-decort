@@ -141,6 +141,22 @@ func flattenAccResources(r Resources) []map[string]interface{} {
 	return res
 }
 
+func flattenAccountSeps(seps map[string]map[string]ResourceSep) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	for sepKey, sepVal := range seps {
+		for dataKey, dataVal := range sepVal {
+			temp := map[string]interface{}{
+				"sep_id":        sepKey,
+				"data_name":     dataKey,
+				"disk_size":     dataVal.DiskSize,
+				"disk_size_max": dataVal.DiskSizeMax,
+			}
+			res = append(res, temp)
+		}
+	}
+	return res
+}
+
 func flattenAccResource(r Resource) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
 	temp := map[string]interface{}{
@@ -150,6 +166,7 @@ func flattenAccResource(r Resource) []map[string]interface{} {
 		"exttraffic": r.Exttraffic,
 		"gpu":        r.GPU,
 		"ram":        r.RAM,
+		"seps":       flattenAccountSeps(r.SEPs),
 	}
 	res = append(res, temp)
 	return res
@@ -161,6 +178,7 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 			Type:     schema.TypeInt,
 			Required: true,
 		},
+
 		"dc_location": {
 			Type:     schema.TypeString,
 			Computed: true,
@@ -199,6 +217,30 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 									Type:     schema.TypeInt,
 									Computed: true,
 								},
+								"seps": {
+									Type:     schema.TypeList,
+									Computed: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"sep_id": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"data_name": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"disk_size": {
+												Type:     schema.TypeFloat,
+												Computed: true,
+											},
+											"disk_size_max": {
+												Type:     schema.TypeInt,
+												Computed: true,
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -230,6 +272,30 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 								"ram": {
 									Type:     schema.TypeInt,
 									Computed: true,
+								},
+								"seps": {
+									Type:     schema.TypeList,
+									Computed: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"sep_id": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"data_name": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"disk_size": {
+												Type:     schema.TypeFloat,
+												Computed: true,
+											},
+											"disk_size_max": {
+												Type:     schema.TypeInt,
+												Computed: true,
+											},
+										},
+									},
 								},
 							},
 						},

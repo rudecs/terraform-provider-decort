@@ -60,8 +60,7 @@ func dataSourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("account_name", disk.AccountName)
 	d.Set("acl", string(diskAcl))
 	d.Set("boot_partition", disk.BootPartition)
-	d.Set("compute_id", disk.ComputeID)
-	d.Set("compute_name", disk.ComputeName)
+	d.Set("computes", flattenDiskComputes(disk.Computes))
 	d.Set("created_time", disk.CreatedTime)
 	d.Set("deleted_time", disk.DeletedTime)
 	d.Set("desc", disk.Desc)
@@ -84,6 +83,7 @@ func dataSourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("passwd", disk.Passwd)
 	d.Set("pci_slot", disk.PciSlot)
 	d.Set("pool", disk.Pool)
+	d.Set("present_to", disk.PresentTo)
 	d.Set("purge_attempts", disk.PurgeAttempts)
 	d.Set("purge_time", disk.PurgeTime)
 	d.Set("reality_device_number", disk.RealityDeviceNumber)
@@ -93,6 +93,7 @@ func dataSourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("role", disk.Role)
 	d.Set("sep_id", disk.SepID)
 	d.Set("sep_type", disk.SepType)
+	d.Set("shareable", disk.Shareable)
 	d.Set("size_max", disk.SizeMax)
 	d.Set("size_used", disk.SizeUsed)
 	d.Set("snapshots", flattenDiskSnapshotList(disk.Snapshots))
@@ -130,15 +131,21 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Number of disk partitions",
 		},
-		"compute_id": {
-			Type:        schema.TypeInt,
-			Computed:    true,
-			Description: "Compute ID",
-		},
-		"compute_name": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "Compute name",
+		"computes": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"compute_id": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
+					"compute_name": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
+				},
+			},
 		},
 		"created_time": {
 			Type:        schema.TypeInt,
@@ -316,6 +323,13 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Pool for disk location",
 		},
+		"present_to": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+		},
 		"purge_attempts": {
 			Type:        schema.TypeInt,
 			Computed:    true,
@@ -360,6 +374,10 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Type SEP. Defines the type of storage system and contains one of the values set in the cloud platform",
+		},
+		"shareable": {
+			Type:     schema.TypeBool,
+			Computed: true,
 		},
 		"size_max": {
 			Type:        schema.TypeInt,

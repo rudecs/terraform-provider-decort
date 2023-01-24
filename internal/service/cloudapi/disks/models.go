@@ -37,9 +37,8 @@ type Disk struct {
 	AccountID           int                    `json:"accountId"`
 	AccountName         string                 `json:"accountName"`
 	BootPartition       int                    `json:"bootPartition"`
+	Computes            map[string]string      `json:"computes"`
 	CreatedTime         uint64                 `json:"creationTime"`
-	ComputeID           int                    `json:"computeId"`
-	ComputeName         string                 `json:"computeName"`
 	DeletedTime         uint64                 `json:"deletionTime"`
 	DeviceName          string                 `json:"devicename"`
 	Desc                string                 `json:"desc"`
@@ -63,6 +62,7 @@ type Disk struct {
 	ParentId            int                    `json:"parentId"`
 	PciSlot             int                    `json:"pciSlot"`
 	Pool                string                 `json:"pool"`
+	PresentTo           []int                  `json:"presentTo"`
 	PurgeTime           uint64                 `json:"purgeTime"`
 	PurgeAttempts       uint64                 `json:"purgeAttempts"`
 	RealityDeviceNumber int                    `json:"realityDeviceNumber"`
@@ -71,6 +71,7 @@ type Disk struct {
 	ResName             string                 `json:"resName"`
 	Role                string                 `json:"role"`
 	SepType             string                 `json:"sepType"`
+	Shareable           bool                   `json:"shareable"`
 	SepID               int                    `json:"sepId"` // NOTE: absent from compute/get output
 	SizeMax             int                    `json:"sizeMax"`
 	SizeUsed            int                    `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space

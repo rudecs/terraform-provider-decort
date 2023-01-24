@@ -593,6 +593,30 @@ func resourceAccountSchemaMake() map[string]*schema.Schema {
 									Type:     schema.TypeInt,
 									Computed: true,
 								},
+								"seps": {
+									Type:     schema.TypeList,
+									Computed: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"sep_id": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"data_name": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"disk_size": {
+												Type:     schema.TypeFloat,
+												Computed: true,
+											},
+											"disk_size_max": {
+												Type:     schema.TypeInt,
+												Computed: true,
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -624,6 +648,30 @@ func resourceAccountSchemaMake() map[string]*schema.Schema {
 								"ram": {
 									Type:     schema.TypeInt,
 									Computed: true,
+								},
+								"seps": {
+									Type:     schema.TypeList,
+									Computed: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"sep_id": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"data_name": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"disk_size": {
+												Type:     schema.TypeFloat,
+												Computed: true,
+											},
+											"disk_size_max": {
+												Type:     schema.TypeInt,
+												Computed: true,
+											},
+										},
+									},
 								},
 							},
 						},

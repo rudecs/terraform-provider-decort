@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -160,6 +161,13 @@ func dataSourceImageExtendSchemaMake() map[string]*schema.Schema {
 		"purge_attempts": {
 			Type:     schema.TypeInt,
 			Computed: true,
+		},
+		"present_to": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
 		},
 		"res_id": {
 			Type:     schema.TypeString,

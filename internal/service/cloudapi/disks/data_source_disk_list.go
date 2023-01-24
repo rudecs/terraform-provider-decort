@@ -42,6 +42,18 @@ import (
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 )
 
+func flattenDiskComputes(computes map[string]string) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	for computeKey, computeVal := range computes {
+		temp := map[string]interface{}{
+			"compute_id":   computeKey,
+			"compute_name": computeVal,
+		}
+		res = append(res, temp)
+	}
+	return res
+}
+
 func flattenIOTune(iot IOTune) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
 	temp := map[string]interface{}{
@@ -72,9 +84,8 @@ func flattenDiskList(dl DisksList) []map[string]interface{} {
 			"account_id":            disk.AccountID,
 			"account_name":          disk.AccountName,
 			"acl":                   string(diskAcl),
+			"computes":              flattenDiskComputes(disk.Computes),
 			"boot_partition":        disk.BootPartition,
-			"compute_id":            disk.ComputeID,
-			"compute_name":          disk.ComputeName,
 			"created_time":          disk.CreatedTime,
 			"deleted_time":          disk.DeletedTime,
 			"desc":                  disk.Desc,
@@ -99,6 +110,7 @@ func flattenDiskList(dl DisksList) []map[string]interface{} {
 			"passwd":                disk.Passwd,
 			"pci_slot":              disk.PciSlot,
 			"pool":                  disk.Pool,
+			"present_to":            disk.PresentTo,
 			"purge_attempts":        disk.PurgeAttempts,
 			"purge_time":            disk.PurgeTime,
 			"reality_device_number": disk.RealityDeviceNumber,
@@ -108,6 +120,7 @@ func flattenDiskList(dl DisksList) []map[string]interface{} {
 			"role":                  disk.Role,
 			"sep_id":                disk.SepID,
 			"sep_type":              disk.SepType,
+			"shareable":             disk.Shareable,
 			"size_max":              disk.SizeMax,
 			"size_used":             disk.SizeUsed,
 			"snapshots":             flattenDiskSnapshotList(disk.Snapshots),
@@ -199,15 +212,21 @@ func dataSourceDiskListSchemaMake() map[string]*schema.Schema {
 						Computed:    true,
 						Description: "Number of disk partitions",
 					},
-					"compute_id": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: "Compute ID",
-					},
-					"compute_name": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: "Compute name",
+					"computes": {
+						Type:     schema.TypeList,
+						Computed: true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"compute_id": {
+									Type:     schema.TypeString,
+									Computed: true,
+								},
+								"compute_name": {
+									Type:     schema.TypeString,
+									Computed: true,
+								},
+							},
+						},
 					},
 					"created_time": {
 						Type:        schema.TypeInt,
@@ -400,6 +419,13 @@ func dataSourceDiskListSchemaMake() map[string]*schema.Schema {
 						Computed:    true,
 						Description: "Pool for disk location",
 					},
+					"present_to": {
+						Type:     schema.TypeList,
+						Computed: true,
+						Elem: &schema.Schema{
+							Type: schema.TypeInt,
+						},
+					},
 					"purge_attempts": {
 						Type:        schema.TypeInt,
 						Computed:    true,
@@ -444,6 +470,10 @@ func dataSourceDiskListSchemaMake() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 						Computed:    true,
 						Description: "Type SEP. Defines the type of storage system and contains one of the values set in the cloud platform",
+					},
+					"shareable": {
+						Type:     schema.TypeBool,
+						Computed: true,
 					},
 					"size_max": {
 						Type:        schema.TypeInt,

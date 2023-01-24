@@ -47,4 +47,6 @@ const (
 
 	disksSnapshotDeleteAPI   = "/restmachine/cloudapi/disks/snapshotDelete"
 	disksSnapshotRollbackAPI = "/restmachine/cloudapi/disks/snapshotRollback"
+	disksShareAPI            = "/restmachine/cloudapi/disks/share"
+	disksUnshareAPI          = "/restmachine/cloudapi/disks/unshare"
 )

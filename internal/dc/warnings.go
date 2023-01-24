@@ -30,6 +30,7 @@ builds seamlessly.
 Documentation: https://github.com/rudecs/terraform-provider-decort/wiki
 */
 
+//Diagnostics Collector
 package dc
 
 import "github.com/hashicorp/terraform-plugin-sdk/v2/diag"

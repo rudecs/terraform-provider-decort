@@ -47,6 +47,7 @@ func flattenAccountDisksList(adl AccountDisksList) []map[string]interface{} {
 			"disk_name": ad.Name,
 			"pool":      ad.Pool,
 			"sep_id":    ad.SepId,
+			"shareable": ad.Shareable,
 			"size_max":  ad.SizeMax,
 			"type":      ad.Type,
 		}
@@ -96,6 +97,10 @@ func dataSourceAccountDisksListSchemaMake() map[string]*schema.Schema {
 					},
 					"sep_id": {
 						Type:     schema.TypeInt,
+						Computed: true,
+					},
+					"shareable": {
+						Type:     schema.TypeBool,
 						Computed: true,
 					},
 					"size_max": {

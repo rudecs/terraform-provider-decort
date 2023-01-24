@@ -113,6 +113,15 @@ func resourceDiskCreate(ctx context.Context, d *schema.ResourceData, m interface
 		urlValues = &url.Values{}
 	}
 
+	if shareable := d.Get("shareable"); shareable.(bool) == true {
+		urlValues.Add("diskId", diskId)
+		_, err := c.DecortAPICall(ctx, "POST", disksShareAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		urlValues = &url.Values{}
+	}
+
 	dgn := resourceDiskRead(ctx, d, m)
 	if dgn != nil {
 		return dgn
@@ -167,8 +176,7 @@ func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("account_name", disk.AccountName)
 	d.Set("acl", string(diskAcl))
 	d.Set("boot_partition", disk.BootPartition)
-	d.Set("compute_id", disk.ComputeID)
-	d.Set("compute_name", disk.ComputeName)
+	d.Set("computes", flattenDiskComputes(disk.Computes))
 	d.Set("created_time", disk.CreatedTime)
 	d.Set("deleted_time", disk.DeletedTime)
 	d.Set("desc", disk.Desc)
@@ -191,6 +199,7 @@ func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("passwd", disk.Passwd)
 	d.Set("pci_slot", disk.PciSlot)
 	d.Set("pool", disk.Pool)
+	d.Set("present_to", disk.PresentTo)
 	d.Set("purge_attempts", disk.PurgeAttempts)
 	d.Set("purge_time", disk.PurgeTime)
 	d.Set("reality_device_number", disk.RealityDeviceNumber)
@@ -202,6 +211,7 @@ func resourceDiskRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("sep_type", disk.SepType)
 	d.Set("size_max", disk.SizeMax)
 	d.Set("size_used", disk.SizeUsed)
+	d.Set("shareable", disk.Shareable)
 	d.Set("snapshots", flattenDiskSnapshotList(disk.Snapshots))
 	d.Set("status", disk.Status)
 	d.Set("tech_status", disk.TechStatus)
@@ -277,6 +287,24 @@ func resourceDiskUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		urlValues = &url.Values{}
 	}
 
+	if d.HasChange("shareable") {
+		oldShare, newShare := d.GetChange("shareable")
+		urlValues = &url.Values{}
+		urlValues.Add("diskId", d.Id())
+		if oldShare.(bool) == false && newShare.(bool) == true {
+			_, err := c.DecortAPICall(ctx, "POST", disksShareAPI, urlValues)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+		if oldShare.(bool) == true && newShare.(bool) == false {
+			_, err := c.DecortAPICall(ctx, "POST", disksUnshareAPI, urlValues)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
 	return resourceDiskRead(ctx, d, m)
 }
 
@@ -335,6 +363,13 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Pool for disk location",
 		},
+		"present_to": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+		},
 		"sep_id": {
 			Type:        schema.TypeInt,
 			Optional:    true,
@@ -354,7 +389,6 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			ValidateFunc: validation.StringInSlice([]string{"D", "B", "T"}, false),
 			Description:  "The type of disk in terms of its role in compute: 'B=Boot, D=Data, T=Temp'",
 		},
-
 		"detach": {
 			Type:        schema.TypeBool,
 			Optional:    true,
@@ -372,6 +406,12 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Optional:    true,
 			Default:     "",
 			Description: "Reason for deletion",
+		},
+		"shareable": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Computed: true,
+			Default:  false,
 		},
 
 		"disk_id": {
@@ -393,15 +433,21 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Number of disk partitions",
 		},
-		"compute_id": {
-			Type:        schema.TypeInt,
-			Computed:    true,
-			Description: "Compute ID",
-		},
-		"compute_name": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "Compute name",
+		"computes": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"compute_id": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
+					"compute_name": {
+						Type:     schema.TypeString,
+						Computed: true,
+					},
+				},
+			},
 		},
 		"created_time": {
 			Type:        schema.TypeInt,

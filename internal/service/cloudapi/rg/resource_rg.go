@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,9 +34,9 @@ package rg
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"github.com/rudecs/terraform-provider-decort/internal/constants"
 	"github.com/rudecs/terraform-provider-decort/internal/controller"
@@ -133,13 +134,8 @@ func resourceResgroupCreate(ctx context.Context, d *schema.ResourceData, m inter
 	d.SetId(api_resp) // rg/create API returns ID of the newly creted resource group on success
 	// rg.ID, _ = strconv.Atoi(api_resp)
 	if !set_quota {
-		resp, err := utilityResgroupCheckPresence(ctx, d, m)
+		rg, err := utilityResgroupCheckPresence(ctx, d, m)
 		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		rg := ResgroupGetResp{}
-		if err := json.Unmarshal([]byte(resp), &rg); err != nil {
 			return diag.FromErr(err)
 		}
 
@@ -155,14 +151,14 @@ func resourceResgroupRead(ctx context.Context, d *schema.ResourceData, m interfa
 		d.Get("name").(string), d.Get("account_id").(int))
 
 	rg_facts, err := utilityResgroupCheckPresence(ctx, d, m)
-	if rg_facts == "" {
+	if err != nil {
 		// if empty string is returned from utilityResgroupCheckPresence then there is no
 		// such resource group and err tells so - just return it to the calling party
 		d.SetId("") // ensure ID is empty
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(flattenResgroup(d, rg_facts))
+	return diag.FromErr(flattenResgroup(d, *rg_facts))
 }
 
 func resourceResgroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -272,29 +268,277 @@ func resourceResgroupDelete(ctx context.Context, d *schema.ResourceData, m inter
 	log.Debugf("resourceResgroupDelete: called for RG name %s, account ID %d",
 		d.Get("name").(string), d.Get("account_id").(int))
 
-	rg_facts, err := utilityResgroupCheckPresence(ctx, d, m)
-	if rg_facts == "" {
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		// the target RG does not exist - in this case according to Terraform best practice
-		// we exit from Destroy method without error
-		return nil
+	c := m.(*controller.ControllerCfg)
+	url_values := &url.Values{}
+
+	url_values.Add("rgId", d.Id())
+	if force, ok := d.GetOk("force"); ok {
+		url_values.Add("force", strconv.FormatBool(force.(bool)))
+	}
+	if permanently, ok := d.GetOk("permanently"); ok {
+		url_values.Add("permanently", strconv.FormatBool(permanently.(bool)))
+	}
+	if reason, ok := d.GetOk("reason"); ok {
+		url_values.Add("reason", reason.(string))
 	}
 
-	url_values := &url.Values{}
-	url_values.Add("rgId", d.Id())
-	url_values.Add("force", "1")
-	url_values.Add("permanently", "1")
-	url_values.Add("reason", "Destroyed by DECORT Terraform provider")
-
-	c := m.(*controller.ControllerCfg)
-	_, err = c.DecortAPICall(ctx, "POST", ResgroupDeleteAPI, url_values)
+	_, err := c.DecortAPICall(ctx, "POST", ResgroupDeleteAPI, url_values)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	return nil
+}
+
+func ResourceRgSchemaMake() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"account_id": {
+			Type:         schema.TypeInt,
+			Required:     true,
+			ValidateFunc: validation.IntAtLeast(1),
+			Description:  "Unique ID of the account, which this resource group belongs to.",
+		},
+
+		"gid": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			ForceNew:    true, // change of Grid ID will require new RG
+			Description: "Unique ID of the grid, where this resource group is deployed.",
+		},
+
+		"name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Name of this resource group. Names are case sensitive and unique within the context of a account.",
+		},
+
+		"def_net_type": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			Default:      "PRIVATE",
+			ValidateFunc: validation.StringInSlice([]string{"PRIVATE", "PUBLIC", "NONE"}, false),
+			Description:  "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
+		},
+
+		"def_net_id": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "ID of the default network for this resource group (if any).",
+		},
+
+		"ipcidr": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Address of the netowrk inside the private network segment (aka ViNS) if def_net_type=PRIVATE",
+		},
+
+		"ext_net_id": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     0,
+			Description: "ID of the external network for default ViNS. Pass 0 if def_net_type=PUBLIC or no external connection required for the defult ViNS when def_net_type=PRIVATE",
+		},
+
+		"ext_ip": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "IP address on the external netowrk to request when def_net_type=PRIVATE and ext_net_id is not 0",
+		},
+
+		"quota": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Computed: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: quotaRgSubresourceSchemaMake(),
+			},
+			Description: "Quota settings for this resource group.",
+		},
+
+		"description": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "User-defined text description of this resource group.",
+		},
+		"force": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Set to True if you want force delete non-empty RG",
+		},
+		"permanently": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Set to True if you want force delete non-empty RG",
+		},
+		"reason": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Set to True if you want force delete non-empty RG",
+		},
+
+		"account_name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the account, which this resource group belongs to.",
+		},
+
+		"resources": {
+			Type:     schema.TypeList,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"current": {
+						Type:     schema.TypeList,
+						Computed: true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"cpu": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"disksize": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"extips": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"exttraffic": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"gpu": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"ram": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"seps": {
+									Type:     schema.TypeList,
+									Computed: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"sep_id": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"data_name": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"disk_size": {
+												Type:     schema.TypeFloat,
+												Computed: true,
+											},
+											"disk_size_max": {
+												Type:     schema.TypeInt,
+												Computed: true,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"reserved": {
+						Type:     schema.TypeList,
+						Computed: true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"cpu": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"disksize": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"extips": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"exttraffic": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"gpu": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"ram": {
+									Type:     schema.TypeInt,
+									Computed: true,
+								},
+								"seps": {
+									Type:     schema.TypeList,
+									Computed: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"sep_id": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"data_name": {
+												Type:     schema.TypeString,
+												Computed: true,
+											},
+											"disk_size": {
+												Type:     schema.TypeFloat,
+												Computed: true,
+											},
+											"disk_size_max": {
+												Type:     schema.TypeInt,
+												Computed: true,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+
+		"status": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Current status of this resource group.",
+		},
+
+		"vins": {
+			Type:     schema.TypeList, //this is a list of ints
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+			Description: "List of VINs deployed in this resource group.",
+		},
+
+		"vms": {
+			Type:     schema.TypeList, //t his is a list of ints
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+			Description: "List of computes deployed in this resource group.",
+		},
+
+		"computes": {
+			Type:     schema.TypeList, //this is a list of ints
+			Computed: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+			Description: "List of computes deployed in this resource group.",
+		},
+	}
 }
 
 func ResourceResgroup() *schema.Resource {
@@ -318,113 +562,6 @@ func ResourceResgroup() *schema.Resource {
 			Default: &constants.Timeout300s,
 		},
 
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of this resource group. Names are case sensitive and unique within the context of a account.",
-			},
-
-			"account_id": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				ValidateFunc: validation.IntAtLeast(1),
-				Description:  "Unique ID of the account, which this resource group belongs to.",
-			},
-
-			"def_net_type": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "PRIVATE",
-				ValidateFunc: validation.StringInSlice([]string{"PRIVATE", "PUBLIC", "NONE"}, false),
-				Description:  "Type of the network, which this resource group will use as default for its computes - PRIVATE or PUBLIC or NONE.",
-			},
-
-			"def_net_id": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "ID of the default network for this resource group (if any).",
-			},
-
-			"ipcidr": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Address of the netowrk inside the private network segment (aka ViNS) if def_net_type=PRIVATE",
-			},
-
-			"ext_net_id": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     0,
-				Description: "ID of the external network for default ViNS. Pass 0 if def_net_type=PUBLIC or no external connection required for the defult ViNS when def_net_type=PRIVATE",
-			},
-
-			"ext_ip": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "IP address on the external netowrk to request when def_net_type=PRIVATE and ext_net_id is not 0",
-			},
-
-			/* commented out, as in this version of provider we use default Grid ID
-			"grid_id": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     0,     // if 0 is passed, default Grid ID will be used
-				// DefaultFunc: utilityResgroupGetDefaultGridID,
-				ForceNew:    true,  // change of Grid ID will require new RG
-				Description: "Unique ID of the grid, where this resource group is deployed.",
-			},
-			*/
-
-			"quota": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
-				MaxItems: 1,
-				Elem: &schema.Resource{
-					Schema: quotaRgSubresourceSchemaMake(),
-				},
-				Description: "Quota settings for this resource group.",
-			},
-
-			"description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "User-defined text description of this resource group.",
-			},
-
-			"account_name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Name of the account, which this resource group belongs to.",
-			},
-
-			/*
-				"status": {
-					Type:        schema.TypeString,
-					Computed:    true,
-					Description: "Current status of this resource group.",
-				},
-
-				"vins": {
-					Type:     schema.TypeList, // this is a list of ints
-					Computed: true,
-					MaxItems: LimitMaxVinsPerResgroup,
-					Elem: &schema.Schema{
-						Type: schema.TypeInt,
-					},
-					Description: "List of VINs deployed in this resource group.",
-				},
-
-				"computes": {
-					Type:     schema.TypeList, // this is a list of ints
-					Computed: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeInt,
-					},
-					Description: "List of computes deployed in this resource group.",
-				},
-			*/
-		},
+		Schema: ResourceRgSchemaMake(),
 	}
 }

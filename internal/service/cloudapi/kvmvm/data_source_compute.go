@@ -45,7 +45,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	// "github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
@@ -125,10 +124,10 @@ func findInExtraDisks(DiskId uint, ExtraDisks []interface{}) bool {
 	return false
 }
 
-func flattenComputeDisksDemo(disksList []DiskRecord, extraDisks []interface{}) []map[string]interface{} {
+func flattenDataComputeDisksDemo(disksList []DiskRecord, extraDisks []interface{}) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
 	for _, disk := range disksList {
-		if disk.Name == "bootdisk" || findInExtraDisks(disk.ID, extraDisks) { //skip main bootdisk and extraDisks
+		if findInExtraDisks(disk.ID, extraDisks) { //skip main bootdisk and extraDisks
 			continue
 		}
 		temp := map[string]interface{}{
@@ -136,6 +135,9 @@ func flattenComputeDisksDemo(disksList []DiskRecord, extraDisks []interface{}) [
 			"disk_id":   disk.ID,
 			"disk_type": disk.Type,
 			"sep_id":    disk.SepID,
+			"shareable": disk.Shareable,
+			"size_max":  disk.SizeMax,
+			"size_used": disk.SizeUsed,
 			"pool":      disk.Pool,
 			"desc":      disk.Desc,
 			"image_id":  disk.ImageID,
@@ -146,7 +148,7 @@ func flattenComputeDisksDemo(disksList []DiskRecord, extraDisks []interface{}) [
 	return res
 }
 
-func flattenCompute(d *schema.ResourceData, compFacts string) error {
+func flattenDataCompute(d *schema.ResourceData, compFacts string) error {
 	// This function expects that compFacts string contains response from API compute/get,
 	// i.e. detailed information about compute instance.
 	//
@@ -219,7 +221,7 @@ func flattenCompute(d *schema.ResourceData, compFacts string) error {
 		}
 	}
 
-	err = d.Set("disks", flattenComputeDisksDemo(model.Disks, d.Get("extra_disks").(*schema.Set).List()))
+	err = d.Set("disks", flattenDataComputeDisksDemo(model.Disks, d.Get("extra_disks").(*schema.Set).List()))
 	if err != nil {
 		return err
 	}
@@ -236,7 +238,7 @@ func dataSourceComputeRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	if err = flattenCompute(d, compFacts); err != nil {
+	if err = flattenDataCompute(d, compFacts); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -353,48 +355,53 @@ func DataSourceCompute() *schema.Resource {
 			"disks": {
 				Type:     schema.TypeList,
 				Computed: true,
-				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"disk_name": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Computed:    true,
 							Description: "Name for disk",
 						},
 						"size": {
 							Type:        schema.TypeInt,
-							Required:    true,
+							Computed:    true,
 							Description: "Disk size in GiB",
 						},
 						"disk_type": {
-							Type:         schema.TypeString,
-							Computed:     true,
-							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"B", "D"}, false),
-							Description:  "The type of disk in terms of its role in compute: 'B=Boot, D=Data'",
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type of disk in terms of its role in compute: 'B=Boot, D=Data'",
 						},
 						"sep_id": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Optional:    true,
 							Description: "Storage endpoint provider ID; by default the same with boot disk",
+						},
+						"shareable": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"size_max": {
+							Type:     schema.TypeInt,
+							Computed: true,
+						},
+						"size_used": {
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 						"pool": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Optional:    true,
 							Description: "Pool name; by default will be chosen automatically",
 						},
 						"desc": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Optional:    true,
 							Description: "Optional description",
 						},
 						"image_id": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Optional:    true,
 							Description: "Specify image id for create disk from template",
 						},
 						"disk_id": {
@@ -404,8 +411,7 @@ func DataSourceCompute() *schema.Resource {
 						},
 						"permanently": {
 							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
+							Computed:    true,
 							Description: "Disk deletion status",
 						},
 					},

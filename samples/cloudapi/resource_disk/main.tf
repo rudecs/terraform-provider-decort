@@ -33,6 +33,7 @@ resource "decort_disk" "acl" {
   restore     = true
   permanently = true
   reason      = "delete"
+  shareable = false
   iotune {
     read_bytes_sec      = 0
     read_bytes_sec_max  = 0

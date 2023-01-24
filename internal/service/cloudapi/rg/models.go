@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -91,27 +92,28 @@ type AccountAclRecord struct {
 }
 
 type ResgroupGetResp struct {
-	ACLs           []UserAclRecord `json:"ACLs"`
-	Usage          UsageRecord     `json:"Resources"`
-	AccountID      int             `json:"accountId"`
-	AccountName    string          `json:"accountName"`
-	GridID         int             `json:"gid"`
-	CreatedBy      string          `json:"createdBy"`
-	CreatedTime    uint64          `json:"createdTime"`
-	DefaultNetID   int             `json:"def_net_id"`
-	DefaultNetType string          `json:"def_net_type"`
-	DeletedBy      string          `json:"deletedBy"`
-	DeletedTime    uint64          `json:"deletedTime"`
-	Desc           string          `json:"desc"`
-	ID             uint            `json:"id"`
-	LockStatus     string          `json:"lockStatus"`
-	Name           string          `json:"name"`
-	Quota          QuotaRecord     `json:"resourceLimits"`
-	Status         string          `json:"status"`
-	UpdatedBy      string          `json:"updatedBy"`
-	UpdatedTime    uint64          `json:"updatedTime"`
-	Vins           []int           `json:"vins"`
-	Computes       []int           `json:"vms"`
+	Resources Resources       `json:"Resources"`
+	ACLs      []UserAclRecord `json:"ACLs"`
+	//Usage          UsageRecord     `json:"Resources"`
+	AccountID      int         `json:"accountId"`
+	AccountName    string      `json:"accountName"`
+	GridID         int         `json:"gid"`
+	CreatedBy      string      `json:"createdBy"`
+	CreatedTime    uint64      `json:"createdTime"`
+	DefaultNetID   int         `json:"def_net_id"`
+	DefaultNetType string      `json:"def_net_type"`
+	DeletedBy      string      `json:"deletedBy"`
+	DeletedTime    uint64      `json:"deletedTime"`
+	Desc           string      `json:"desc"`
+	ID             uint        `json:"id"`
+	LockStatus     string      `json:"lockStatus"`
+	Name           string      `json:"name"`
+	Quota          QuotaRecord `json:"resourceLimits"`
+	Status         string      `json:"status"`
+	UpdatedBy      string      `json:"updatedBy"`
+	UpdatedTime    uint64      `json:"updatedTime"`
+	Vins           []int       `json:"vins"`
+	Computes       []int       `json:"vms"`
 
 	Ignored map[string]interface{} `json:"-"`
 }
@@ -146,4 +148,24 @@ type ResourceRecord struct { // this is how actual usage is reported by /api/...
 type UsageRecord struct {
 	Current  ResourceRecord `json:"Current"`
 	Reserved ResourceRecord `json:"Reserved"`
+}
+
+type ResourceSep struct {
+	DiskSize    float64 `json:"disksize"`
+	DiskSizeMax int     `json:"disksizemax"`
+}
+
+type Resource struct {
+	CPU        int                               `json:"cpu"`
+	Disksize   int                               `json:"disksize"`
+	Extips     int                               `json:"extips"`
+	Exttraffic int                               `json:"exttraffic"`
+	GPU        int                               `json:"gpu"`
+	RAM        int                               `json:"ram"`
+	SEPs       map[string]map[string]ResourceSep `json:"seps"`
+}
+
+type Resources struct {
+	Current  Resource `json:"Current"`
+	Reserved Resource `json:"Reserved"`
 }

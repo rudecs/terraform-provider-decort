@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -134,6 +135,7 @@ type ImageExtend struct {
 	Password      string      `json:"password"`
 	Pool          string      `json:"pool"`
 	ProviderName  string      `json:"provider_name"`
+	PresentTo     []int       `json:"presentTo"`
 	PurgeAttempts int         `json:"purgeAttempts"`
 	ResId         string      `json:"resId"`
 	RescueCD      bool        `json:"rescuecd"`

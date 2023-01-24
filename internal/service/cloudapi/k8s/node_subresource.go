@@ -56,10 +56,12 @@ func parseNode(nodeList []interface{}) K8sNodeRecord {
 	node := nodeList[0].(map[string]interface{})
 
 	return K8sNodeRecord{
-		Num:  node["num"].(int),
-		Cpu:  node["cpu"].(int),
-		Ram:  node["ram"].(int),
-		Disk: node["disk"].(int),
+		Num:     node["num"].(int),
+		Cpu:     node["cpu"].(int),
+		Ram:     node["ram"].(int),
+		Disk:    node["disk"].(int),
+		SepID:   node["sep_id"].(int),
+		SepPool: node["sep_pool"].(string),
 	}
 }
 
@@ -112,6 +114,14 @@ func mastersSchemaMake() map[string]*schema.Schema {
 		Required:    true,
 		Description: "Number of nodes to create.",
 	}
+	masters["sep_id"] = &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+	}
+	masters["sep_pool"] = &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
+	}
 	masters["cpu"] = &schema.Schema{
 		Type:        schema.TypeInt,
 		Required:    true,
@@ -139,6 +149,14 @@ func workersSchemaMake() map[string]*schema.Schema {
 		Type:        schema.TypeInt,
 		Required:    true,
 		Description: "Number of nodes to create.",
+	}
+	workers["sep_id"] = &schema.Schema{
+		Type:     schema.TypeInt,
+		Optional: true,
+	}
+	workers["sep_pool"] = &schema.Schema{
+		Type:     schema.TypeString,
+		Optional: true,
 	}
 	workers["cpu"] = &schema.Schema{
 		Type:        schema.TypeInt,

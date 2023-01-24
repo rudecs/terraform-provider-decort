@@ -3,6 +3,7 @@ Copyright (c) 2019-2022 Digital Energy Cloud Solutions LLC. All Rights Reserved.
 Authors:
 Petr Krutov, <petr.krutov@digitalenergy.online>
 Stanislav Solovev, <spsolovev@digitalenergy.online>
+Kasim Baybikov, <kmbaybikov@basistech.ru>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,6 +81,7 @@ func flattenImage(d *schema.ResourceData, img *ImageExtend) {
 	d.Set("pool_name", img.Pool)
 	d.Set("provider_name", img.ProviderName)
 	d.Set("purge_attempts", img.PurgeAttempts)
+	d.Set("present_to", img.PresentTo)
 	d.Set("res_id", img.ResId)
 	d.Set("rescuecd", img.RescueCD)
 	d.Set("sep_id", img.SepId)
