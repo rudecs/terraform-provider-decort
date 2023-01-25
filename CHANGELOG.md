@@ -11,7 +11,6 @@
 - Add "shareable" to the data source decort_disk
 - Add "shareable" to the resource decort_disk
 - Add "shareable" to the data source decort_disk_list
-- Add optional field "shareable" to the resource decort_account_disk_list
 - Add "present_to" to the data source decort_disk
 - Add "present_to" to the data source decort_disk_list
 - Add "present_to" to the resource decort_disk
@@ -48,4 +47,3 @@
 - Add "resources" to the data source decort_resgroup
 - Add "gid" to the data source decort_resgroup
 - Change required field "account_id" to optional in data source decort_resgroup
-
