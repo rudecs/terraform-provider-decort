@@ -11,7 +11,7 @@
 - Add "shareable" to the data source decort_disk
 - Add "shareable" to the resource decort_disk
 - Add "shareable" to the data source decort_disk_list
-- Add optional field "share" to the resource decort_account_disk_list
+- Add optional field "shareable" to the resource decort_account_disk_list
 - Add "present_to" to the data source decort_disk
 - Add "present_to" to the data source decort_disk_list
 - Add "present_to" to the resource decort_disk
