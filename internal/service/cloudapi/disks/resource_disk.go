@@ -411,7 +411,6 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Type:     schema.TypeBool,
 			Optional: true,
 			Computed: true,
-			Default:  false,
 		},
 
 		"disk_id": {
