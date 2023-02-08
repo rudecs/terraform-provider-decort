@@ -225,6 +225,18 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	if !cleanup {
+		if affinityLabel, ok := d.GetOk("affinity_label"); ok {
+			affinityLabel := affinityLabel.(string)
+			urlValues := &url.Values{}
+			urlValues.Add("computeId", d.Id())
+			urlValues.Add("affinityLabel", affinityLabel)
+			_, err := c.DecortAPICall(ctx, "POST", ComputeAffinityLabelSetAPI, urlValues)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			urlValues = &url.Values{}
+		}
+
 		if disks, ok := d.GetOk("disks"); ok {
 			log.Debugf("resourceComputeCreate: Create disks on ComputeID: %d", compId)
 			addedDisks := disks.([]interface{})
@@ -251,6 +263,52 @@ func resourceComputeCreate(ctx context.Context, d *schema.ResourceData, m interf
 						urlValues.Add("imageId", strconv.Itoa(diskConv["image_id"].(int)))
 					}
 					_, err := c.DecortAPICall(ctx, "POST", ComputeDiskAddAPI, urlValues)
+					if err != nil {
+						cleanup = true
+						return diag.FromErr(err)
+					}
+					urlValues = &url.Values{}
+				}
+			}
+		}
+
+		if ars, ok := d.GetOk("affinity_rules"); ok {
+			log.Debugf("resourceComputeCreate: Create affinity rules on ComputeID: %d", compId)
+			addedAR := ars.([]interface{})
+			if len(addedAR) > 0 {
+				for _, ar := range addedAR {
+					arConv := ar.(map[string]interface{})
+
+					urlValues.Add("computeId", d.Id())
+					urlValues.Add("topology", arConv["topology"].(string))
+					urlValues.Add("policy", arConv["policy"].(string))
+					urlValues.Add("mode", arConv["mode"].(string))
+					urlValues.Add("key", arConv["key"].(string))
+					urlValues.Add("value", arConv["value"].(string))
+					_, err := c.DecortAPICall(ctx, "POST", ComputeAffinityRuleAddAPI, urlValues)
+					if err != nil {
+						cleanup = true
+						return diag.FromErr(err)
+					}
+					urlValues = &url.Values{}
+				}
+			}
+		}
+
+		if ars, ok := d.GetOk("anti_affinity_rules"); ok {
+			log.Debugf("resourceComputeCreate: Create anti affinity rules on ComputeID: %d", compId)
+			addedAR := ars.([]interface{})
+			if len(addedAR) > 0 {
+				for _, ar := range addedAR {
+					arConv := ar.(map[string]interface{})
+
+					urlValues.Add("computeId", d.Id())
+					urlValues.Add("topology", arConv["topology"].(string))
+					urlValues.Add("policy", arConv["policy"].(string))
+					urlValues.Add("mode", arConv["mode"].(string))
+					urlValues.Add("key", arConv["key"].(string))
+					urlValues.Add("value", arConv["value"].(string))
+					_, err := c.DecortAPICall(ctx, "POST", ComputeAntiAffinityRuleAddAPI, urlValues)
 					if err != nil {
 						cleanup = true
 						return diag.FromErr(err)
@@ -576,6 +634,155 @@ func resourceComputeUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
+	if d.HasChange("affinity_label") {
+		affinityLabel := d.Get("affinity_label").(string)
+		urlValues.Add("computeId", d.Id())
+		if affinityLabel == "" {
+			_, err := c.DecortAPICall(ctx, "POST", ComputeAffinityLabelRemoveAPI, urlValues)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+		urlValues.Add("affinityLabel", affinityLabel)
+		_, err := c.DecortAPICall(ctx, "POST", ComputeAffinityLabelSetAPI, urlValues)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		urlValues = &url.Values{}
+	}
+
+	if d.HasChange("affinity_rules") {
+		deletedAR := make([]interface{}, 0)
+		addedAR := make([]interface{}, 0)
+
+		oldAR, newAR := d.GetChange("affinity_rules")
+		oldConv := oldAR.([]interface{})
+		newConv := newAR.([]interface{})
+
+		if len(newConv) == 0 {
+			urlValues := &url.Values{}
+			urlValues.Add("computeId", d.Id())
+			_, err := c.DecortAPICall(ctx, "POST", ComputeAffinityRulesClearAPI, urlValues)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		} else {
+			for _, el := range oldConv {
+				if !isContainsAR(newConv, el) {
+					deletedAR = append(deletedAR, el)
+				}
+			}
+			for _, el := range newConv {
+				if !isContainsAR(oldConv, el) {
+					addedAR = append(addedAR, el)
+				}
+			}
+
+			if len(deletedAR) > 0 {
+				urlValues := &url.Values{}
+				for _, ar := range deletedAR {
+					arConv := ar.(map[string]interface{})
+					urlValues.Add("computeId", d.Id())
+					urlValues.Add("topology", arConv["topology"].(string))
+					urlValues.Add("policy", arConv["policy"].(string))
+					urlValues.Add("mode", arConv["mode"].(string))
+					urlValues.Add("key", arConv["key"].(string))
+					urlValues.Add("value", arConv["value"].(string))
+					_, err := c.DecortAPICall(ctx, "POST", ComputeAffinityRuleRemoveAPI, urlValues)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+
+					urlValues = &url.Values{}
+				}
+			}
+			if len(addedAR) > 0 {
+				for _, ar := range addedAR {
+					arConv := ar.(map[string]interface{})
+					urlValues.Add("computeId", d.Id())
+					urlValues.Add("topology", arConv["topology"].(string))
+					urlValues.Add("policy", arConv["policy"].(string))
+					urlValues.Add("mode", arConv["mode"].(string))
+					urlValues.Add("key", arConv["key"].(string))
+					urlValues.Add("value", arConv["value"].(string))
+					_, err := c.DecortAPICall(ctx, "POST", ComputeAffinityRuleAddAPI, urlValues)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+
+					urlValues = &url.Values{}
+				}
+			}
+		}
+
+	}
+
+	if d.HasChange("anti_affinity_rules") {
+		deletedAR := make([]interface{}, 0)
+		addedAR := make([]interface{}, 0)
+
+		oldAR, newAR := d.GetChange("anti_affinity_rules")
+		oldConv := oldAR.([]interface{})
+		newConv := newAR.([]interface{})
+
+		if len(newConv) == 0 {
+			urlValues := &url.Values{}
+			urlValues.Add("computeId", d.Id())
+			_, err := c.DecortAPICall(ctx, "POST", ComputeAntiAffinityRulesClearAPI, urlValues)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		} else {
+			for _, el := range oldConv {
+				if !isContainsAR(newConv, el) {
+					deletedAR = append(deletedAR, el)
+				}
+			}
+			for _, el := range newConv {
+				if !isContainsAR(oldConv, el) {
+					addedAR = append(addedAR, el)
+				}
+			}
+
+			if len(deletedAR) > 0 {
+				urlValues := &url.Values{}
+				for _, ar := range deletedAR {
+					arConv := ar.(map[string]interface{})
+					urlValues.Add("computeId", d.Id())
+					urlValues.Add("topology", arConv["topology"].(string))
+					urlValues.Add("policy", arConv["policy"].(string))
+					urlValues.Add("mode", arConv["mode"].(string))
+					urlValues.Add("key", arConv["key"].(string))
+					urlValues.Add("value", arConv["value"].(string))
+					_, err := c.DecortAPICall(ctx, "POST", ComputeAntiAffinityRuleRemoveAPI, urlValues)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+
+					urlValues = &url.Values{}
+				}
+			}
+			if len(addedAR) > 0 {
+				for _, ar := range addedAR {
+					arConv := ar.(map[string]interface{})
+					urlValues.Add("computeId", d.Id())
+					urlValues.Add("topology", arConv["topology"].(string))
+					urlValues.Add("policy", arConv["policy"].(string))
+					urlValues.Add("mode", arConv["mode"].(string))
+					urlValues.Add("key", arConv["key"].(string))
+					urlValues.Add("value", arConv["value"].(string))
+					_, err := c.DecortAPICall(ctx, "POST", ComputeAntiAffinityRuleAddAPI, urlValues)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+
+					urlValues = &url.Values{}
+				}
+			}
+		}
+
+	}
+
 	// we may reuse dataSourceComputeRead here as we maintain similarity
 	// between Compute resource and Compute data source schemas
 	return resourceComputeRead(ctx, d, m)
@@ -586,6 +793,21 @@ func isContainsDisk(els []interface{}, el interface{}) bool {
 		elOldConv := elOld.(map[string]interface{})
 		elConv := el.(map[string]interface{})
 		if elOldConv["disk_name"].(string) == elConv["disk_name"].(string) {
+			return true
+		}
+	}
+	return false
+}
+
+func isContainsAR(els []interface{}, el interface{}) bool {
+	for _, elOld := range els {
+		elOldConv := elOld.(map[string]interface{})
+		elConv := el.(map[string]interface{})
+		if elOldConv["key"].(string) == elConv["key"].(string) &&
+			elOldConv["value"].(string) == elConv["value"].(string) &&
+			elOldConv["mode"].(string) == elConv["mode"].(string) &&
+			elOldConv["topology"].(string) == elConv["topology"].(string) &&
+			elOldConv["policy"].(string) == elConv["policy"].(string) {
 			return true
 		}
 	}
@@ -663,6 +885,86 @@ func ResourceComputeSchemaMake() map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Description: "This compute instance boot disk size in GB. Make sure it is large enough to accomodate selected OS image.",
+		},
+
+		"affinity_label": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Set affinity label for compute",
+		},
+
+		"affinity_rules": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"topology": {
+						Type:         schema.TypeString,
+						Required:     true,
+						ValidateFunc: validation.StringInSlice([]string{"node", "compute"}, false),
+						Description:  "compute or node, for whom rule applies",
+					},
+					"policy": {
+						Type:         schema.TypeString,
+						Required:     true,
+						ValidateFunc: validation.StringInSlice([]string{"RECOMMENDED", "REQUIRED"}, false),
+						Description:  "RECOMMENDED or REQUIRED, the degree of 'strictness' of this rule",
+					},
+					"mode": {
+						Type:         schema.TypeString,
+						Required:     true,
+						ValidateFunc: validation.StringInSlice([]string{"EQ", "NE", "ANY"}, false),
+						Description:  "EQ or NE or ANY - the comparison mode is 'value', recorded by the specified 'key'",
+					},
+					"key": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "key that are taken into account when analyzing this rule will be identified",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "value that must match the key to be taken into account when analyzing this rule",
+					},
+				},
+			},
+		},
+
+		"anti_affinity_rules": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"topology": {
+						Type:         schema.TypeString,
+						Required:     true,
+						ValidateFunc: validation.StringInSlice([]string{"node", "compute"}, false),
+						Description:  "compute or node, for whom rule applies",
+					},
+					"policy": {
+						Type:         schema.TypeString,
+						Required:     true,
+						ValidateFunc: validation.StringInSlice([]string{"RECOMMENDED", "REQUIRED"}, false),
+						Description:  "RECOMMENDED or REQUIRED, the degree of 'strictness' of this rule",
+					},
+					"mode": {
+						Type:         schema.TypeString,
+						Required:     true,
+						ValidateFunc: validation.StringInSlice([]string{"EQ", "NE", "ANY"}, false),
+						Description:  "EQ or NE or ANY - the comparison mode is 'value', recorded by the specified 'key'",
+					},
+					"key": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "key that are taken into account when analyzing this rule will be identified",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "value that must match the key to be taken into account when analyzing this rule",
+					},
+				},
+			},
 		},
 
 		"disks": {

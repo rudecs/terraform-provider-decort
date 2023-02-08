@@ -52,4 +52,14 @@ const (
 	ComputeRestoreAPI    = "/restmachine/cloudapi/compute/restore"
 	ComputeEnableAPI     = "/restmachine/cloudapi/compute/enable"
 	ComputeDisableAPI    = "/restmachine/cloudapi/compute/disable"
+
+	//affinity and anti-affinity
+	ComputeAffinityLabelSetAPI       = "/restmachine/cloudapi/compute/affinityLabelSet"
+	ComputeAffinityLabelRemoveAPI    = "/restmachine/cloudapi/compute/affinityLabelRemove"
+	ComputeAffinityRuleAddAPI        = "/restmachine/cloudapi/compute/affinityRuleAdd"
+	ComputeAffinityRuleRemoveAPI     = "/restmachine/cloudapi/compute/affinityRuleRemove"
+	ComputeAffinityRulesClearAPI     = "/restmachine/cloudapi/compute/affinityRulesClear"
+	ComputeAntiAffinityRuleAddAPI    = "/restmachine/cloudapi/compute/antiAffinityRuleAdd"
+	ComputeAntiAffinityRuleRemoveAPI = "/restmachine/cloudapi/compute/antiAffinityRuleRemove"
+	ComputeAntiAffinityRulesClearAPI = "/restmachine/cloudapi/compute/antiAffinityRulesClear"
 )
