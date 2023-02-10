@@ -1005,7 +1005,7 @@ func ResourceComputeSchemaMake() map[string]*schema.Schema {
 						Computed: true,
 					},
 					"size_used": {
-						Type:     schema.TypeInt,
+						Type:     schema.TypeFloat,
 						Computed: true,
 					},
 					"pool": {

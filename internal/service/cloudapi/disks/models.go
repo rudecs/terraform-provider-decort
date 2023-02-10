@@ -74,7 +74,7 @@ type Disk struct {
 	Shareable           bool                   `json:"shareable"`
 	SepID               int                    `json:"sepId"` // NOTE: absent from compute/get output
 	SizeMax             int                    `json:"sizeMax"`
-	SizeUsed            int                    `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
+	SizeUsed            float64                `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
 	Snapshots           []Snapshot             `json:"snapshots"`
 	Status              string                 `json:"status"`
 	TechStatus          string                 `json:"techStatus"`
@@ -165,7 +165,7 @@ type Unattached struct {
 	Role                string                 `json:"role"`
 	SepID               int                    `json:"sepId"`
 	SizeMax             int                    `json:"sizeMax"`
-	SizeUsed            int                    `json:"sizeUsed"`
+	SizeUsed            float64                `json:"sizeUsed"`
 	Snapshots           []Snapshot             `json:"snapshots"`
 	Status              string                 `json:"status"`
 	TechStatus          string                 `json:"techStatus"`

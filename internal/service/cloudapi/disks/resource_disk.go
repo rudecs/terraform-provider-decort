@@ -661,7 +661,7 @@ func resourceDiskSchemaMake() map[string]*schema.Schema {
 			Description: "Type SEP. Defines the type of storage system and contains one of the values set in the cloud platform",
 		},
 		"size_used": {
-			Type:        schema.TypeInt,
+			Type:        schema.TypeFloat,
 			Computed:    true,
 			Description: "Number of used space, in GB",
 		},

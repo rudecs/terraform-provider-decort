@@ -481,7 +481,7 @@ func dataSourceDiskListSchemaMake() map[string]*schema.Schema {
 						Description: "Size in GB",
 					},
 					"size_used": {
-						Type:        schema.TypeInt,
+						Type:        schema.TypeFloat,
 						Computed:    true,
 						Description: "Number of used space, in GB",
 					},

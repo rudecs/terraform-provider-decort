@@ -1,8 +1,12 @@
-### Version 3.4.1
+### Version 3.4.2
 
-### Features
+### Bug fixes
 
-- Add the affinity_label field into the kvmvm resource
-- Add affinity_rules blocks into the kvmvm resource
-- Add anti-affinity_rules blocks into the kvmvm resource
-- Update samples for the kvmvm resource
+- Change field type size_used from int to float in:
+  - resource decort_kvmvm
+  - resource decort_disk
+  - data source decort_kvmvm
+  - data source decort_disk
+  - data source decort_disk_list
+  - data source decort_disk_list-unattached
+- Models of the resources

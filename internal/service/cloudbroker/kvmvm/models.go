@@ -72,7 +72,7 @@ type DiskRecord struct {
 	SepType             string                 `json:"sepType"`
 	SepID               int                    `json:"sepId"` // NOTE: absent from compute/get output
 	SizeMax             int                    `json:"sizeMax"`
-	SizeUsed            int                    `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
+	SizeUsed            float64                `json:"sizeUsed"` // sum over all snapshots of this disk to report total consumed space
 	Snapshots           []SnapshotRecord       `json:"snapshots"`
 	Status              string                 `json:"status"`
 	TechStatus          string                 `json:"techStatus"`

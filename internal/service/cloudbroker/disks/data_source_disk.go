@@ -317,7 +317,7 @@ func dataSourceDiskSchemaMake() map[string]*schema.Schema {
 			Computed: true,
 		},
 		"size_used": {
-			Type:     schema.TypeInt,
+			Type:     schema.TypeFloat,
 			Computed: true,
 		},
 		"snapshots": {

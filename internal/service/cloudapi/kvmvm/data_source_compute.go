@@ -386,7 +386,7 @@ func DataSourceCompute() *schema.Resource {
 							Computed: true,
 						},
 						"size_used": {
-							Type:     schema.TypeInt,
+							Type:     schema.TypeFloat,
 							Computed: true,
 						},
 						"pool": {
