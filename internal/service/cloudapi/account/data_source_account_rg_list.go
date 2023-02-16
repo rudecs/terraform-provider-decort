@@ -74,12 +74,41 @@ func flattenAccRGComputes(argc AccountRGComputes) []map[string]interface{} {
 	return res
 }
 
+func flattenAccResourceHack(r ResourceHack) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	temp := map[string]interface{}{
+		"cpu":        r.CPU,
+		"disksize":   r.Disksize,
+		"extips":     r.Extips,
+		"exttraffic": r.Exttraffic,
+		"gpu":        r.GPU,
+		"ram":        r.RAM,
+		//"seps":       flattenAccountSeps(r.SEPs),
+	}
+	res = append(res, temp)
+	return res
+}
+
+func flattenAccResourceRg(r Resource) []map[string]interface{} {
+	res := make([]map[string]interface{}, 0)
+	temp := map[string]interface{}{
+		"cpu":        r.CPU,
+		"disksize":   r.Disksize,
+		"extips":     r.Extips,
+		"exttraffic": r.Exttraffic,
+		"gpu":        r.GPU,
+		"ram":        r.RAM,
+	}
+	res = append(res, temp)
+	return res
+}
+
 func flattenAccRGResources(argr AccountRGResources) []map[string]interface{} {
 	res := make([]map[string]interface{}, 0)
 	temp := map[string]interface{}{
-		"consumed": flattenAccResource(argr.Consumed),
-		"limits":   flattenAccResource(argr.Limits),
-		"reserved": flattenAccResource(argr.Reserved),
+		"consumed": flattenAccResourceRg(argr.Consumed),
+		"limits":   flattenAccResourceHack(argr.Limits),
+		"reserved": flattenAccResourceRg(argr.Reserved),
 	}
 	res = append(res, temp)
 	return res

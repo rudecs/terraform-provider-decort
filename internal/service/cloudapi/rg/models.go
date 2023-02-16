@@ -137,12 +137,12 @@ type QuotaRecord struct { // this is how quota is reported by /api/.../rg/get
 }
 
 type ResourceRecord struct { // this is how actual usage is reported by /api/.../rg/get
-	Cpu        int `json:"cpu"`
-	Disk       int `json:"disksize"`
-	ExtIPs     int `json:"extips"`
-	ExtTraffic int `json:"exttraffic"`
-	Gpu        int `json:"gpu"`
-	Ram        int `json:"ram"`
+	Cpu        int     `json:"cpu"`
+	Disk       float64 `json:"disksize"`
+	ExtIPs     int     `json:"extips"`
+	ExtTraffic int     `json:"exttraffic"`
+	Gpu        int     `json:"gpu"`
+	Ram        int     `json:"ram"`
 }
 
 type UsageRecord struct {
@@ -157,7 +157,7 @@ type ResourceSep struct {
 
 type Resource struct {
 	CPU        int                               `json:"cpu"`
-	Disksize   int                               `json:"disksize"`
+	Disksize   float64                           `json:"disksize"`
 	Extips     int                               `json:"extips"`
 	Exttraffic int                               `json:"exttraffic"`
 	GPU        int                               `json:"gpu"`

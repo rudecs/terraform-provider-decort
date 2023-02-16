@@ -96,7 +96,7 @@ type ResourceSep struct {
 
 type Resource struct {
 	CPU        int                               `json:"cpu"`
-	Disksize   int                               `json:"disksize"`
+	Disksize   float64                           `json:"disksize"`
 	Extips     int                               `json:"extips"`
 	Exttraffic int                               `json:"exttraffic"`
 	GPU        int                               `json:"gpu"`
@@ -201,10 +201,19 @@ type AccountRGComputes struct {
 	Stopped int `json:"Stopped"`
 }
 
+type ResourceHack struct {
+	CPU        int     `json:"cpu"`
+	Disksize   float64 `json:"disksize"`
+	Extips     int     `json:"extips"`
+	Exttraffic int     `json:"exttraffic"`
+	GPU        int     `json:"gpu"`
+	RAM        int     `json:"ram"`
+}
+
 type AccountRGResources struct {
-	Consumed Resource `json:"Consumed"`
-	Limits   Resource `json:"Limits"`
-	Reserved Resource `json:"Reserved"`
+	Consumed Resource     `json:"Consumed"`
+	Limits   ResourceHack `json:"Limits"`
+	Reserved Resource     `json:"Reserved"`
 }
 
 type AccountRG struct {

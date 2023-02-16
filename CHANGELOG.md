@@ -1,12 +1,11 @@
-### Version 3.4.2
+### Version 3.4.3
 
-### Bug fixes
+### Features
 
-- Change field type size_used from int to float in:
-  - resource decort_kvmvm
-  - resource decort_disk
-  - data source decort_kvmvm
-  - data source decort_disk
-  - data source decort_disk_list
-  - data source decort_disk_list-unattached
+- Change field type disksize from int to float in:
+  - resource decort_resgroup
+  - resource decort_account
+  - data source decort_rg
+  - data source decort_account
+  - data source decort_account_rg_list
 - Models of the resources

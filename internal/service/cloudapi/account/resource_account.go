@@ -574,7 +574,7 @@ func resourceAccountSchemaMake() map[string]*schema.Schema {
 									Computed: true,
 								},
 								"disksize": {
-									Type:     schema.TypeInt,
+									Type:     schema.TypeFloat,
 									Computed: true,
 								},
 								"extips": {
@@ -630,7 +630,7 @@ func resourceAccountSchemaMake() map[string]*schema.Schema {
 									Computed: true,
 								},
 								"disksize": {
-									Type:     schema.TypeInt,
+									Type:     schema.TypeFloat,
 									Computed: true,
 								},
 								"extips": {

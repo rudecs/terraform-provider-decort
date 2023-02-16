@@ -198,7 +198,7 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 									Computed: true,
 								},
 								"disksize": {
-									Type:     schema.TypeInt,
+									Type:     schema.TypeFloat,
 									Computed: true,
 								},
 								"extips": {
@@ -254,7 +254,7 @@ func dataSourceAccountSchemaMake() map[string]*schema.Schema {
 									Computed: true,
 								},
 								"disksize": {
-									Type:     schema.TypeInt,
+									Type:     schema.TypeFloat,
 									Computed: true,
 								},
 								"extips": {
